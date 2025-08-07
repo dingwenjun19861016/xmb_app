@@ -14,13 +14,12 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import coinInfoService, { CoinInfo } from '../../services/CoinInfoService';
-import coinLogoService from '../../services/CoinLogoService';
+import stockService, { TransformedStockData } from '../../services/StockService';
+import stockLogoService from '../../services/StockLogoService';
 import { useRealTimePrice } from '../../contexts/RealTimePriceContext';
 import { newsService, NewsArticle } from '../../services/NewsService';
 import userCoinService from '../../services/UserCoinService';
 import { useUser } from '../../contexts/UserContext';
-import { resolveCoinSymbol, resolveCoinSymbolSync } from '../Market/CoinAlias';
 import { getWebAppURL } from '../../config/apiConfig';
 import { DateUtils } from '../../utils/dateUtils';
 // Import components
@@ -34,9 +33,9 @@ import LoginModal from '../../components/auth/LoginModal';
 import TodayHeader from '../../components/common/TodayHeader';
 import CoinPosterModal from '../../components/common/CoinPosterModal';
 
-// 币种详情页面组件
+// 美股详情页面组件
 
-const CoinDetailScreen = () => {
+const USStockDetailScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
   
@@ -46,35 +45,15 @@ const CoinDetailScreen = () => {
   // 使用用户Context
   const { currentUser } = useUser();
   
-  // URL编码/解码辅助函数，用于处理包含空格的fullName
-  const encodeFullName = (fullName: string): string => {
-    return encodeURIComponent(fullName);
-  };
-  
-  const decodeFullName = (encodedFullName: string): string => {
-    try {
-      return decodeURIComponent(encodedFullName);
-    } catch (error) {
-      console.warn('Failed to decode fullName:', error);
-      return encodedFullName;
-    }
-  };
-  
-  // 从路由参数中获取name和fullName
-  let rawCoinName = 'BTC'; // 默认币种符号
-  let routeFullName: string | null = null; // 路由中的fullName
+  // 从路由参数中获取股票代码
+  let rawStockCode = 'AAPL'; // 默认股票代码
   
   if (route.params && route.params.name) {
-    // 使用路由传递的币种符号/名称（支持Web URL路由）
-    rawCoinName = route.params.name;
-  } else if (route.params && route.params.coinId) {
+    // 使用路由传递的股票代码（支持Web URL路由）
+    rawStockCode = route.params.name;
+  } else if (route.params && route.params.stockCode) {
     // 兼容旧版本传递方式
-    rawCoinName = route.params.coinId;
-  }
-  
-  // 获取fullName参数（如果存在）
-  if (route.params && route.params.fullName) {
-    routeFullName = decodeFullName(route.params.fullName);
+    rawStockCode = route.params.stockCode;
   }
   
   // 获取returnTo参数，用于控制返回导航
@@ -83,18 +62,18 @@ const CoinDetailScreen = () => {
   // 获取fromMarketScreen参数，用于判断是否从MarketScreen进入
   const fromMarketScreen = route.params && route.params.fromMarketScreen === true;
   
-  // 标准化币种符号（同步版本，用于初始显示）
-  const coinName = resolveCoinSymbolSync(rawCoinName);
+  // 标准化股票代码
+  const stockCode = rawStockCode.toUpperCase();
   const [selectedTimePeriod, setSelectedTimePeriod] = useState('24h');
   const [isFavorite, setIsFavorite] = useState(false);
   // 分层加载状态
   const [loading, setLoading] = useState(true);
-  const [coinDataLoading, setCoinDataLoading] = useState(true);
+  const [stockDataLoading, setStockDataLoading] = useState(true);
   const [chartDataLoading, setChartDataLoading] = useState(true);
   const [logoLoading, setLogoLoading] = useState(true);
   
-  const [coinData, setCoinData] = useState<CoinInfo | null>(null);
-  const [historicalData, setHistoricalData] = useState<CoinInfo[]>([]);
+  const [stockData, setStockData] = useState<TransformedStockData | null>(null);
+  const [historicalData, setHistoricalData] = useState<TransformedStockData[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [logoUrl, setLogoUrl] = useState<string>('');
   
@@ -120,8 +99,8 @@ const CoinDetailScreen = () => {
   const [showShareModal, setShowShareModal] = useState(false);
   
   // 获取实时价格数据
-  const realTimePrice = getPrice(coinName);
-  const realTimePriceChange = getPriceChange(coinName);
+  const realTimePrice = getPrice(stockCode);
+  const realTimePriceChange = getPriceChange(stockCode);
   
   // 相关资讯状态
   const [relatedNews, setRelatedNews] = useState<NewsArticle[]>([]);
@@ -154,10 +133,8 @@ const CoinDetailScreen = () => {
       const pageSize = 20; // 每页加载20条
       const skip = currentPage * pageSize;
       
-      // 使用异步版本标准化搜索词，确保远程配置也能被应用
-      const standardizedSearchTerm = await resolveCoinSymbol(searchTerm);
-      
-      const results = await newsService.smartSearchNews(standardizedSearchTerm, pageSize, skip);
+      // 搜索美股相关新闻
+      const results = await newsService.smartSearchNews(searchTerm, pageSize, skip);
       
       if (isLoadMore) {
         // 加载更多：追加到现有列表
@@ -188,13 +165,13 @@ const CoinDetailScreen = () => {
   // 加载更多资讯
   const loadMoreNews = () => {
     if (!loadingMore && hasMoreNews && !newsLoading) {
-      fetchRelatedNews(coinName, true);
+      fetchRelatedNews(stockCode, true);
     }
   };
 
   // 检查是否已自选
   const checkIfFavorite = async () => {
-    if (!currentUser || !coinName) {
+    if (!currentUser || !stockCode) {
       setIsFavorite(false);
       return;
     }
@@ -204,8 +181,8 @@ const CoinDetailScreen = () => {
       if (result.success && result.data) {
         const favoriteCoinsData = result.data as any;
         const coinSymbols = favoriteCoinsData.coins.map((item: any) => item.coin.toUpperCase());
-        const isCoinFavorite = coinSymbols.includes(coinName.toUpperCase());
-        setIsFavorite(isCoinFavorite);
+        const isStockFavorite = coinSymbols.includes(stockCode.toUpperCase());
+        setIsFavorite(isStockFavorite);
       }
     } catch (error: any) {
       
@@ -241,63 +218,63 @@ const CoinDetailScreen = () => {
   // 监听用户登录状态变化
   useEffect(() => {
     checkIfFavorite();
-  }, [currentUser, coinName]);
+  }, [currentUser, stockCode]);
 
   useEffect(() => {
     // 并行加载核心数据
     const loadCoreData = async () => {
       try {
-        // 验证币种名称有效性
-        if (!coinName) {
-          setError('无效的币种标识符');
+        // 验证股票代码有效性
+        if (!stockCode) {
+          setError('无效的股票代码');
           setLoading(false);
-          setCoinDataLoading(false);
+          setStockDataLoading(false);
           setChartDataLoading(false);
           return;
         }
         
         setLoading(true);
-        setCoinDataLoading(true);
+        setStockDataLoading(true);
         setChartDataLoading(true);
         
         // 确保API参数格式正确
-        const validCoinName = typeof coinName === 'string' ? coinName.toUpperCase() : 'BTC';
+        const validStockCode = typeof stockCode === 'string' ? stockCode.toUpperCase() : 'AAPL';
         
         // 并行获取基础数据和图表数据
-        const loadBasicDataPromise = coinInfoService.getCoinInfo(validCoinName, 1, routeFullName || undefined);
+        const loadBasicDataPromise = stockService.getUsstockInfo(validStockCode, 1);
         
         try {
-          // 首先快速获取基础币种信息
+          // 首先快速获取基础股票信息
           const basicData = await loadBasicDataPromise;
           
           if (basicData && Array.isArray(basicData) && basicData.length > 0) {
-            setCoinData(basicData[0]); // 立即设置基本币种信息
-            setCoinDataLoading(false); // 基础数据加载完成
+            setStockData(basicData[0]); // 立即设置基本股票信息
+            setStockDataLoading(false); // 基础数据加载完成
             
             // 异步加载图表数据
-            loadChartData(validCoinName, basicData[0]);
+            loadChartData(validStockCode, basicData[0]);
             
             // 异步加载相关资讯（不阻塞主界面）
             setTimeout(() => {
-              fetchRelatedNews(coinName);
+              fetchRelatedNews(stockCode);
             }, 100);
             
           } else {
-            setError('未找到该币种的数据');
-            setCoinDataLoading(false);
+            setError('未找到该股票的数据');
+            setStockDataLoading(false);
             setChartDataLoading(false);
           }
         } catch (err) {
-          console.error('Failed to fetch basic coin data:', err);
-          setError('Failed to load basic coin data');
-          setCoinDataLoading(false);
+          console.error('Failed to fetch basic stock data:', err);
+          setError('Failed to load basic stock data');
+          setStockDataLoading(false);
           setChartDataLoading(false);
         }
       } catch (err) {
-        console.error('Failed to initialize coin data loading:', err);
+        console.error('Failed to initialize stock data loading:', err);
         setError('Failed to initialize data loading');
         setLoading(false);
-        setCoinDataLoading(false);
+        setStockDataLoading(false);
         setChartDataLoading(false);
       } finally {
         setLoading(false);
@@ -305,17 +282,15 @@ const CoinDetailScreen = () => {
     };
 
     // 异步加载图表数据的函数
-    const loadChartData = async (validCoinName: string, basicCoinData: CoinInfo) => {
+    const loadChartData = async (validStockCode: string, basicStockData: TransformedStockData) => {
       try {
         setChartDataLoading(true);
         
         // 如果选择24h，特殊处理
         if (selectedTimePeriod === '24h') {
-          // 使用新的getCoin24hByName API，传递name, fullName和count参数
-          const coinFullName = route.params?.fullName || basicCoinData.fullName;
-          const data24h = await coinInfoService.getCoin24hData(
-            validCoinName,
-            coinFullName,
+          // 使用新的getUsstock24hByCode API
+          const data24h = await stockService.getUsstock24hByCode(
+            validStockCode,
             "1000"
           );
           
@@ -323,47 +298,47 @@ const CoinDetailScreen = () => {
             // 转换24h数据为历史数据格式用于图表显示
             const convertedData = data24h.map((item, index) => {
               return {
-                ...basicCoinData,
-                currentPrice: item.price.toString(),
+                ...basicStockData,
+                currentPrice: item.price,
                 date: item.createdAt,
                 created_at: item.createdAt,
-                updated_at: item.updatedAt || item.createdAt,
-                price: item.price.toString(),
+                updated_at: item.createdAt,
+                price: item.price,
                 timestamp: new Date(item.createdAt).getTime(),
                 originalIndex: index
-              };
+              } as TransformedStockData;
             }).sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
             
             if (convertedData && convertedData.length > 0) {
               setHistoricalData(convertedData);
             } else {
-              setHistoricalData([basicCoinData]);
+              setHistoricalData([basicStockData]);
             }
           } else {
-            setHistoricalData([basicCoinData]);
+            setHistoricalData([basicStockData]);
           }
         } else {
           // 其他时间周期使用原有逻辑
           const days = getTimeFrameDays(selectedTimePeriod);
-          const data = await coinInfoService.getCoinInfo(validCoinName, days, basicCoinData?.fullName);
+          const data = await stockService.getUsstockInfo(validStockCode, days);
           
           if (data && Array.isArray(data) && data.length > 0) {
             setHistoricalData(data.reverse());
           } else {
-            setHistoricalData([basicCoinData]);
+            setHistoricalData([basicStockData]);
           }
         }
       } catch (err) {
         console.error('Failed to fetch chart data:', err);
         // 图表数据加载失败时，使用基础数据作为回退
-        setHistoricalData([basicCoinData]);
+        setHistoricalData([basicStockData]);
       } finally {
         setChartDataLoading(false);
       }
     };
 
     loadCoreData();
-  }, [coinName, selectedTimePeriod]);
+  }, [stockCode, selectedTimePeriod]);
 
   // 管理实时价格轮询
   useEffect(() => {
@@ -376,13 +351,13 @@ const CoinDetailScreen = () => {
     };
   }, []);
 
-  // 并行加载币种图标（独立状态管理）
+  // 并行加载股票图标（独立状态管理）
   useEffect(() => {
     const loadLogo = async () => {
-      if (coinName) {
+      if (stockCode) {
         try {
           setLogoLoading(true);
-          const url = await coinLogoService.getLogoUrl(coinName);
+          const url = stockLogoService.getLogoUrlSync(stockCode);
           setLogoUrl(url);
         } catch (error) {
           console.warn('Failed to load logo:', error);
@@ -394,15 +369,15 @@ const CoinDetailScreen = () => {
     };
     
     loadLogo();
-  }, [coinName]);
+  }, [stockCode]);
 
   // 检查价格变化是否为正值
   const isPriceChangePositive = () => {
-    if (!coinData || !coinData.priceChange24h) return true;
+    if (!stockData || !stockData.priceChange24h) return true;
     // 处理不同格式的价格变化数据
-    const cleanedChange = coinData.priceChange24h.replace ? 
-                        coinData.priceChange24h.replace('%', '') : 
-                        coinData.priceChange24h;
+    const cleanedChange = stockData.priceChange24h.replace ? 
+                        stockData.priceChange24h.replace('%', '') : 
+                        stockData.priceChange24h;
     return parseFloat(cleanedChange) >= 0;
   };
 
@@ -434,7 +409,7 @@ const CoinDetailScreen = () => {
       showMessageModal(
         'warning',
         '需要登录',
-        '请先登录账户才能管理自选币种',
+        '请先登录账户才能管理自选股票',
         [
           { 
             text: '取消', 
@@ -458,8 +433,8 @@ const CoinDetailScreen = () => {
       
       // 根据当前状态选择API
       const response = isRemoving 
-        ? await userCoinService.removeUserCoin(currentUser.email, coinName)
-        : await userCoinService.addUserCoin(currentUser.email, coinName);
+        ? await userCoinService.removeUserCoin(currentUser.email, stockCode)
+        : await userCoinService.addUserCoin(currentUser.email, stockCode);
         
       if (response.success && response.data) {
         // 更新本地状态
@@ -471,8 +446,8 @@ const CoinDetailScreen = () => {
           'success',
           `${actionText}成功`,
           isRemoving 
-            ? `${coinName} 已从自选列表中移除`
-            : `${coinName} 已添加到自选列表`,
+            ? `${stockCode} 已从自选列表中移除`
+            : `${stockCode} 已添加到自选列表`,
           [{ text: '确定', onPress: () => setModalVisible(false) }]
         );
         
@@ -510,7 +485,7 @@ const CoinDetailScreen = () => {
     showMessageModal(
       'success',
       '登录成功',
-      `欢迎回来，${user.email}！现在可以管理自选币种了。`,
+      `欢迎回来，${user.email}！现在可以管理自选股票了。`,
       [{ text: '确定', onPress: () => setModalVisible(false) }]
     );
     
@@ -549,7 +524,7 @@ const CoinDetailScreen = () => {
           navigation.goBack();
           return;
         } catch (error) {
-          console.error('❌ CoinDetailScreen: 返回到MarketScreen失败:', error);
+          console.error('❌ USStockDetailScreen: 返回到MarketScreen失败:', error);
         }
       }
       
@@ -559,7 +534,7 @@ const CoinDetailScreen = () => {
           navigation.goBack();
           return;
         } catch (urlError) {
-          console.error('❌ CoinDetailScreen: 返回到首页失败:', urlError);
+          console.error('❌ USStockDetailScreen: 返回到首页失败:', urlError);
         }
       }
       
@@ -572,7 +547,7 @@ const CoinDetailScreen = () => {
           window.location.href = targetUrl;
           return;
         } catch (urlError) {
-          console.error('❌ CoinDetailScreen: URL解析失败:', urlError);
+          console.error('❌ USStockDetailScreen: URL解析失败:', urlError);
         }
       }
       
@@ -622,8 +597,8 @@ const CoinDetailScreen = () => {
     return parseFloat(cleanedChange) >= 0;
   };
   
-  // Helper function to check if coinData is valid
-  const isValidCoinData = (data: CoinInfo | null): boolean => {
+  // Helper function to check if stockData is valid
+  const isValidStockData = (data: TransformedStockData | null): boolean => {
     if (!data) return false;
     return Boolean(
       data.name && 
@@ -635,12 +610,7 @@ const CoinDetailScreen = () => {
 
   // 生成分享URL的辅助函数
   const generateShareUrl = (): string => {
-    const fullName = coinData?.fullName || routeFullName;
-    if (fullName) {
-      const encodedFullName = encodeFullName(fullName);
-      return getWebAppURL(`market/${coinName}?fullName=${encodedFullName}`);
-    }
-    return getWebAppURL(`market/${coinName}`);
+    return getWebAppURL(`market/${stockCode}`);
   };
 
   // 骨架屏组件
@@ -682,7 +652,7 @@ const CoinDetailScreen = () => {
     );
   };
 
-  const CoinInfoSkeleton = () => (
+  const StockInfoSkeleton = () => (
     <View style={styles.priceSection}>
       <View style={styles.priceContainer}>
         {/* 价格信息（垂直布局） */}
@@ -739,8 +709,8 @@ const CoinDetailScreen = () => {
   // 完整页面骨架屏 - 精确匹配真实布局
   const FullPageSkeleton = () => (
     <ScrollView showsVerticalScrollIndicator={false}>
-      {/* 币种价格信息骨架屏 */}
-      <CoinInfoSkeleton />
+      {/* 股票价格信息骨架屏 */}
+      <StockInfoSkeleton />
       
       {/* 图表区域骨架屏 */}
       <ChartSkeleton />
@@ -782,20 +752,12 @@ const CoinDetailScreen = () => {
           </View>
         </View>
       </View>
-      
-      {/* 交易所信息区域骨架屏 */}
-      <View style={styles.exchangeSection}>
-        <View style={styles.exchangeSectionHeader}>
-          <SkeletonBox width={80} height={18} />
-          <SkeletonBox width={70} height={14} />
-        </View>
-      </View>
     </ScrollView>
   );
 
   // 处理分享按钮点击
   const handleSharePress = () => {
-    console.log('🔄 CoinDetailScreen: 分享按钮被点击');
+    console.log('🔄 USStockDetailScreen: 分享按钮被点击');
     setShowShareModal(true);
   };
 
@@ -810,7 +772,7 @@ const CoinDetailScreen = () => {
           <Ionicons name="chevron-back" size={24} color="white" />
         </TouchableOpacity>
         <View style={styles.headerTitleContainer}>
-          {/* 币种图标 */}
+          {/* 股票图标 */}
           <View style={styles.headerLogoContainer}>
             {logoLoading ? (
               <View style={styles.headerLogoPlaceholder} />
@@ -818,23 +780,23 @@ const CoinDetailScreen = () => {
               <Image 
                 source={{ uri: logoUrl }} 
                 style={styles.headerLogo}
-                onError={() => console.warn('Failed to load coin logo')}
+                onError={() => console.warn('Failed to load stock logo')}
               />
             ) : (
               <View style={styles.headerLogoPlaceholder}>
                 <Text style={styles.headerLogoPlaceholderText}>
-                  {(coinData?.name || coinName).slice(0, 2)}
+                  {(stockData?.name || stockCode).slice(0, 2)}
                 </Text>
               </View>
             )}
           </View>
           
-          {/* 币种名称信息 */}
+          {/* 股票名称信息 */}
           <View style={styles.headerTitleInfo}>
             <Text style={styles.headerTitle} numberOfLines={2} ellipsizeMode="tail">
-              {coinData?.fullName || coinData?.name || coinName}
+              {stockData?.fullName || stockData?.name || stockCode}
             </Text>
-            <Text style={styles.headerSymbol}>{coinData?.name || coinName}</Text>
+            <Text style={styles.headerSymbol}>{stockData?.name || stockCode}</Text>
           </View>
         </View>
         <View style={styles.headerRightContainer}>
@@ -856,7 +818,7 @@ const CoinDetailScreen = () => {
         </View>
       </View>
 
-      {loading && !coinData ? (
+      {loading && !stockData ? (
         // 首次加载使用完整骨架屏替代简单loading
         <FullPageSkeleton />
       ) : error ? (
@@ -866,56 +828,56 @@ const CoinDetailScreen = () => {
             style={styles.retryButton}
             onPress={() => {
               setLoading(true);
-              setCoinDataLoading(true);
+              setStockDataLoading(true);
               setChartDataLoading(true);
               setError(null);
               // 触发重新加载
               const fetchData = async () => {
                 try {
-                  const validCoinName = typeof coinName === 'string' ? coinName.toUpperCase() : 'BTC';
-                  const basicData = await coinInfoService.getCoinInfo(validCoinName, 1, routeFullName || coinData?.fullName || undefined);
+                  const validStockCode = typeof stockCode === 'string' ? stockCode.toUpperCase() : 'AAPL';
+                  const basicData = await stockService.getUsstockInfo(validStockCode, 1);
                   if (basicData && Array.isArray(basicData) && basicData.length > 0) {
-                    setCoinData(basicData[0]);
-                    setCoinDataLoading(false);
+                    setStockData(basicData[0]);
+                    setStockDataLoading(false);
                   }
                 } catch (err) {
-                  setError('Failed to load coin data');
+                  setError('Failed to load stock data');
                 } finally {
                   setLoading(false);
-                  setCoinDataLoading(false);
+                  setStockDataLoading(false);
                   setChartDataLoading(false);
                 }
               };
               fetchData();
             }}
           >
-            <Text style={styles.retryButtonText}>Retry</Text>
+            <Text style={styles.retryButtonText}>重试</Text>
           </TouchableOpacity>
         </View>
       ) : (
         <ScrollView showsVerticalScrollIndicator={false}>
           {/* Price and Action Buttons Section - 价格和操作按钮整合区域 */}
-          {coinDataLoading ? (
-            <CoinInfoSkeleton />
-          ) : coinData && isValidCoinData(coinData) ? (
+          {stockDataLoading ? (
+            <StockInfoSkeleton />
+          ) : stockData && isValidStockData(stockData) ? (
             <CoinInfoComponent
-              coinName={coinData.name || coinName}
-              coinSymbol={coinName}
+              coinName={stockData.name || stockCode}
+              coinSymbol={stockCode}
               currentPrice={(() => {
                 // 优先使用实时价格，如果没有则使用API返回的价格
-                const realTimePrice = getPrice(coinName);
+                const realTimePrice = getPrice(stockCode);
                 if (realTimePrice) {
                   return `$${realTimePrice.toLocaleString('en-US', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 6
                   })}`;
                 }
-                return formatPrice(coinData.currentPrice);
+                return formatPrice(stockData.currentPrice);
               })()}
-              priceChange24h={formatPriceChange(coinData.priceChange24h)}
-              isPositive={isPricePositive(coinData.priceChange24h)}
+              priceChange24h={formatPriceChange(stockData.priceChange24h)}
+              isPositive={isPricePositive(stockData.priceChange24h)}
               logoUrl={logoLoading ? '' : logoUrl}
-              priceChangeDirection={getPriceChange(coinName)}
+              priceChangeDirection={getPriceChange(stockCode)}
               renderActionButtons={() => (
                 <View style={styles.actionButtonsHorizontal}>
                   <TouchableOpacity 
@@ -958,7 +920,7 @@ const CoinDetailScreen = () => {
               )}
             />
           ) : (
-            <CoinInfoSkeleton />
+            <StockInfoSkeleton />
           )}
 
 
@@ -979,44 +941,31 @@ const CoinDetailScreen = () => {
 
         {/* Info Cards */}
         <View style={styles.infoCardsContainer}>
-          {coinData && (
+          {stockData && (
             <>
               <InfoCard 
                 label="市值" 
-                value={coinData.marketcap || 'N/A'} 
+                value={stockData.marketcap || 'N/A'} 
               />
               <InfoCard 
                 label="24h成交量" 
-                value={coinData.volume || 'N/A'} 
+                value={stockData.volume || 'N/A'} 
               />
               <InfoCard 
                 label="总市值" 
-                value={coinData.fdv || 'N/A'} 
+                value={stockData.fdv || 'N/A'} 
               />
               <InfoCard 
                 label="总供应量" 
-                value={coinData.totalSupply || 'N/A'} 
+                value={stockData.totalSupply || 'N/A'} 
               />
               <InfoCard 
                 label="流通供应量" 
-                value={coinData.circulatingSupply || 'N/A'} 
+                value={stockData.circulatingSupply || 'N/A'} 
               />
             </>
           )}
         </View>
-
-        {/* Exchange Info */}
-        {coinData && coinData.cexInfos && coinData.cexInfos.length > 0 && (
-          <View style={styles.exchangeSection}>
-            <View style={styles.exchangeSectionHeader}>
-              <Text style={styles.sectionTitle}>交易所信息</Text>
-              <Text style={styles.exchangeTip}>点击前往交易</Text>
-            </View>
-            {coinData.cexInfos.map((exchange, index) => (
-              <ExchangeCard key={index} exchangeInfo={exchange} />
-            ))}
-          </View>
-        )}
         
         {/* 相关资讯 */}
         <View style={styles.newsSection}>
@@ -1033,7 +982,7 @@ const CoinDetailScreen = () => {
               <Text style={styles.errorText}>{newsError}</Text>
               <TouchableOpacity 
                 style={styles.retryButton}
-                onPress={() => fetchRelatedNews(coinName)}
+                onPress={() => fetchRelatedNews(stockCode)}
               >
                 <Text style={styles.retryButtonText}>重试</Text>
               </TouchableOpacity>
@@ -1046,8 +995,8 @@ const CoinDetailScreen = () => {
                   style={styles.newsItem}
                   onPress={() => navigation.navigate('ArticleDetail', { 
                     articleId: article.id,
-                    returnTo: 'coinDetail',
-                    coinName: coinName
+                    returnTo: 'stockDetail',
+                    stockCode: stockCode
                   })}
                 >
                   <View style={styles.newsContent}>
@@ -1113,14 +1062,14 @@ const CoinDetailScreen = () => {
         onLoginSuccess={handleLoginSuccess}
       />
       
-      {/* CoinPosterModal */}
+      {/* CoinPosterModal - 复用现有组件，但传入股票数据 */}
       <CoinPosterModal
         visible={showShareModal}
         onClose={() => setShowShareModal(false)}
-        coinSymbol={coinName}
-        coinName={coinData?.fullName || coinData?.name || coinName}
-        currentPrice={realTimePrice || coinData?.current_price}
-        priceChange24h={coinData?.price_change_percentage_24h}
+        coinSymbol={stockCode}
+        coinName={stockData?.fullName || stockData?.name || stockCode}
+        currentPrice={realTimePrice || stockData?.currentPrice}
+        priceChange24h={stockData?.priceChangePercent}
         logoUrl={logoUrl}
         coinUrl={generateShareUrl()}
         onShowMessage={showMessageModal}
@@ -1390,22 +1339,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#999',
   },
-  exchangeSection: {
-    backgroundColor: 'white',
-    padding: 20,
-    marginBottom: 10,
-  },
-  exchangeSectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  exchangeTip: {
-    fontSize: 12,
-    color: '#007AFF',
-    fontWeight: '400',
-  },
   loadingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1539,4 +1472,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CoinDetailScreen;
+export default USStockDetailScreen;

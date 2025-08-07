@@ -7,7 +7,7 @@ import { Platform } from 'react-native';
 // Import all screens
 import HomeScreen from '../screens/Home/HomeScreen';
 import MarketScreen from '../screens/Market/MarketScreen';
-import CoinDetailScreen from '../screens/Market/CoinDetailScreen';
+import USStockDetailScreen from '../screens/Market/USStockDetailScreen';
 import ArticleDetailScreen from '../screens/Articles/ArticleDetailScreen';
 import AirdropsScreen from '../screens/Airdrops/AirdropsScreen';
 import AirdropDetailScreen from '../screens/Airdrops/AirdropDetailScreen';
@@ -49,7 +49,7 @@ const HomeStackNavigator = React.forwardRef((props, ref) => {
         component={HomeScreen}
         initialParams={{ activeTab: 'articles' }}
       />
-      <HomeStack.Screen name="CoinDetail" component={CoinDetailScreen} />
+      <HomeStack.Screen name="CoinDetail" component={USStockDetailScreen} />
       <HomeStack.Screen name="ArticleDetail" component={ArticleDetailScreen} />
       <HomeStack.Screen name="AirdropDetail" component={AirdropDetailScreen} />
       <HomeStack.Screen name="Data" component={DataScreen} />
@@ -91,7 +91,7 @@ const MarketStackNavigator = () => {
       />
       <MarketStack.Screen 
         name="CoinDetail" 
-        component={CoinDetailScreen}
+        component={USStockDetailScreen}
         options={{
           // Web端路由配置
           ...(Platform.OS === 'web' && {

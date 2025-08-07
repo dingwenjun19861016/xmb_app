@@ -314,6 +314,101 @@ class StockService {
   }
 
   /**
+   * 获取指定股票的详细信息 - 使用新的getUsstockInfo API
+   * @param stockCode 股票代码，如 "NVDA", "AAPL"
+   * @param days 天数，默认7天
+   * @returns Promise<TransformedStockData[]>
+   */
+  async getUsstockInfo(stockCode: string, days: number = 7): Promise<TransformedStockData[]> {
+    try {
+      console.log('🔄 StockService: Fetching stock info using getUsstockInfo API:', { stockCode, days });
+
+      const response = await apiService.call<any[]>('getUsstockInfo', [stockCode.toUpperCase(), days.toString()]);
+      
+      if (!Array.isArray(response)) {
+        console.warn('⚠️ StockService: Invalid response format from getUsstockInfo');
+        return [];
+      }
+
+      // 转换数据格式
+      const transformedStocks: TransformedStockData[] = response.map(stock => ({
+        _id: stock._id || stock.id || '',
+        rank: Number(stock.rank) || 0,
+        name: stock.code || stock.name || '',
+        code: stock.code || '',
+        fullName: stock.name || stock.fullName || '',
+        currentPrice: stock.currentPrice || stock.price || '0',
+        priceChange24h: stock.priceChangePercent || stock.priceChange24h || '0',
+        priceChangePercent: stock.priceChangePercent || stock.priceChange24h || '0',
+        marketcap: stock.baseinfo?.marketCap || stock.marketCap || '',
+        volume: stock.baseinfo?.volume || stock.volume || '',
+        exchange: stock.exchange || '',
+        sector: stock.sector || '',
+        logoUrl: stockLogoService.getLogoUrlSync(stock.code || ''),
+        // 兼容字段
+        fdv: stock.baseinfo?.marketCap || stock.marketCap || '',
+        totalSupply: stock.baseinfo?.sharesOutstanding || '',
+        circulatingSupply: stock.baseinfo?.sharesOutstanding || '',
+        description: `${stock.name || ''} (${stock.code || ''}) - ${stock.sector || ''}`,
+        cexInfos: [],
+        valid: true,
+        created_at: stock.created_at || new Date().toISOString(),
+        date: stock.date || new Date().toISOString(),
+        updated_at: stock.updated_at || new Date().toISOString(),
+        coin_id: stock._id || stock.id || '',
+        usstock24h: stock.usstock24h || []
+      }));
+
+      console.log(`✅ StockService: Successfully fetched ${transformedStocks.length} stock records for ${stockCode}`);
+      return transformedStocks;
+
+    } catch (error) {
+      console.error(`❌ StockService: Failed to fetch stock info for ${stockCode}:`, error);
+      return [];
+    }
+  }
+
+  /**
+   * 获取股票24小时价格走势数据 - 使用新的getUsstock24hByCode API
+   * @param stockCode 股票代码，如 "NVDA", "AAPL"
+   * @param count 数据点数量，通常为 "1000"
+   * @returns Promise<Array<{_id: string, rank: number, code: string, name: string, price: string, createdAt: string}>>
+   */
+  async getUsstock24hByCode(stockCode: string, count: string = "1000"): Promise<Array<{
+    _id: string;
+    rank: number;
+    code: string;
+    name: string;
+    price: string;
+    createdAt: string;
+  }>> {
+    try {
+      console.log('🔄 StockService: Fetching 24h data using getUsstock24hByCode API:', { stockCode, count });
+
+      const response = await apiService.call<Array<{
+        _id: string;
+        rank: number;
+        code: string;
+        name: string;
+        price: string;
+        createdAt: string;
+      }>>('getUsstock24hByCode', [stockCode.toUpperCase(), count]);
+
+      if (!Array.isArray(response)) {
+        console.warn('⚠️ StockService: Invalid response format from getUsstock24hByCode');
+        return [];
+      }
+
+      console.log(`✅ StockService: Successfully fetched ${response.length} 24h records for ${stockCode}`);
+      return response;
+
+    } catch (error) {
+      console.error(`❌ StockService: Failed to fetch 24h data for ${stockCode}:`, error);
+      return [];
+    }
+  }
+
+  /**
    * 清除缓存
    */
   clearCache(): void {
