@@ -1,5 +1,6 @@
 import apiService from './APIService';
 import configService from './ConfigService';
+import stockLogoService from './StockLogoService';
 
 // 股票数据接口 - 基于API返回的数据结构
 export interface StockData {
@@ -230,7 +231,7 @@ class StockService {
         volume: stock.baseinfo.volume || stock.volume || '',
         exchange: stock.exchange,
         sector: stock.sector,
-        logoUrl: stock.logoUrl,
+        logoUrl: stockLogoService.getLogoUrlSync(stock.code), // 使用StockLogoService生成正确的logo URL
         // 兼容字段
         fdv: stock.baseinfo.marketCap || stock.marketCap || '',
         totalSupply: stock.baseinfo.sharesOutstanding || '',
@@ -288,7 +289,7 @@ class StockService {
         volume: stock.baseinfo.volume || stock.volume || '',
         exchange: stock.exchange,
         sector: stock.sector,
-        logoUrl: stock.logoUrl,
+        logoUrl: stockLogoService.getLogoUrlSync(stock.code), // 使用StockLogoService生成正确的logo URL
         // 兼容字段
         fdv: stock.baseinfo.marketCap || stock.marketCap || '',
         totalSupply: stock.baseinfo.sharesOutstanding || '',

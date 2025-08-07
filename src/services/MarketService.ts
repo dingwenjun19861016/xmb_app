@@ -1,5 +1,7 @@
 import apiService, { APIError } from './APIService';
 import configService from './ConfigService';
+import stockService from './StockService';
+import stockLogoService from './StockLogoService';
 
 // 定义币种数据接口
 export interface CoinData {
@@ -352,46 +354,107 @@ class MarketService {
    */
   async getUSStockHomeDisplay(): Promise<CoinData[]> {
     try {
- 
-      // 从配置获取需要显示的美股代码
-      const stockCodes = await configService.getConfig('HOME_MARKET_DISPLAY', '');
+      console.log('🔄 MarketService: Delegating to StockService for home display stocks...');
       
-      if (!stockCodes) {
-        console.warn('⚠️ MarketService: HOME_MARKET_DISPLAY config not found or empty');
+      // 从配置获取需要显示的股票数量
+      const displayCount = await configService.getConfig('HOME_MARKET_OVERVIEW_COUNT', 2);
+      
+      // 使用StockService获取股票数据
+      const stocksData = await stockService.getHomeDisplayStocks(displayCount);
+      
+      if (!stocksData || stocksData.length === 0) {
+        console.warn('⚠️ MarketService: No stock data received from StockService');
         return [];
       }
       
-      console.log('🔄 MarketService: Fetching US stocks with codes:', stockCodes);
+      // 将StockService的TransformedStockData转换为MarketService需要的CoinData格式
+      const coinDataResult: CoinData[] = stocksData.map(stock => ({
+        _id: stock._id,
+        coin_id: stock._id,
+        rank: stock.rank,
+        name: stock.code, // 使用股票代码
+        fullName: stock.fullName, // 使用公司全名
+        symbol: stock.code,
+        currentPrice: stock.currentPrice,
+        priceChange24h: stock.priceChange24h,
+        priceChangePercent: stock.priceChangePercent,
+        marketCap: stock.marketcap,
+        volume: stock.volume,
+        fdv: stock.fdv,
+        totalSupply: stock.totalSupply,
+        circulatingSupply: stock.circulatingSupply,
+        description: stock.description,
+        logo: stockLogoService.getLogoUrlSync(stock.code), // 使用StockLogoService生成正确的logo URL
+        cexInfos: stock.cexInfos || [],
+        valid: stock.valid,
+        created_at: stock.created_at,
+        date: stock.date,
+        updated_at: stock.updated_at,
+        coin24h: stock.usstock24h?.map(item => ({
+          price: item.price,
+          createdAt: item.createdAt
+        })) || []
+      }));
       
-      // 使用getMultipleCoinsInfo获取股票数据，使用参数"1"
-      return await this.getMultipleCoinsInfo(stockCodes, "1");
+      console.log(`✅ MarketService: Successfully converted ${coinDataResult.length} stock items to CoinData format`);
+      console.log('📊 MarketService: Sample converted stock data:', coinDataResult[0]);
+      
+      return coinDataResult;
     } catch (error) {
-      console.error('❌ MarketService: Failed to fetch US stocks:', error);
+      console.error('❌ MarketService: Failed to fetch US stocks via StockService:', error);
       return []; // 返回空数组而不是抛出错误，以避免UI崩溃
     }
   }
 
   /**
-   * 获取美股列表数据（从配置服务获取完整的股票列表）
+   * 获取美股列表数据（使用StockService获取完整的股票列表）
    * @returns Promise<CoinData[]>
    */
   async getUSStockList(): Promise<CoinData[]> {
     try {
-      console.log('🔄 MarketService: Fetching US stocks...');
-      // 从配置获取需要显示的美股代码
-      const stockCodes = await configService.getConfig('MARKET_LIST', '');
+      console.log('🔄 MarketService: Delegating to StockService for full stock list...');
       
-      if (!stockCodes) {
-        console.warn('⚠️ MarketService: MARKET_LIST config not found or empty');
+      // 使用StockService获取股票列表，获取更多数据用于市场页面
+      const stocksData = await stockService.getUSStocksList(0, 100); // 获取前100只股票
+      
+      if (!stocksData || stocksData.length === 0) {
+        console.warn('⚠️ MarketService: No stock list data received from StockService');
         return [];
       }
       
-      // 使用getMultipleCoinsInfo获取股票数据，使用参数"1"
-      const result = await this.getMultipleCoinsInfo(stockCodes, "1");
-      console.log(`✅ MarketService: Fetched ${result.length} US stocks`);
-      return result;
+      // 将StockService的StockData转换为MarketService需要的CoinData格式
+      const coinDataResult: CoinData[] = stocksData.map(stock => ({
+        _id: stock._id,
+        coin_id: stock._id,
+        rank: stock.rank,
+        name: stock.code, // 使用股票代码
+        fullName: stock.name, // 使用公司全名
+        symbol: stock.code,
+        currentPrice: stock.currentPrice,
+        priceChange24h: stock.priceChangePercent,
+        priceChangePercent: stock.priceChangePercent,
+        marketCap: stock.baseinfo?.marketCap || stock.marketCap || '',
+        volume: stock.baseinfo?.volume || stock.volume || '',
+        fdv: stock.baseinfo?.marketCap || stock.marketCap || '',
+        totalSupply: stock.baseinfo?.sharesOutstanding || '',
+        circulatingSupply: stock.baseinfo?.sharesOutstanding || '',
+        description: `${stock.name} (${stock.code}) - ${stock.sector}`,
+        logo: stockLogoService.getLogoUrlSync(stock.code), // 使用StockLogoService生成正确的logo URL
+        cexInfos: [],
+        valid: true,
+        created_at: stock.created_at,
+        date: stock.date,
+        updated_at: stock.updated_at,
+        coin24h: stock.usstock24h?.map(item => ({
+          price: item.price,
+          createdAt: item.createdAt
+        })) || []
+      }));
+      
+      console.log(`✅ MarketService: Successfully converted ${coinDataResult.length} stock list items to CoinData format`);
+      return coinDataResult;
     } catch (error) {
-      console.error('❌ MarketService: Failed to fetch US stocks list:', error);
+      console.error('❌ MarketService: Failed to fetch US stocks list via StockService:', error);
       return []; // 返回空数组而不是抛出错误，以避免UI崩溃
     }
   }

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import coinLogoService from '../../services/CoinLogoService';
+import stockLogoService from '../../services/StockLogoService';
 import userCoinService from '../../services/UserCoinService';
 import { useUser } from '../../contexts/UserContext';
 // 导入图表组件
@@ -60,6 +61,7 @@ interface CoinCardProps {
   onFavoritePress?: (coinSymbol: string, isAdding: boolean) => void; // 新增：自选按钮回调
   onLoginRequired?: () => void; // 新增：需要登录时的回调
   showChart?: boolean; // 新增：是否显示24小时价格图表
+  isStock?: boolean; // 新增：是否为股票数据
 }
 
 const CoinCard: React.FC<CoinCardProps> = ({
@@ -76,6 +78,7 @@ const CoinCard: React.FC<CoinCardProps> = ({
   onFavoritePress,
   onLoginRequired,
   showChart = true, // 默认显示图表，包括首页
+  isStock = false, // 默认不是股票
 }) => {
   const [imageError, setImageError] = useState(false);
   const [currentLogoUrl, setCurrentLogoUrl] = useState(data.logo || '');
@@ -100,15 +103,26 @@ const CoinCard: React.FC<CoinCardProps> = ({
           // 使用symbol或name来获取图标
           const symbol = data.symbol || data.name;
           
-          // 先快速获取同步URL用于立即显示
-          const syncUrl = coinLogoService.getLogoUrlSync(symbol);
-          setCurrentLogoUrl(syncUrl);
-          
-          // 然后异步获取更好的缓存版本
-          setIsLoadingIcon(true);
-          const asyncUrl = await coinLogoService.getLogoUrl(symbol);
-          if (asyncUrl !== syncUrl) {
-            setCurrentLogoUrl(asyncUrl);
+          if (isStock) {
+            // 如果是股票，使用StockLogoService
+            const syncUrl = stockLogoService.getLogoUrlSync(symbol);
+            setCurrentLogoUrl(syncUrl);
+            
+            setIsLoadingIcon(true);
+            const asyncUrl = await stockLogoService.getLogoUrl(symbol);
+            if (asyncUrl !== syncUrl) {
+              setCurrentLogoUrl(asyncUrl);
+            }
+          } else {
+            // 如果是加密货币，使用CoinLogoService
+            const syncUrl = coinLogoService.getLogoUrlSync(symbol);
+            setCurrentLogoUrl(syncUrl);
+            
+            setIsLoadingIcon(true);
+            const asyncUrl = await coinLogoService.getLogoUrl(symbol);
+            if (asyncUrl !== syncUrl) {
+              setCurrentLogoUrl(asyncUrl);
+            }
           }
         } catch (error) {
           console.warn('Failed to load icon:', error);
@@ -120,7 +134,7 @@ const CoinCard: React.FC<CoinCardProps> = ({
     };
 
     loadIcon();
-  }, [data.symbol, data.name, data.logo, imageError]);
+  }, [data.symbol, data.name, data.logo, imageError, isStock]);
 
   const handlePress = () => {
     if (onPress) {
@@ -214,9 +228,12 @@ const CoinCard: React.FC<CoinCardProps> = ({
     console.warn('Image load failed for:', data.name, 'URL:', currentLogoUrl);
     setImageError(true);
     
-    // 尝试使用CoinLogoService的回退机制
+    // 根据是否为股票选择合适的logo服务
     try {
-      const fallbackUrl = coinLogoService.handleIconError(data.symbol || data.name, currentLogoUrl);
+      const fallbackUrl = isStock 
+        ? stockLogoService.handleLogoError(data.symbol || data.name, currentLogoUrl)
+        : coinLogoService.handleIconError(data.symbol || data.name, currentLogoUrl);
+        
       if (fallbackUrl && fallbackUrl !== currentLogoUrl) {
         setCurrentLogoUrl(fallbackUrl);
         setImageError(false); // 重置错误状态，给回退URL一个机会

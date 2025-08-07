@@ -1863,6 +1863,10 @@ const MarketScreen = () => {
     const coinSymbol = (item.symbol || item.name).toUpperCase();
     const isUserFavorite = userFavoriteCoins.has(coinSymbol);
     
+    // 检测是否为股票数据：通过当前选择的分类或数据来源判断
+    const isStock = selectedSort === '美股' || (section === 'stocks') || 
+                   (typeof item.symbol === 'string' && item.symbol.length <= 5 && /^[A-Z]+$/.test(item.symbol));
+    
     return (
       <CoinCard
         data={item}
@@ -1873,12 +1877,16 @@ const MarketScreen = () => {
           if (fullName) {
             params.fullName = fullName;
           }
+          if (isStock) {
+            params.isStock = true; // 标记为股票详情
+          }
           navigation.navigate('CoinDetail', params);
         }}
         showRank={true}
         showFavoriteButton={true} // 总是显示自选按钮
         isFavorited={isUserFavorite} // 新增：标识是否已自选
         showChart={true} // 启用24小时价格图表
+        isStock={isStock} // 传递股票标记
         onFavoritePress={(coinSymbol, isAdding) => {
           console.log('🔥 MarketScreen: 收到CoinCard的自选点击回调', { coinSymbol, isAdding });
           handleFavoritePress(coinSymbol, isAdding);

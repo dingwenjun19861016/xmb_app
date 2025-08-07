@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, FlatList, Alert, ActivityIndi
 import { useNavigation } from '@react-navigation/native';
 import CoinCard, { CoinCardData } from '../ui/CoinCard';
 import stockService, { TransformedStockData } from '../../services/StockService';
+import stockLogoService from '../../services/StockLogoService';
 import { useRealTimePrice } from '../../contexts/RealTimePriceContext';
 
 // UI 颜色常量 - 与其他组件保持一致
@@ -76,8 +77,8 @@ const StockOverview: React.FC<StockOverviewProps> = ({
         rank: stock.rank,
         marketCap: stock.marketcap,
         volume: stock.volume,
-        // 使用股票logo，如果没有则使用默认图标或留空
-        logo: stock.logoUrl && stock.logoUrl.trim() !== '' ? stock.logoUrl : '',
+        // 使用StockLogoService生成正确的股票logo URL
+        logo: stockLogoService.getLogoUrlSync(stock.code),
         // 添加价格变动标志
         priceChangeDirection: priceChangeDirection,
         // 添加额外的股票信息
@@ -197,6 +198,7 @@ const StockOverview: React.FC<StockOverviewProps> = ({
       onPress={handleStockPress}
       showRank={showRank}
       showFavoriteButton={false} // 首页不显示自选按钮
+      isStock={true} // 标记为股票数据
     />
   );
 
