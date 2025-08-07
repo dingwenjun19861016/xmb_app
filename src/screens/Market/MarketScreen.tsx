@@ -74,6 +74,7 @@ import stockLogoService from '../../services/StockLogoService';
 import userCoinService from '../../services/UserCoinService';
 import configService from '../../services/ConfigService';
 import { useRealTimePrice } from '../../contexts/RealTimePriceContext';
+import { useUSStockRealTimePrice } from '../../contexts/USStockRealTimePriceContext';
 import { useUser } from '../../contexts/UserContext';
 import MessageModal from '../../components/common/MessageModal';
 import LoginModal from '../../components/auth/LoginModal';
@@ -480,7 +481,11 @@ const MarketScreen = () => {
   const route = useRoute();
   
   // 使用实时价格Context
-  const { realTimePrices, priceChanges, startPolling, stopPolling } = useRealTimePrice();
+  // 实时价格Hook - 加密货币
+  const { realTimePrices: coinRealTimePrices, priceChanges: coinPriceChanges, startPolling: startCoinPolling, stopPolling: stopCoinPolling } = useRealTimePrice();
+  
+  // 实时价格Hook - 美股
+  const { realTimePrices: stockRealTimePrices, priceChanges: stockPriceChanges, startPolling: startStockPolling, stopPolling: stopStockPolling } = useUSStockRealTimePrice();
   
   // 使用用户Context
   const { currentUser, logout } = useUser();
@@ -654,20 +659,30 @@ const MarketScreen = () => {
 
     // 批量转换数据 - 美股格式
     const transformedCoins = apiCoins.map(coin => {
-      // 优先使用实时价格，如果没有则使用API返回的价格
-      const currentPrice = useRealTimePrices && realTimePrices[coin.name.toLowerCase()] 
-        ? realTimePrices[coin.name.toLowerCase()]
-        : parseFloat(coin.currentPrice);
+      // 调试：检查价格转换过程（仅在开发模式下）
+      const rawPrice = coin.currentPrice;
+      const parsedPrice = parseFloat(coin.currentPrice);
+      
+      // 美股价格处理：不使用实时价格API，因为该API只支持加密货币
+      // 始终使用API返回的股票价格，避免与同名加密货币代币混淆
+      const currentPrice = parsedPrice;
+
+      // 格式化价格
+      const formattedPrice = `$${currentPrice.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 6
+      })}`;
+
+      // 获取价格变动方向 - 优先使用美股价格变动，备用加密货币价格变动
+      const stockKey = coin.name.toLowerCase();
+      const priceChangeDirection = stockPriceChanges[stockKey] || coinPriceChanges[stockKey] || null;
 
       return {
         id: `${coin.name}_${coin.rank}`, // 使用股票代码和rank的组合
         name: coin.name, // 股票代码如NVDA, AAPL
         fullName: coin.fullName, // 公司全名如NVIDIA Corporation
         symbol: coin.name, // 股票代码
-        price: `$${currentPrice.toLocaleString('en-US', {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 6
-        })}`,
+        price: formattedPrice,
         change: coin.priceChange24h,
         isPositive: !coin.priceChange24h.startsWith('-'),
         rank: coin.rank,
@@ -676,7 +691,7 @@ const MarketScreen = () => {
         // 使用股票logo服务获取的logo
         logo: logos[coin.name],
         // 添加价格变动标志
-        priceChangeDirection: priceChanges[coin.name.toLowerCase()] || null,
+        priceChangeDirection,
         // 添加24小时价格数据
         coin24h: coin.coin24h || [],
       };
@@ -869,33 +884,38 @@ const MarketScreen = () => {
       
       if (stocksData.length > 0) {
         // 将StockData转换为CoinData格式，然后再转换为CoinCardData
-        const coinDataFormat = stocksData.map(stock => ({
-          _id: stock._id,
-          coin_id: stock._id,
-          rank: stock.rank,
-          name: stock.code, // 使用股票代码
-          fullName: stock.name, // 使用公司全名
-          symbol: stock.code,
-          currentPrice: stock.currentPrice,
-          priceChange24h: stock.priceChangePercent,
-          priceChangePercent: stock.priceChangePercent,
-          marketCap: stock.baseinfo?.marketCap || stock.marketCap || '',
-          volume: stock.baseinfo?.volume || stock.volume || '',
-          fdv: stock.baseinfo?.marketCap || stock.marketCap || '',
-          totalSupply: stock.baseinfo?.sharesOutstanding || '',
-          circulatingSupply: stock.baseinfo?.sharesOutstanding || '',
-          description: `${stock.name} (${stock.code}) - ${stock.sector}`,
-          logo: stockLogoService.getLogoUrlSync(stock.code),
-          cexInfos: [],
-          valid: true,
-          created_at: stock.created_at,
-          date: stock.date || '',
-          updated_at: stock.updated_at,
-          coin24h: stock.usstock24h?.map(item => ({
-            price: parseFloat(item.price),
-            createdAt: item.createdAt
-          })) || []
-        }));
+        const coinDataFormat = stocksData.map(stock => {
+          // 确保currentPrice是正确的当前股价，不是历史数据
+          const currentStockPrice = stock.currentPrice;
+          
+          return {
+            _id: stock._id,
+            coin_id: stock._id,
+            rank: stock.rank,
+            name: stock.code, // 使用股票代码
+            fullName: stock.name, // 使用公司全名
+            symbol: stock.code,
+            currentPrice: currentStockPrice, // 明确使用股票当前价格
+            priceChange24h: stock.priceChangePercent,
+            priceChangePercent: stock.priceChangePercent,
+            marketCap: stock.baseinfo?.marketCap || stock.marketCap || '',
+            volume: stock.baseinfo?.volume || stock.volume || '',
+            fdv: stock.baseinfo?.marketCap || stock.marketCap || '',
+            totalSupply: stock.baseinfo?.sharesOutstanding || '',
+            circulatingSupply: stock.baseinfo?.sharesOutstanding || '',
+            description: `${stock.name} (${stock.code}) - ${stock.sector}`,
+            logo: stockLogoService.getLogoUrlSync(stock.code),
+            cexInfos: [],
+            valid: true,
+            created_at: stock.created_at,
+            date: stock.date || '',
+            updated_at: stock.updated_at,
+            coin24h: stock.usstock24h?.map(item => ({
+              price: parseFloat(item.price),
+              createdAt: item.createdAt
+            })) || []
+          };
+        });
         
         const transformedStocks = await transformCoinData(coinDataFormat, false); // 移除第三个参数，因为美股APP默认处理股票数据
         
@@ -1174,7 +1194,7 @@ const MarketScreen = () => {
       setActiveBatchLoaders(prev => new Set([...prev, batchIndex]));
       
       const result = await marketService.listCoins(skip, limit, sortBy, apiSortOrder);
-      const transformedCoins = await transformCoinData(result.coins, Object.keys(realTimePrices).length > 0);
+      const transformedCoins = await transformCoinData(result.coins, Object.keys(coinRealTimePrices).length > 0);
       
       // 预加载logo（根据批次调整优先级）
       const symbols = result.coins.map(coin => coin.name);
@@ -1424,35 +1444,46 @@ const MarketScreen = () => {
   // 管理实时价格轮询
   useEffect(() => {
     if (coins.length > 0 || usStocks.length > 0) {
-      startPolling();
+      // 美股APP：主要启动美股价格轮询，保留加密货币轮询作为备用
+      startStockPolling();
+      if (coins.length > 0) {
+        startCoinPolling();
+      }
     } else {
-      stopPolling();
+      stopStockPolling();
+      stopCoinPolling();
     }
 
     // 清理函数
     return () => {
-      stopPolling();
+      stopStockPolling();
+      stopCoinPolling();
     };
   }, [coins.length, usStocks.length]);
 
   // 组件卸载时清理
   useEffect(() => {
     return () => {
-      stopPolling();
+      stopStockPolling();
+      stopCoinPolling();
     };
   }, []);
 
   // 监听实时价格变化，更新币种列表的价格显示
   useEffect(() => {
-    if (Object.keys(realTimePrices).length > 0 && (coins.length > 0 || usStocks.length > 0 || favoriteCoinsData.length > 0)) {
+    // 美股APP：主要使用美股实时价格，保留加密货币实时价格作为备用
+    const hasStockPrices = Object.keys(stockRealTimePrices).length > 0;
+    const hasCoinPrices = Object.keys(coinRealTimePrices).length > 0;
+    
+    if ((hasStockPrices || hasCoinPrices) && (coins.length > 0 || usStocks.length > 0 || favoriteCoinsData.length > 0)) {
       // 使用防抖机制来减少频繁的状态更新
       const timeoutId = setTimeout(() => {
-        // 更新加密货币价格
-        if (coins.length > 0) {
+        // 更新加密货币价格（如果有）
+        if (coins.length > 0 && hasCoinPrices) {
           setCoins(prevCoins => prevCoins.map(coin => {
             const coinKey = coin.name.toLowerCase();
-            const realTimePrice = realTimePrices[coinKey];
-            const priceDirection = priceChanges[coinKey];
+            const realTimePrice = coinRealTimePrices[coinKey];
+            const priceDirection = coinPriceChanges[coinKey];
             
             if (realTimePrice) {
               return {
@@ -1473,11 +1504,11 @@ const MarketScreen = () => {
         }
 
         // 更新美股价格
-        if (usStocks.length > 0) {
+        if (usStocks.length > 0 && hasStockPrices) {
           setUsStocks(prevStocks => prevStocks.map(stock => {
             const stockKey = stock.name.toLowerCase();
-            const realTimePrice = realTimePrices[stockKey];
-            const priceDirection = priceChanges[stockKey];
+            const realTimePrice = stockRealTimePrices[stockKey];
+            const priceDirection = stockPriceChanges[stockKey];
             
             if (realTimePrice) {
               return {
@@ -1497,52 +1528,102 @@ const MarketScreen = () => {
           }));
         }
 
-        // 更新自选币种价格
+        // 更新自选币种价格（可能包含美股和加密货币）
         if (favoriteCoinsData.length > 0) {
-          setFavoriteCoinsData(prevFavorites => prevFavorites.map(coin => {
-            const coinKey = coin.name.toLowerCase();
-            const realTimePrice = realTimePrices[coinKey];
-            const priceDirection = priceChanges[coinKey];
+          setFavoriteCoinsData(prevFavorites => prevFavorites.map(item => {
+            const itemKey = item.name.toLowerCase();
             
-            if (realTimePrice) {
-              return {
-                ...coin,
-                price: `$${realTimePrice.toLocaleString('en-US', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 6
-                })}`,
-                priceChangeDirection: priceDirection || coin.priceChangeDirection
-              };
+            // 优先尝试美股实时价格
+            if (hasStockPrices) {
+              const stockRealTimePrice = stockRealTimePrices[itemKey];
+              const stockPriceDirection = stockPriceChanges[itemKey];
+              
+              if (stockRealTimePrice) {
+                return {
+                  ...item,
+                  price: `$${stockRealTimePrice.toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 6
+                  })}`,
+                  priceChangeDirection: stockPriceDirection || item.priceChangeDirection
+                };
+              }
             }
             
+            // 如果不是美股，尝试加密货币实时价格
+            if (hasCoinPrices) {
+              const coinRealTimePrice = coinRealTimePrices[itemKey];
+              const coinPriceDirection = coinPriceChanges[itemKey];
+              
+              if (coinRealTimePrice) {
+                return {
+                  ...item,
+                  price: `$${coinRealTimePrice.toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 6
+                  })}`,
+                  priceChangeDirection: coinPriceDirection || item.priceChangeDirection
+                };
+              }
+            }
+            
+            // 只更新价格变动方向
+            const priceDirection = (hasStockPrices ? stockPriceChanges[itemKey] : null) || 
+                                 (hasCoinPrices ? coinPriceChanges[itemKey] : null);
+            
             return {
-              ...coin,
-              priceChangeDirection: priceDirection || coin.priceChangeDirection
+              ...item,
+              priceChangeDirection: priceDirection || item.priceChangeDirection
             };
           }));
         }
 
         // 同时更新搜索结果的价格
         if (searchResults.length > 0) {
-          setSearchResults(prevResults => prevResults.map(coin => {
-            const coinKey = coin.name.toLowerCase();
-            const realTimePrice = realTimePrices[coinKey];
-            const priceDirection = priceChanges[coinKey];
+          setSearchResults(prevResults => prevResults.map(item => {
+            const itemKey = item.name.toLowerCase();
             
-            if (realTimePrice) {
-              return {
-                ...coin,
-                price: `$${realTimePrice.toLocaleString('en-US', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 6
-                })}`,
-                priceChangeDirection: priceDirection || coin.priceChangeDirection
-              };
+            // 优先尝试美股实时价格
+            if (hasStockPrices) {
+              const stockRealTimePrice = stockRealTimePrices[itemKey];
+              const stockPriceDirection = stockPriceChanges[itemKey];
+              
+              if (stockRealTimePrice) {
+                return {
+                  ...item,
+                  price: `$${stockRealTimePrice.toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 6
+                  })}`,
+                  priceChangeDirection: stockPriceDirection || item.priceChangeDirection
+                };
+              }
             }
             
+            // 如果不是美股，尝试加密货币实时价格
+            if (hasCoinPrices) {
+              const coinRealTimePrice = coinRealTimePrices[itemKey];
+              const coinPriceDirection = coinPriceChanges[itemKey];
+              
+              if (coinRealTimePrice) {
+                return {
+                  ...item,
+                  price: `$${coinRealTimePrice.toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 6
+                  })}`,
+                  priceChangeDirection: coinPriceDirection || item.priceChangeDirection
+                };
+              }
+            }
+            
+            // 只更新价格变动方向
+            const priceDirection = (hasStockPrices ? stockPriceChanges[itemKey] : null) || 
+                                 (hasCoinPrices ? coinPriceChanges[itemKey] : null);
+            
             return {
-              ...coin,
-              priceChangeDirection: priceDirection || coin.priceChangeDirection
+              ...item,
+              priceChangeDirection: priceDirection || item.priceChangeDirection
             };
           }));
         }
@@ -1550,7 +1631,7 @@ const MarketScreen = () => {
       
       return () => clearTimeout(timeoutId);
     }
-  }, [realTimePrices, priceChanges, searchResults.length, coins.length, usStocks.length, favoriteCoinsData.length]);
+  }, [stockRealTimePrices, stockPriceChanges, coinRealTimePrices, coinPriceChanges, searchResults.length, coins.length, usStocks.length, favoriteCoinsData.length]);
 
   // 根据搜索状态决定显示的币种列表
   const displayCoins = useMemo(() => {
@@ -1629,7 +1710,7 @@ const MarketScreen = () => {
         if (coinSymbols.length > 0) {
           console.log('🔄 MarketScreen: 获取自选币种的完整数据...');
           const favoriteData = await marketService.getFavoriteCoinsData(coinSymbols);
-          const transformedFavoriteData = await transformCoinData(favoriteData, Object.keys(realTimePrices).length > 0);
+          const transformedFavoriteData = await transformCoinData(favoriteData, Object.keys(coinRealTimePrices).length > 0);
           setFavoriteCoinsData(transformedFavoriteData);
           console.log('✅ MarketScreen: 获取自选币种数据成功:', transformedFavoriteData.length, '个币种');
           
@@ -1838,7 +1919,7 @@ const MarketScreen = () => {
           if (coinSymbols.length > 0) {
             console.log('🔄 MarketScreen: 强制刷新自选币种的完整数据...');
             const favoriteData = await marketService.getFavoriteCoinsData(coinSymbols);
-            const transformedFavoriteData = await transformCoinData(favoriteData, Object.keys(realTimePrices).length > 0);
+            const transformedFavoriteData = await transformCoinData(favoriteData, Object.keys(coinRealTimePrices).length > 0);
             setFavoriteCoinsData(transformedFavoriteData);
             console.log('✅ MarketScreen: 强制刷新自选币种数据成功:', transformedFavoriteData.length, '个币种');
             

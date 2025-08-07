@@ -3,6 +3,7 @@ import { StatusBar, Platform, View, StyleSheet, Dimensions } from 'react-native'
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { RealTimePriceProvider } from './src/contexts/RealTimePriceContext';
+import { USStockRealTimePriceProvider } from './src/contexts/USStockRealTimePriceContext';
 import { ChartTypeProvider } from './src/contexts/ChartTypeContext';
 import { UserProvider } from './src/contexts/UserContext';
 import AppNavigator from './src/navigation/AppNavigator';
@@ -81,26 +82,28 @@ const App = () => {
     <SafeAreaProvider>
       <UserProvider>
         <RealTimePriceProvider>
-          <ChartTypeProvider>
-            <View style={[styles.appContainer, isWideScreen && styles.wideScreenContainer]}>
-              <NavigationContainer 
-                linking={Platform.OS === 'web' ? linking : undefined}
-                onStateChange={(state) => {
-                  if (Platform.OS === 'web' && state) {
-                    console.log('🔄 Navigation state changed:', state);
-                  }
-                }}
-                onReady={() => {
-                  if (Platform.OS === 'web') {
-                    console.log('✅ Navigation ready for web routing');
-                  }
-                }}
-              >
-                <StatusBar barStyle="light-content" />
-                <AppNavigator />
-              </NavigationContainer>
-            </View>
-          </ChartTypeProvider>
+          <USStockRealTimePriceProvider>
+            <ChartTypeProvider>
+              <View style={[styles.appContainer, isWideScreen && styles.wideScreenContainer]}>
+                <NavigationContainer 
+                  linking={Platform.OS === 'web' ? linking : undefined}
+                  onStateChange={(state) => {
+                    if (Platform.OS === 'web' && state) {
+                      console.log('🔄 Navigation state changed:', state);
+                    }
+                  }}
+                  onReady={() => {
+                    if (Platform.OS === 'web') {
+                      console.log('✅ Navigation ready for web routing');
+                    }
+                  }}
+                >
+                  <StatusBar barStyle="light-content" />
+                  <AppNavigator />
+                </NavigationContainer>
+              </View>
+            </ChartTypeProvider>
+          </USStockRealTimePriceProvider>
         </RealTimePriceProvider>
       </UserProvider>
     </SafeAreaProvider>
