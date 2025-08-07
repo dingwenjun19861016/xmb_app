@@ -1,4 +1,4 @@
-package com.chainalert.app
+package com.xmb.app
 
 import android.os.Build
 import android.os.Bundle
