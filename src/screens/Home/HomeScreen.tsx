@@ -46,7 +46,7 @@ import UpdateAvailableModal from '../../components/common/UpdateAvailableModal';
 import { User } from '../../types/user';
 import versionService from '../../services/VersionService';
 import { useUser } from '../../contexts/UserContext';
-import { useRealTimePrice } from '../../contexts/RealTimePriceContext';
+import { useUSStockRealTimePrice } from '../../contexts/USStockRealTimePriceContext';
 
 // 分类配置
 const ARTICLE_CATEGORIES = ['全部', '快讯', '头条', '研报'];

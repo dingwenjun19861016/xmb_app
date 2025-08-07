@@ -5,7 +5,6 @@ import CoinCard, { CoinCardData } from '../ui/CoinCard';
 import marketService, { CoinData } from '../../services/MarketService';
 import coinLogoService from '../../services/CoinLogoService';
 import coinRealTimePriceService from '../../services/CoinRealTimePriceService';
-import { useRealTimePrice } from '../../contexts/RealTimePriceContext';
 
 // UI 颜色常量 - 与其他组件保持一致
 const UI_COLORS = {
@@ -50,9 +49,6 @@ const MarketOverview: React.FC<MarketOverviewProps> = ({
   const [stocksLoading, setStocksLoading] = useState(true);
   const [stocksError, setStocksError] = useState<string | null>(null);
 
-  // 使用实时价格Context
-  const { realTimePrices: contextPrices, priceChanges: contextPriceChanges, getPrice, getPriceChange, startPolling } = useRealTimePrice();
-
   // 将API数据转换为CoinCard组件需要的格式
   const transformCoinData = async (apiCoins: CoinData[], useRealTimePrices = false): Promise<CoinCardData[]> => {
     // 批量获取所有币种的logo
@@ -62,15 +58,13 @@ const MarketOverview: React.FC<MarketOverviewProps> = ({
     const logos = coinLogoService.getLogosSync(symbols);
 
     return apiCoins.map(coin => {
-      // 优先使用实时价格Context，然后是本地实时价格，最后使用API价格
-      const contextPrice = getPrice(coin.name.toLowerCase());
+      // 使用本地实时价格，如果有的话，否则使用API价格
       const localPrice = useRealTimePrices && realTimePrices[coin.name.toLowerCase()];
-      const currentPrice = contextPrice || localPrice || parseFloat(coin.currentPrice);
+      const currentPrice = localPrice || parseFloat(coin.currentPrice);
 
       // 获取价格变动方向
-      const contextPriceChange = getPriceChange(coin.name.toLowerCase());
       const localPriceChange = priceChanges[coin.name.toLowerCase()];
-      const priceChangeDirection = contextPriceChange || localPriceChange || null;
+      const priceChangeDirection = localPriceChange || null;
 
       return {
         id: coin._id,

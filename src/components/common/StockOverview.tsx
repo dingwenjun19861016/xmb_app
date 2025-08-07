@@ -4,7 +4,7 @@ import { useNavigation } from '@react-navigation/native';
 import CoinCard, { CoinCardData } from '../ui/CoinCard';
 import stockService, { TransformedStockData } from '../../services/StockService';
 import stockLogoService from '../../services/StockLogoService';
-import { useRealTimePrice } from '../../contexts/RealTimePriceContext';
+import { useUSStockRealTimePrice } from '../../contexts/USStockRealTimePriceContext';
 
 // UI 颜色常量 - 与其他组件保持一致
 const UI_COLORS = {
@@ -45,7 +45,7 @@ const StockOverview: React.FC<StockOverviewProps> = ({
   const realTimeIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // 使用实时价格Context（虽然当前可能不支持股票，但保留接口）
-  const { realTimePrices: contextPrices, priceChanges: contextPriceChanges, getPrice, getPriceChange, startPolling } = useRealTimePrice();
+  const { realTimePrices: contextPrices, priceChanges: contextPriceChanges, getPrice, getPriceChange, startPolling } = useUSStockRealTimePrice();
 
   // 将股票数据转换为CoinCard组件需要的格式
   const transformStockData = (stocksData: TransformedStockData[]): CoinCardData[] => {

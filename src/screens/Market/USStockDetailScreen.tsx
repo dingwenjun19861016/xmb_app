@@ -16,7 +16,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import stockService, { TransformedStockData } from '../../services/StockService';
 import stockLogoService from '../../services/StockLogoService';
-import { useRealTimePrice } from '../../contexts/RealTimePriceContext';
+import { useUSStockRealTimePrice } from '../../contexts/USStockRealTimePriceContext';
 import { newsService, NewsArticle } from '../../services/NewsService';
 import userCoinService from '../../services/UserCoinService';
 import { useUser } from '../../contexts/UserContext';
@@ -41,7 +41,7 @@ const USStockDetailScreen = () => {
   const route = useRoute();
   
   // 使用实时价格Context
-  const { getPrice, getPriceChange, startPolling, stopPolling } = useRealTimePrice();
+  const { getPrice, getPriceChange, startPolling, stopPolling } = useUSStockRealTimePrice();
   
   // 使用用户Context
   const { currentUser } = useUser();
