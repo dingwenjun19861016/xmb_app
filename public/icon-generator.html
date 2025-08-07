@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ChainAlert Icon Generator</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .upload-section { margin: 20px 0; padding: 20px; border: 2px dashed #ccc; border-radius: 8px; text-align: center; }
+        .upload-section.dragover { border-color: #007AFF; background-color: #f0f8ff; }
+        .canvas-container { margin: 20px 0; text-align: center; }
+        .download-section { margin: 20px 0; text-align: center; }
+        button { padding: 10px 20px; margin: 5px; background: #007AFF; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background: #0056CC; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .icon-preview { display: inline-block; margin: 10px; text-align: center; }
+        .icon-preview img { border: 1px solid #ccc; border-radius: 4px; }
+        .icon-preview div { margin-top: 5px; font-size: 12px; }
+        #originalImage { max-width: 200px; max-height: 200px; margin: 10px; }
+        .settings { margin: 20px 0; padding: 15px; background: #f9f9f9; border-radius: 8px; }
+        .settings label { display: block; margin: 10px 0; }
+        .settings input, .settings select { margin-left: 10px; }
+        .progress { margin: 20px 0; }
+        .progress-bar { width: 100%; height: 20px; background: #f0f0f0; border-radius: 10px; overflow: hidden; }
+        .progress-fill { height: 100%; background: #007AFF; transition: width 0.3s; }
+    </style>
+</head>
+<body>
+    <h1>ChainAlert PWA图标生成器</h1>
+    <p>上传您的图片，自动生成所有需要的PWA图标尺寸</p>
+    
+    <div class="upload-section" id="uploadArea">
+        <p>拖拽图片到这里，或点击选择文件</p>
+        <input type="file" id="imageInput" accept="image/*" style="display: none;">
+        <button onclick="document.getElementById('imageInput').click()">选择图片</button>
+        <div id="imagePreview" style="margin-top: 15px;"></div>
+    </div>
+    
+    <div class="settings">
+        <h3>图标设置</h3>
+        <label>
+            图标样式:
+            <select id="iconStyle">
+                <option value="contain">保持比例，居中显示</option>
+                <option value="fill">填充整个图标</option>
+                <option value="cover">覆盖整个图标</option>
+            </select>
+        </label>
+        <label>
+            边距:
+            <input type="range" id="padding" min="0" max="20" value="5">
+            <span id="paddingValue">5%</span>
+        </label>
+    </div>
+    
+    <div class="canvas-container">
+        <canvas id="iconCanvas" width="512" height="512" style="border: 1px solid #ccc; max-width: 200px; max-height: 200px;"></canvas>
+        <div>预览 (512x512)</div>
+    </div>
+    
+    <div class="download-section">
+        <button id="generateBtn" onclick="generateAllIcons()" disabled>生成所有PWA图标</button>
+        <button id="downloadBtn" onclick="downloadZip()" disabled>下载ZIP包</button>
+    </div>
+    
+    <div class="progress" id="progressSection" style="display: none;">
+        <div>正在生成图标...</div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressBar"></div>
+        </div>
+        <div id="progressText">0%</div>
+    </div>
+    
+    <div id="iconPreviews"></div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <script>
+        const canvas = document.getElementById('iconCanvas');
+        const ctx = canvas.getContext('2d');
+        const imageInput = document.getElementById('imageInput');
+        const uploadArea = document.getElementById('uploadArea');
+        const imagePreview = document.getElementById('imagePreview');
+        const generateBtn = document.getElementById('generateBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const progressSection = document.getElementById('progressSection');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+        
+        let uploadedImage = null;
+        let generatedIcons = {};
+        
+        // 图标尺寸配置
+        const iconSizes = [
+            { name: 'favicon-16x16', size: 16 },
+            { name: 'favicon-32x32', size: 32 },
+            { name: 'icon-72x72', size: 72 },
+            { name: 'icon-96x96', size: 96 },
+            { name: 'icon-128x128', size: 128 },
+            { name: 'icon-144x144', size: 144 },
+            { name: 'icon-152x152', size: 152 },
+            { name: 'icon-192x192', size: 192 },
+            { name: 'icon-384x384', size: 384 },
+            { name: 'icon-512x512', size: 512 },
+            { name: 'apple-touch-icon-57x57', size: 57 },
+            { name: 'apple-touch-icon-60x60', size: 60 },
+            { name: 'apple-touch-icon-72x72', size: 72 },
+            { name: 'apple-touch-icon-76x76', size: 76 },
+            { name: 'apple-touch-icon-114x114', size: 114 },
+            { name: 'apple-touch-icon-120x120', size: 120 },
+            { name: 'apple-touch-icon-144x144', size: 144 },
+            { name: 'apple-touch-icon-152x152', size: 152 },
+            { name: 'apple-touch-icon-180x180', size: 180 },
+            { name: 'splash-640x1136', size: 640, height: 1136 },
+            { name: 'splash-750x1334', size: 750, height: 1334 },
+            { name: 'splash-1242x2208', size: 1242, height: 2208 },
+            { name: 'splash-1125x2436', size: 1125, height: 2436 },
+            { name: 'splash-1536x2048', size: 1536, height: 2048 }
+        ];
+        
+        // 拖拽上传
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleImageUpload(files[0]);
+            }
+        });
+        
+        imageInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleImageUpload(e.target.files[0]);
+            }
+        });
+        
+        // 设置变化时更新预览
+        ['iconStyle', 'padding'].forEach(id => {
+            document.getElementById(id).addEventListener('change', updatePreview);
+        });
+        
+        document.getElementById('padding').addEventListener('input', function() {
+            document.getElementById('paddingValue').textContent = this.value + '%';
+            updatePreview();
+        });
+        
+        function handleImageUpload(file) {
+            if (!file.type.startsWith('image/')) {
+                alert('请选择图片文件！');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    uploadedImage = img;
+                    
+                    // 显示预览
+                    const preview = document.createElement('img');
+                    preview.src = e.target.result;
+                    preview.id = 'originalImage';
+                    preview.alt = '原始图片';
+                    
+                    imagePreview.innerHTML = '';
+                    imagePreview.appendChild(preview);
+                    
+                    generateBtn.disabled = false;
+                    updatePreview();
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        function updatePreview() {
+            if (!uploadedImage) return;
+            
+            drawIcon(canvas, 512, uploadedImage);
+        }
+        
+        function drawIcon(canvas, size, image) {
+            const ctx = canvas.getContext('2d');
+            canvas.width = size;
+            canvas.height = size;
+            
+            // 获取设置
+            const iconStyle = document.getElementById('iconStyle').value;
+            const padding = parseInt(document.getElementById('padding').value);
+            
+            // 清空画布（透明背景）
+            ctx.clearRect(0, 0, size, size);
+            
+            // 计算图片位置和大小
+            const paddingPx = (size * padding) / 100;
+            const availableSize = size - (paddingPx * 2);
+            
+            let drawX = paddingPx;
+            let drawY = paddingPx;
+            let drawWidth = availableSize;
+            let drawHeight = availableSize;
+            
+            if (iconStyle === 'contain') {
+                const scale = Math.min(availableSize / image.width, availableSize / image.height);
+                drawWidth = image.width * scale;
+                drawHeight = image.height * scale;
+                drawX = (size - drawWidth) / 2;
+                drawY = (size - drawHeight) / 2;
+            } else if (iconStyle === 'cover') {
+                const scale = Math.max(availableSize / image.width, availableSize / image.height);
+                drawWidth = image.width * scale;
+                drawHeight = image.height * scale;
+                drawX = (size - drawWidth) / 2;
+                drawY = (size - drawHeight) / 2;
+            }
+            
+            // 绘制图片
+            ctx.drawImage(image, drawX, drawY, drawWidth, drawHeight);
+        }
+        
+        function generateIcon(iconConfig, image) {
+            const tempCanvas = document.createElement('canvas');
+            const isSquare = !iconConfig.height;
+            const width = iconConfig.size;
+            const height = iconConfig.height || iconConfig.size;
+            
+            if (isSquare) {
+                drawIcon(tempCanvas, iconConfig.size, image);
+            } else {
+                // 启动画面 - 使用白色背景
+                tempCanvas.width = width;
+                tempCanvas.height = height;
+                const ctx = tempCanvas.getContext('2d');
+                
+                // 白色背景
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, width, height);
+                
+                // 居中绘制图标
+                const iconSize = Math.min(width, height) * 0.3;
+                const iconCanvas = document.createElement('canvas');
+                drawIcon(iconCanvas, iconSize, image);
+                
+                ctx.drawImage(iconCanvas, 
+                    (width - iconSize) / 2, 
+                    (height - iconSize) / 2 - 50
+                );
+                
+                // 添加文字
+                ctx.fillStyle = '#333333';
+                ctx.font = `${Math.min(width, height) * 0.05}px Arial`;
+                ctx.textAlign = 'center';
+                ctx.fillText('ChainAlert', width / 2, height / 2 + iconSize / 2 + 80);
+            }
+            
+            return tempCanvas.toDataURL('image/png');
+        }
+        
+        async function generateAllIcons() {
+            if (!uploadedImage) {
+                alert('请先上传图片！');
+                return;
+            }
+            
+            generateBtn.disabled = true;
+            progressSection.style.display = 'block';
+            
+            const previewDiv = document.getElementById('iconPreviews');
+            previewDiv.innerHTML = '';
+            generatedIcons = {};
+            
+            for (let i = 0; i < iconSizes.length; i++) {
+                const iconConfig = iconSizes[i];
+                const progress = ((i + 1) / iconSizes.length) * 100;
+                
+                progressBar.style.width = progress + '%';
+                progressText.textContent = Math.round(progress) + '%';
+                
+                const dataURL = generateIcon(iconConfig, uploadedImage);
+                generatedIcons[iconConfig.name] = dataURL;
+                
+                // 创建预览
+                const previewContainer = document.createElement('div');
+                previewContainer.className = 'icon-preview';
+                
+                const img = document.createElement('img');
+                img.src = dataURL;
+                img.width = 64;
+                img.height = iconConfig.height ? 64 * (iconConfig.height / iconConfig.size) : 64;
+                
+                const label = document.createElement('div');
+                label.textContent = `${iconConfig.name}.png`;
+                
+                previewContainer.appendChild(img);
+                previewContainer.appendChild(label);
+                previewDiv.appendChild(previewContainer);
+                
+                // 让UI有时间更新
+                await new Promise(resolve => setTimeout(resolve, 10));
+            }
+            
+            // 生成favicon.ico
+            generatedIcons['favicon'] = generatedIcons['favicon-32x32'];
+            
+            progressSection.style.display = 'none';
+            generateBtn.disabled = false;
+            downloadBtn.disabled = false;
+            
+            alert('所有图标已生成！');
+        }
+        
+        function downloadZip() {
+            if (Object.keys(generatedIcons).length === 0) {
+                alert('请先生成图标！');
+                return;
+            }
+            
+            const zip = new JSZip();
+            
+            Object.keys(generatedIcons).forEach(name => {
+                const dataURL = generatedIcons[name];
+                const base64Data = dataURL.split(',')[1];
+                const extension = name === 'favicon' ? '.ico' : '.png';
+                zip.file(name + extension, base64Data, {base64: true});
+            });
+            
+            zip.generateAsync({type: 'blob'}).then(function(content) {
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(content);
+                link.download = 'chainalert-pwa-icons.zip';
+                link.click();
+            });
+        }
+    </script>
+</body>
+</html>

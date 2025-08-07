@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>币链快报 - 接入点切换</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+            margin: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .current-domain {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196f3;
+        }
+        .domain-list {
+            margin: 20px 0;
+        }
+        .domain-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: white;
+        }
+        .domain-info {
+            flex: 1;
+        }
+        .domain-url {
+            font-weight: 600;
+            color: #333;
+        }
+        .domain-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 2px;
+        }
+        .status {
+            display: flex;
+            align-items: center;
+            margin: 0 15px;
+        }
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-online { background: #4caf50; }
+        .status-offline { background: #f44336; }
+        .status-checking { background: #ff9800; animation: pulse 1s infinite; }
+        .switch-btn {
+            padding: 8px 16px;
+            background: #007AFF;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .switch-btn:hover { background: #0056CC; }
+        .switch-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .actions {
+            text-align: center;
+            margin-top: 30px;
+        }
+        .action-btn {
+            margin: 5px;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .primary-btn {
+            background: #28a745;
+            color: white;
+        }
+        .primary-btn:hover { background: #1e7e34; }
+        .secondary-btn {
+            background: #6c757d;
+            color: white;
+        }
+        .secondary-btn:hover { background: #545b62; }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 币链快报 - 接入点切换</h1>
+        
+        <div class="current-domain">
+            <strong>当前接入点：</strong><span id="currentDomain">loading...</span>
+        </div>
+        
+        <div id="loading" class="loading">
+            🔍 正在检测各接入点状态...
+        </div>
+        
+        <div id="domainList" class="domain-list" style="display: none;">
+            <!-- 域名列表将在这里动态生成 -->
+        </div>
+        
+        <div class="actions">
+            <button class="action-btn primary-btn" onclick="checkAllDomains()">
+                🔄 重新检测
+            </button>
+            <button class="action-btn secondary-btn" onclick="goHome()">
+                🏠 返回首页
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const DOMAINS = [
+            { url: 'https://app.chainalert.me', label: '主接入点' },
+            { url: 'https://app.gostake.io', label: '备用接入点1' },
+            { url: 'https://app.airdrophunt.xyz', label: '备用接入点2' }
+        ];
+
+        let domainStatus = {};
+
+        // 显示当前域名
+        document.getElementById('currentDomain').textContent = location.origin;
+
+        // 检查单个域名状态
+        async function checkDomainStatus(domain) {
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                
+                const response = await fetch(`${domain}/favicon.ico`, {
+                    method: 'HEAD',
+                    signal: controller.signal,
+                    cache: 'no-cache',
+                    mode: 'no-cors'
+                });
+                
+                clearTimeout(timeoutId);
+                return true;
+            } catch (error) {
+                return false;
+            }
+        }
+
+        // 检查所有域名
+        async function checkAllDomains() {
+            const loadingEl = document.getElementById('loading');
+            const listEl = document.getElementById('domainList');
+            
+            loadingEl.style.display = 'block';
+            listEl.style.display = 'none';
+            
+            // 重置状态
+            domainStatus = {};
+            
+            // 并行检查所有域名
+            const promises = DOMAINS.map(async (domain) => {
+                const status = await checkDomainStatus(domain.url);
+                domainStatus[domain.url] = status;
+                return { ...domain, status };
+            });
+            
+            const results = await Promise.all(promises);
+            
+            // 渲染结果
+            renderDomainList(results);
+            
+            loadingEl.style.display = 'none';
+            listEl.style.display = 'block';
+        }
+
+        // 渲染域名列表
+        function renderDomainList(domains) {
+            const listEl = document.getElementById('domainList');
+            
+            listEl.innerHTML = domains.map(domain => `
+                <div class="domain-item">
+                    <div class="domain-info">
+                        <div class="domain-url">${domain.url}</div>
+                        <div class="domain-label">${domain.label}</div>
+                    </div>
+                    <div class="status">
+                        <div class="status-indicator ${domain.status ? 'status-online' : 'status-offline'}"></div>
+                        <span>${domain.status ? '在线' : '离线'}</span>
+                    </div>
+                    <button class="switch-btn" 
+                            onclick="switchToDomain('${domain.url}')"
+                            ${!domain.status || domain.url === location.origin ? 'disabled' : ''}>
+                        ${domain.url === location.origin ? '当前' : '切换'}
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        // 切换到指定域名
+        function switchToDomain(domain) {
+            if (domain === location.origin) {
+                return;
+            }
+            
+            // 保持当前路径
+            const currentPath = location.pathname + location.search + location.hash;
+            window.location.href = domain + currentPath;
+        }
+
+        // 返回首页
+        function goHome() {
+            window.location.href = '/';
+        }
+
+        // 与Service Worker通信检查域名状态
+        async function checkDomainsWithSW() {
+            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+                try {
+                    const messageChannel = new MessageChannel();
+                    
+                    navigator.serviceWorker.controller.postMessage({
+                        type: 'CHECK_DOMAINS'
+                    }, [messageChannel.port2]);
+                    
+                    const response = await new Promise((resolve, reject) => {
+                        messageChannel.port1.onmessage = (event) => {
+                            if (event.data.error) {
+                                reject(new Error(event.data.error));
+                            } else {
+                                resolve(event.data);
+                            }
+                        };
+                        
+                        // 5秒超时
+                        setTimeout(() => reject(new Error('Timeout')), 5000);
+                    });
+                    
+                    if (response.type === 'DOMAIN_STATUS' && response.domains) {
+                        return response.domains;
+                    }
+                } catch (error) {
+                    console.log('SW check failed, using direct check:', error.message);
+                }
+            }
+            
+            // 如果Service Worker不可用，直接检查
+            return null;
+        }
+
+        // 初始化
+        async function init() {
+            // 尝试使用Service Worker检查，如果失败则直接检查
+            const swResults = await checkDomainsWithSW();
+            
+            if (swResults) {
+                // 使用Service Worker结果
+                const results = DOMAINS.map(domain => {
+                    const swResult = swResults.find(r => r.domain === domain.url);
+                    return {
+                        ...domain,
+                        status: swResult ? swResult.available : false
+                    };
+                });
+                
+                renderDomainList(results);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('domainList').style.display = 'block';
+            } else {
+                // 直接检查
+                await checkAllDomains();
+            }
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
