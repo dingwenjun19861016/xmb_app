@@ -926,11 +926,47 @@ const MarketScreen = () => {
         
         const transformedStocks = await transformCoinData(coinDataFormat, false); // 移除第三个参数，因为美股APP默认处理股票数据
         
-        // 更新股票列表 - 追加方式
+        // 更新股票列表 - 追加方式并根据当前排序重新排序
         if (isNewSession && batchIndex === 0) {
           setUsStocks(transformedStocks);
         } else {
-          setUsStocks(prev => [...prev, ...transformedStocks]);
+          setUsStocks(prev => {
+            const combined = [...prev, ...transformedStocks];
+            // 根据当前选择的排序方式重新排序
+            const { sortBy: currentSortBy } = getSortParams(selectedSort, sortOrder);
+            
+            return combined.sort((a, b) => {
+              let valueA, valueB;
+              
+              switch (currentSortBy) {
+                case 'rank':
+                  valueA = parseInt(a.rank) || 999999;
+                  valueB = parseInt(b.rank) || 999999;
+                  break;
+                case 'currentPrice':
+                  // 价格字段格式为"$123.45"，需要去掉$符号
+                  valueA = parseFloat(a.price.replace('$', '')) || 0;
+                  valueB = parseFloat(b.price.replace('$', '')) || 0;
+                  break;
+                case 'priceChange24h':
+                  // 涨跌幅字段格式为"-1.23%"或"1.23%"
+                  valueA = parseFloat(a.change.replace('%', '')) || 0;
+                  valueB = parseFloat(b.change.replace('%', '')) || 0;
+                  break;
+                case 'volume':
+                  // 成交量字段可能包含中文单位，先简单按字符串排序
+                  valueA = parseFloat(a.volume.replace(/[万亿]/g, '')) || 0;
+                  valueB = parseFloat(b.volume.replace(/[万亿]/g, '')) || 0;
+                  break;
+                default:
+                  valueA = parseInt(a.rank) || 999999;
+                  valueB = parseInt(b.rank) || 999999;
+              }
+              
+              // 根据排序顺序决定升序还是降序
+              return sortOrder === 'asc' ? valueA - valueB : valueB - valueA;
+            });
+          });
         }
         
         console.log(`✅ MarketScreen: Stock batch ${batchIndex} loaded successfully, ${transformedStocks.length} stocks`);
