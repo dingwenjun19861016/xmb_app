@@ -1,6 +1,6 @@
 import apiService from './APIService';
 import { DateUtils } from '../utils/dateUtils';
-import { CRYPTO_SYMBOLS, getCoinAliases } from '../screens/Market/CoinAlias';
+import { US_STOCK_SYMBOLS, getUSStockAliases } from '../screens/Market/USStockAlias';
 import { domains, resourceURLs, getMainURL } from '../config/apiConfig';
 
 // 定义新闻文章接口
@@ -282,7 +282,7 @@ class NewsService {
   }
 
   /**
-   * 智能搜索新闻 - 利用币种别名扩展搜索
+   * 智能搜索新闻 - 利用美股别名扩展搜索
    * @param searchTerm 搜索关键词
    * @param limit 获取数量
    * @param skip 跳过数量
@@ -292,17 +292,17 @@ class NewsService {
     try {
       console.log('🧠 NewsService: 开始智能搜索:', searchTerm, `limit: ${limit}, skip: ${skip}`);
       
-      // 检查是否为识别度不高的币名（1-2个字母）
+      // 检查是否为识别度不高的股票代码（1-2个字母）
       const isLowRecognitionSymbol = searchTerm.length <= 2 && /^[A-Z]+$/i.test(searchTerm.trim());
       
       // 构建搜索词列表
       const searchTerms: string[] = [];
       
-      // 对于非低识别度币名，添加原始搜索词
+      // 对于非低识别度股票代码，添加原始搜索词
       if (!isLowRecognitionSymbol) {
         searchTerms.push(searchTerm);
       } else {
-        console.log('� NewsService: 跳过低识别度币名的原始词搜索:', searchTerm);
+        console.log('⚠️ NewsService: 跳过低识别度股票代码的原始词搜索:', searchTerm);
       }
       
       // 添加扩展搜索词
@@ -366,7 +366,7 @@ class NewsService {
   }
 
   /**
-   * 扩展搜索词 - 根据币种别名（异步版本）
+   * 扩展搜索词 - 根据美股别名（异步版本）
    * @param searchTerm 原始搜索词
    * @returns Promise<string[]> 扩展的搜索词数组
    */
@@ -375,14 +375,14 @@ class NewsService {
     const normalizedSearchTerm = searchTerm.toLowerCase().trim();
     
     try {
-      // 获取合并后的币种别名配置
-      const cryptoSymbols = await getCoinAliases();
+      // 获取合并后的美股别名配置
+      const usStockSymbols = await getUSStockAliases();
       
-      // 遍历所有币种符号及其别名
-      Object.entries(cryptoSymbols).forEach(([symbol, aliases]) => {
+      // 遍历所有美股符号及其别名
+      Object.entries(usStockSymbols).forEach(([symbol, aliases]) => {
         const symbolLower = symbol.toLowerCase();
         
-        // 检查搜索词是否匹配币种代码
+        // 检查搜索词是否匹配股票代码
         if (normalizedSearchTerm === symbolLower || normalizedSearchTerm === symbol) {
           // 添加所有别名
           aliases.forEach(alias => {
@@ -399,7 +399,7 @@ class NewsService {
         );
         
         if (matchingAlias) {
-          // 添加币种代码
+          // 添加股票代码
           if (symbolLower !== normalizedSearchTerm) {
             expandedTerms.push(symbol);
           }
@@ -412,10 +412,10 @@ class NewsService {
         }
       });
     } catch (error) {
-      console.warn('⚠️ NewsService: Failed to get coin aliases, using local fallback:', error);
+      console.warn('⚠️ NewsService: Failed to get US stock aliases, using local fallback:', error);
       
       // 回退到本地配置
-      Object.entries(CRYPTO_SYMBOLS).forEach(([symbol, aliases]) => {
+      Object.entries(US_STOCK_SYMBOLS).forEach(([symbol, aliases]) => {
         const symbolLower = symbol.toLowerCase();
         
         if (normalizedSearchTerm === symbolLower || normalizedSearchTerm === symbol) {
@@ -769,10 +769,10 @@ class NewsService {
   /**
    * 应用新闻过滤词过滤
    * @param articles 原始文章列表
-   * @param coinSymbol 币种符号，如 "BTC", "ENA"
+   * @param stockSymbol 股票符号，如 "AAPL", "TSLA"
    * @returns Promise<NewsArticle[]> 过滤后的文章列表
    */
-  private async applyNewsFilter(articles: NewsArticle[], coinSymbol: string): Promise<NewsArticle[]> {
+  private async applyNewsFilter(articles: NewsArticle[], stockSymbol: string): Promise<NewsArticle[]> {
     try {
       // 获取过滤词配置
       const filterConfig = await this.getNewsFilterConfig();
@@ -782,18 +782,18 @@ class NewsService {
         return articles;
       }
       
-      // 标准化币种符号
-      const normalizedCoinSymbol = coinSymbol.toUpperCase().trim();
+      // 标准化股票符号
+      const normalizedStockSymbol = stockSymbol.toUpperCase().trim();
       
-      // 获取该币种的过滤词列表
-      const filterWords = filterConfig[normalizedCoinSymbol] || [];
+      // 获取该股票的过滤词列表
+      const filterWords = filterConfig[normalizedStockSymbol] || [];
       
       if (filterWords.length === 0) {
-        console.log(`📝 NewsService: 币种 ${normalizedCoinSymbol} 无过滤词配置，返回原始结果`);
+        console.log(`📝 NewsService: 股票 ${normalizedStockSymbol} 无过滤词配置，返回原始结果`);
         return articles;
       }
       
-      console.log(`🚫 NewsService: 应用过滤词for ${normalizedCoinSymbol}:`, filterWords);
+      console.log(`🚫 NewsService: 应用过滤词for ${normalizedStockSymbol}:`, filterWords);
       
       // 过滤文章
       const filteredArticles = articles.filter(article => {
@@ -835,7 +835,7 @@ class NewsService {
       const { default: configService } = await import('./ConfigService');
       
       // 获取配置
-      const configStr = await configService.getConfig('MARKET_COIN_NG_NEWS', '{}');
+      const configStr = await configService.getConfig('MARKET_USSTOCK_NG_NEWS', '{}');
       
       if (!configStr || configStr === '{}') {
         return null;

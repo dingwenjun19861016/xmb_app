@@ -20,6 +20,7 @@ import { useRealTimePrice } from '../../contexts/RealTimePriceContext';
 import { newsService, NewsArticle } from '../../services/NewsService';
 import userCoinService from '../../services/UserCoinService';
 import { useUser } from '../../contexts/UserContext';
+import { generateStockSearchTerms, generateStockSearchTermsSync } from '../Market/USStockAlias';
 import { getWebAppURL } from '../../config/apiConfig';
 import { DateUtils } from '../../utils/dateUtils';
 // Import components
@@ -110,9 +111,9 @@ const USStockDetailScreen = () => {
   const [hasMoreNews, setHasMoreNews] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  // 获取相关资讯
-  const fetchRelatedNews = async (searchTerm: string, isLoadMore: boolean = false) => {
-    if (!searchTerm.trim()) {
+  // 获取相关资讯 - 使用股票代码、名称和别名关键词
+  const fetchRelatedNews = async (stockCode: string, stockName?: string, isLoadMore: boolean = false) => {
+    if (!stockCode.trim()) {
       setRelatedNews([]);
       setNewsPage(0);
       setHasMoreNews(true);
@@ -133,8 +134,17 @@ const USStockDetailScreen = () => {
       const pageSize = 20; // 每页加载20条
       const skip = currentPage * pageSize;
       
-      // 搜索美股相关新闻
-      const results = await newsService.smartSearchNews(searchTerm, pageSize, skip);
+      // 生成丰富的搜索关键词，包括：
+      // 1. 股票代码
+      // 2. 股票名称
+      // 3. USStockAlias中的别名和关键词
+      const searchTerms = await generateStockSearchTerms(stockCode, stockName);
+      console.log(`🔍 USStockDetailScreen: Generated search terms for ${stockCode}:`, searchTerms);
+      
+      // 使用主要搜索词（优先使用股票代码）进行搜索
+      const primarySearchTerm = searchTerms[0] || stockCode;
+      
+      const results = await newsService.smartSearchNews(primarySearchTerm, pageSize, skip);
       
       if (isLoadMore) {
         // 加载更多：追加到现有列表
@@ -149,6 +159,7 @@ const USStockDetailScreen = () => {
       setHasMoreNews(results.length === pageSize); // 如果返回的数量少于每页大小，说明没有更多数据
       
     } catch (error) {
+      console.error('❌ USStockDetailScreen: Failed to fetch related news:', error);
       if (!isLoadMore) {
         setNewsError('获取相关资讯失败，请稍后重试');
         setRelatedNews([]);
@@ -165,7 +176,7 @@ const USStockDetailScreen = () => {
   // 加载更多资讯
   const loadMoreNews = () => {
     if (!loadingMore && hasMoreNews && !newsLoading) {
-      fetchRelatedNews(stockCode, true);
+      fetchRelatedNews(stockCode, stockData?.fullName || stockData?.name, true);
     }
   };
 
@@ -256,7 +267,7 @@ const USStockDetailScreen = () => {
             
             // 异步加载相关资讯（不阻塞主界面）
             setTimeout(() => {
-              fetchRelatedNews(stockCode);
+              fetchRelatedNews(stockCode, basicData[0]?.fullName || basicData[0]?.name);
             }, 100);
             
           } else {
@@ -982,7 +993,7 @@ const USStockDetailScreen = () => {
               <Text style={styles.errorText}>{newsError}</Text>
               <TouchableOpacity 
                 style={styles.retryButton}
-                onPress={() => fetchRelatedNews(stockCode)}
+                onPress={() => fetchRelatedNews(stockCode, stockData?.fullName || stockData?.name)}
               >
                 <Text style={styles.retryButtonText}>重试</Text>
               </TouchableOpacity>
