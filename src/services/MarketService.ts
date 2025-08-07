@@ -127,14 +127,118 @@ class MarketService {
   }
 
   /**
-   * 搜索币种（使用getCoinInfo API）
+   * 搜索币种和美股（美股APP专用：优先搜索美股，兼容加密货币）
    * @param query 搜索关键词
    * @param limit 返回数量限制
    * @returns Promise<CoinData[]>
    */
   async searchCoins(query: string, limit: number = 20): Promise<CoinData[]> {
     try {
-      console.log('🔄 MarketService: Searching coins with getCoinInfo API...', { query, limit });
+      console.log('🔄 MarketService: Searching stocks and coins (US stock app mode)...', { query, limit });
+      
+      // 美股APP模式：优先搜索美股数据
+      const stockResults = await this.searchStocks(query, Math.min(limit, 20));
+      console.log(`🔄 MarketService: Found ${stockResults.length} stock results`);
+      
+      // 如果股票搜索结果足够，直接返回
+      if (stockResults.length >= limit) {
+        return stockResults.slice(0, limit);
+      }
+      
+      // 如果股票搜索结果不足，补充加密货币搜索结果
+      const remainingLimit = limit - stockResults.length;
+      let cryptoResults: CoinData[] = [];
+      
+      try {
+        cryptoResults = await this.searchCryptoCurrency(query, remainingLimit);
+        console.log(`🔄 MarketService: Found ${cryptoResults.length} crypto results`);
+      } catch (error) {
+        console.warn('⚠️ MarketService: Crypto search failed, using stock results only:', error);
+      }
+      
+      // 合并结果：股票优先，然后是加密货币
+      const allResults = [...stockResults, ...cryptoResults];
+      console.log(`✅ MarketService: Total search results: ${allResults.length} (${stockResults.length} stocks + ${cryptoResults.length} crypto)`);
+      
+      return allResults.slice(0, limit);
+    } catch (error) {
+      console.error(`❌ MarketService: Search failed for query "${query}":`, error);
+      // 完全失败时回退到本地搜索
+      return this.searchCoinsLocal(query, limit);
+    }
+  }
+
+  /**
+   * 搜索美股数据
+   * @param query 搜索关键词
+   * @param limit 返回数量限制
+   * @returns Promise<CoinData[]>
+   */
+  private async searchStocks(query: string, limit: number = 20): Promise<CoinData[]> {
+    try {
+      console.log('🔄 MarketService: Searching US stocks...', { query, limit });
+      
+      // 获取所有股票数据进行本地搜索
+      const stocksData = await stockService.getUSStocksList(0, 200); // 获取更多数据用于搜索
+      
+      // 过滤股票：匹配代码或公司名称
+      const filteredStocks = stocksData.filter(stock => {
+        const queryLower = query.toLowerCase();
+        const codeLower = stock.code.toLowerCase();
+        const nameLower = stock.name.toLowerCase();
+        
+        return codeLower.includes(queryLower) || 
+               nameLower.includes(queryLower) ||
+               codeLower === queryLower;
+      });
+      
+      // 转换为CoinData格式
+      const stockResults: CoinData[] = filteredStocks.slice(0, limit).map(stock => ({
+        _id: stock._id,
+        coin_id: stock._id,
+        rank: stock.rank,
+        name: stock.code,
+        fullName: stock.name,
+        symbol: stock.code,
+        currentPrice: stock.currentPrice,
+        priceChange24h: stock.priceChangePercent,
+        priceChangePercent: stock.priceChangePercent,
+        marketcap: stock.baseinfo?.marketCap || stock.marketCap || '',
+        volume: stock.baseinfo?.volume || stock.volume || '',
+        fdv: stock.baseinfo?.marketCap || stock.marketCap || '',
+        totalSupply: stock.baseinfo?.sharesOutstanding || '',
+        circulatingSupply: stock.baseinfo?.sharesOutstanding || '',
+        description: `${stock.name} (${stock.code}) - ${stock.sector}`,
+        logo: stockLogoService.getLogoUrlSync(stock.code),
+        cexInfos: [],
+        valid: true,
+        created_at: stock.created_at,
+        date: stock.date,
+        updated_at: stock.updated_at,
+        coin24h: stock.usstock24h?.map(item => ({
+          price: parseFloat(item.price),
+          createdAt: item.createdAt
+        })) || []
+      }));
+      
+      console.log(`✅ MarketService: Found ${stockResults.length} matching stocks`);
+      return stockResults;
+      
+    } catch (error) {
+      console.error('❌ MarketService: Stock search failed:', error);
+      return [];
+    }
+  }
+
+  /**
+   * 搜索加密货币（原始逻辑保留作为备用）
+   * @param query 搜索关键词
+   * @param limit 返回数量限制
+   * @returns Promise<CoinData[]>
+   */
+  private async searchCryptoCurrency(query: string, limit: number = 20): Promise<CoinData[]> {
+    try {
+      console.log('🔄 MarketService: Searching crypto with getCoinInfo API...', { query, limit });
       
       // 调用getCoinInfo API - 精确搜索单个币种
       const result = await apiService.call<CoinData[] | { result: CoinData[] }>(
@@ -159,22 +263,14 @@ class MarketService {
         coinData = result.result;
         console.log('🔄 MarketService: Using result property format');
       } else {
-        console.warn('⚠️ Invalid getCoinInfo response format, fallback to local search');
-        console.log('🔄 MarketService: Response structure:', {
-          hasResult: !!result,
-          hasResultProperty: result && 'result' in result,
-          resultType: result && result.result ? typeof result.result : 'undefined',
-          isArray: Array.isArray(result)
-        });
-        // 如果API返回格式不正确，回退到本地搜索
+        console.warn('⚠️ Invalid getCoinInfo response format, fallback to local crypto search');
         return this.searchCoinsLocal(query, limit);
       }
 
       console.log('🔄 MarketService: getCoinInfo returning:', coinData.length, 'coins');
-      // getCoinInfo返回的是单个币种的精确匹配，直接返回结果
-      return coinData;
+      return coinData.slice(0, limit);
     } catch (error) {
-      console.error(`❌ Failed to search coins with getCoinInfo API for query "${query}":`, error);
+      console.error(`❌ Failed to search crypto with getCoinInfo API for query "${query}":`, error);
       // API失败时回退到本地搜索
       return this.searchCoinsLocal(query, limit);
     }
