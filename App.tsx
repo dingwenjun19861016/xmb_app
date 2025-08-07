@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { StatusBar, Platform, View, StyleSheet, Dimensions } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { RealTimePriceProvider } from './src/contexts/RealTimePriceContext';
 import { USStockRealTimePriceProvider } from './src/contexts/USStockRealTimePriceContext';
 import { ChartTypeProvider } from './src/contexts/ChartTypeContext';
 import { UserProvider } from './src/contexts/UserContext';
@@ -81,9 +80,8 @@ const App = () => {
   return (
     <SafeAreaProvider>
       <UserProvider>
-        <RealTimePriceProvider>
-          <USStockRealTimePriceProvider>
-            <ChartTypeProvider>
+        <USStockRealTimePriceProvider>
+          <ChartTypeProvider>
               <View style={[styles.appContainer, isWideScreen && styles.wideScreenContainer]}>
                 <NavigationContainer 
                   linking={Platform.OS === 'web' ? linking : undefined}
@@ -103,8 +101,7 @@ const App = () => {
                 </NavigationContainer>
               </View>
             </ChartTypeProvider>
-          </USStockRealTimePriceProvider>
-        </RealTimePriceProvider>
+        </USStockRealTimePriceProvider>
       </UserProvider>
     </SafeAreaProvider>
   );
