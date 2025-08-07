@@ -106,9 +106,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.chainalert.app'
+    namespace 'com.xmb.app'
     defaultConfig {
-        applicationId 'com.chainalert.app'
+        applicationId 'com.xmb.app'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode getVersionCode()
@@ -122,10 +122,10 @@ android {
             keyPassword 'android'
         }
         release {
-            storeFile file('chainalert-release-new.keystore')
-            storePassword 'chainalert'
-            keyAlias 'chainalert'
-            keyPassword 'chainalert'
+            storeFile file('xmb-release.keystore')
+            storePassword 'xmbstock'
+            keyAlias 'xmb'
+            keyPassword 'xmbstock'
         }
     }
     buildTypes {

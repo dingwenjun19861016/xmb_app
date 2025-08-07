@@ -74,7 +74,7 @@ if [ -z "$ANDROID_HOME" ]; then
 fi
 
 # 检查keystore文件
-KEYSTORE_FILE="android/app/chainalert-release-new.keystore"
+KEYSTORE_FILE="android/app/xmb-release.keystore"
 if [ ! -f "$KEYSTORE_FILE" ]; then
     print_error "Keystore文件不存在: $KEYSTORE_FILE"
     exit 1
