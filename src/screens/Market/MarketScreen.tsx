@@ -73,7 +73,6 @@ import coinLogoService from '../../services/CoinLogoService';
 import stockLogoService from '../../services/StockLogoService';
 import userCoinService from '../../services/UserCoinService';
 import configService from '../../services/ConfigService';
-import { useRealTimePrice } from '../../contexts/RealTimePriceContext';
 import { useUSStockRealTimePrice } from '../../contexts/USStockRealTimePriceContext';
 import { useUser } from '../../contexts/UserContext';
 import MessageModal from '../../components/common/MessageModal';
@@ -481,9 +480,6 @@ const MarketScreen = () => {
   const route = useRoute();
   
   // 使用实时价格Context
-  // 实时价格Hook - 加密货币
-  const { realTimePrices: coinRealTimePrices, priceChanges: coinPriceChanges, startPolling: startCoinPolling, stopPolling: stopCoinPolling } = useRealTimePrice();
-  
   // 实时价格Hook - 美股
   const { realTimePrices: stockRealTimePrices, priceChanges: stockPriceChanges, startPolling: startStockPolling, stopPolling: stopStockPolling } = useUSStockRealTimePrice();
   
@@ -496,7 +492,6 @@ const MarketScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [coins, setCoins] = useState<CoinCardData[]>([]);
   const [hasMore, setHasMore] = useState(true);
   const [currentPage, setCurrentPage] = useState(0);
   const [error, setError] = useState<string | null>(null);
@@ -673,9 +668,9 @@ const MarketScreen = () => {
         maximumFractionDigits: 6
       })}`;
 
-      // 获取价格变动方向 - 优先使用美股价格变动，备用加密货币价格变动
+      // 获取价格变动方向 - 使用美股价格变动
       const stockKey = coin.name.toLowerCase();
-      const priceChangeDirection = stockPriceChanges[stockKey] || coinPriceChanges[stockKey] || null;
+      const priceChangeDirection = stockPriceChanges[stockKey] || null;
 
       return {
         id: `${coin.name}_${coin.rank}`, // 使用股票代码和rank的组合
@@ -1233,66 +1228,34 @@ const MarketScreen = () => {
 
   // 管理实时价格轮询
   useEffect(() => {
-    if (coins.length > 0 || usStocks.length > 0) {
-      // 美股APP：主要启动美股价格轮询，保留加密货币轮询作为备用
+    if (usStocks.length > 0) {
+      // 美股APP：启动美股价格轮询
       startStockPolling();
-      if (coins.length > 0) {
-        startCoinPolling();
-      }
     } else {
       stopStockPolling();
-      stopCoinPolling();
     }
 
     // 清理函数
     return () => {
       stopStockPolling();
-      stopCoinPolling();
     };
-  }, [coins.length, usStocks.length]);
+  }, [usStocks.length]);
 
   // 组件卸载时清理
   useEffect(() => {
     return () => {
       stopStockPolling();
-      stopCoinPolling();
     };
   }, []);
 
   // 监听实时价格变化，更新币种列表的价格显示
   useEffect(() => {
-    // 美股APP：主要使用美股实时价格，保留加密货币实时价格作为备用
+    // 美股APP：使用美股实时价格
     const hasStockPrices = Object.keys(stockRealTimePrices).length > 0;
-    const hasCoinPrices = Object.keys(coinRealTimePrices).length > 0;
     
-    if ((hasStockPrices || hasCoinPrices) && (coins.length > 0 || usStocks.length > 0 || favoriteCoinsData.length > 0)) {
+    if (hasStockPrices && (usStocks.length > 0 || favoriteCoinsData.length > 0)) {
       // 使用防抖机制来减少频繁的状态更新
       const timeoutId = setTimeout(() => {
-        // 更新加密货币价格（如果有）
-        if (coins.length > 0 && hasCoinPrices) {
-          setCoins(prevCoins => prevCoins.map(coin => {
-            const coinKey = coin.name.toLowerCase();
-            const realTimePrice = coinRealTimePrices[coinKey];
-            const priceDirection = coinPriceChanges[coinKey];
-            
-            if (realTimePrice) {
-              return {
-                ...coin,
-                price: `$${realTimePrice.toLocaleString('en-US', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 6
-                })}`,
-                priceChangeDirection: priceDirection || coin.priceChangeDirection
-              };
-            }
-            
-            return {
-              ...coin,
-              priceChangeDirection: priceDirection || coin.priceChangeDirection
-            };
-          }));
-        }
-
         // 更新美股价格
         if (usStocks.length > 0 && hasStockPrices) {
           setUsStocks(prevStocks => prevStocks.map(stock => {
@@ -1318,52 +1281,30 @@ const MarketScreen = () => {
           }));
         }
 
-        // 更新自选币种价格（可能包含美股和加密货币）
+        // 更新自选币种价格（美股）
         if (favoriteCoinsData.length > 0) {
           setFavoriteCoinsData(prevFavorites => prevFavorites.map(item => {
             const itemKey = item.name.toLowerCase();
             
-            // 优先尝试美股实时价格
-            if (hasStockPrices) {
-              const stockRealTimePrice = stockRealTimePrices[itemKey];
-              const stockPriceDirection = stockPriceChanges[itemKey];
-              
-              if (stockRealTimePrice) {
-                return {
-                  ...item,
-                  price: `$${stockRealTimePrice.toLocaleString('en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 6
-                  })}`,
-                  priceChangeDirection: stockPriceDirection || item.priceChangeDirection
-                };
-              }
-            }
+            // 使用美股实时价格
+            const stockRealTimePrice = stockRealTimePrices[itemKey];
+            const stockPriceDirection = stockPriceChanges[itemKey];
             
-            // 如果不是美股，尝试加密货币实时价格
-            if (hasCoinPrices) {
-              const coinRealTimePrice = coinRealTimePrices[itemKey];
-              const coinPriceDirection = coinPriceChanges[itemKey];
-              
-              if (coinRealTimePrice) {
-                return {
-                  ...item,
-                  price: `$${coinRealTimePrice.toLocaleString('en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 6
-                  })}`,
-                  priceChangeDirection: coinPriceDirection || item.priceChangeDirection
-                };
-              }
+            if (stockRealTimePrice) {
+              return {
+                ...item,
+                price: `$${stockRealTimePrice.toLocaleString('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 6
+                })}`,
+                priceChangeDirection: stockPriceDirection || item.priceChangeDirection
+              };
             }
             
             // 只更新价格变动方向
-            const priceDirection = (hasStockPrices ? stockPriceChanges[itemKey] : null) || 
-                                 (hasCoinPrices ? coinPriceChanges[itemKey] : null);
-            
             return {
               ...item,
-              priceChangeDirection: priceDirection || item.priceChangeDirection
+              priceChangeDirection: stockPriceDirection || item.priceChangeDirection
             };
           }));
         }
@@ -1373,47 +1314,25 @@ const MarketScreen = () => {
           setSearchResults(prevResults => prevResults.map(item => {
             const itemKey = item.name.toLowerCase();
             
-            // 优先尝试美股实时价格
-            if (hasStockPrices) {
-              const stockRealTimePrice = stockRealTimePrices[itemKey];
-              const stockPriceDirection = stockPriceChanges[itemKey];
-              
-              if (stockRealTimePrice) {
-                return {
-                  ...item,
-                  price: `$${stockRealTimePrice.toLocaleString('en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 6
-                  })}`,
-                  priceChangeDirection: stockPriceDirection || item.priceChangeDirection
-                };
-              }
-            }
+            // 使用美股实时价格
+            const stockRealTimePrice = stockRealTimePrices[itemKey];
+            const stockPriceDirection = stockPriceChanges[itemKey];
             
-            // 如果不是美股，尝试加密货币实时价格
-            if (hasCoinPrices) {
-              const coinRealTimePrice = coinRealTimePrices[itemKey];
-              const coinPriceDirection = coinPriceChanges[itemKey];
-              
-              if (coinRealTimePrice) {
-                return {
-                  ...item,
-                  price: `$${coinRealTimePrice.toLocaleString('en-US', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 6
-                  })}`,
-                  priceChangeDirection: coinPriceDirection || item.priceChangeDirection
-                };
-              }
+            if (stockRealTimePrice) {
+              return {
+                ...item,
+                price: `$${stockRealTimePrice.toLocaleString('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 6
+                })}`,
+                priceChangeDirection: stockPriceDirection || item.priceChangeDirection
+              };
             }
             
             // 只更新价格变动方向
-            const priceDirection = (hasStockPrices ? stockPriceChanges[itemKey] : null) || 
-                                 (hasCoinPrices ? coinPriceChanges[itemKey] : null);
-            
             return {
               ...item,
-              priceChangeDirection: priceDirection || item.priceChangeDirection
+              priceChangeDirection: stockPriceDirection || item.priceChangeDirection
             };
           }));
         }
@@ -1421,7 +1340,7 @@ const MarketScreen = () => {
       
       return () => clearTimeout(timeoutId);
     }
-  }, [stockRealTimePrices, stockPriceChanges, coinRealTimePrices, coinPriceChanges, searchResults.length, coins.length, usStocks.length, favoriteCoinsData.length]);
+  }, [stockRealTimePrices, stockPriceChanges, searchResults.length, usStocks.length, favoriteCoinsData.length]);
 
   // 根据搜索状态决定显示的币种列表
   const displayCoins = useMemo(() => {
@@ -1503,7 +1422,7 @@ const MarketScreen = () => {
         if (coinSymbols.length > 0) {
           console.log('🔄 MarketScreen: 获取自选币种的完整数据...');
           const favoriteData = await marketService.getFavoriteCoinsData(coinSymbols);
-          const transformedFavoriteData = await transformCoinData(favoriteData, Object.keys(coinRealTimePrices).length > 0);
+          const transformedFavoriteData = await transformCoinData(favoriteData, false);
           setFavoriteCoinsData(transformedFavoriteData);
           console.log('✅ MarketScreen: 获取自选币种数据成功:', transformedFavoriteData.length, '个币种');
           
@@ -1712,7 +1631,7 @@ const MarketScreen = () => {
           if (coinSymbols.length > 0) {
             console.log('🔄 MarketScreen: 强制刷新自选币种的完整数据...');
             const favoriteData = await marketService.getFavoriteCoinsData(coinSymbols);
-            const transformedFavoriteData = await transformCoinData(favoriteData, Object.keys(coinRealTimePrices).length > 0);
+            const transformedFavoriteData = await transformCoinData(favoriteData, false);
             setFavoriteCoinsData(transformedFavoriteData);
             console.log('✅ MarketScreen: 强制刷新自选币种数据成功:', transformedFavoriteData.length, '个币种');
             
