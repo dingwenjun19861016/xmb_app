@@ -70,7 +70,7 @@ const AboutUsScreen: React.FC = () => {
               <View style={styles.logo}>
                 <Ionicons name="analytics" size={48} color="#007AFF" />
               </View>
-              <Text style={styles.appName}>币链快报</Text>
+              <Text style={styles.appName}>小目标</Text>
               <Text style={styles.appVersion}>ChainAlert</Text>
             </View>
           </View>
@@ -78,7 +78,7 @@ const AboutUsScreen: React.FC = () => {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>产品介绍</Text>
             <Text style={styles.paragraph}>
-              币链快报是一款专业的加密货币数据分析应用，为用户提供实时的市场数据、深度分析和行业资讯。
+              小目标是一款专业的加密货币数据分析应用，为用户提供实时的市场数据、深度分析和行业资讯。
             </Text>
             <Text style={styles.paragraph}>
               我们致力于为加密货币投资者和爱好者提供准确、及时的市场信息，帮助用户更好地了解市场动态。

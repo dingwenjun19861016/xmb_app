@@ -53,12 +53,12 @@ const ARTICLE_CATEGORIES = ['全部', '快讯', '头条', '研报'];
 const CATEGORY_MAP = {
   '头条': 'headline',
   '研报': 'market',
-  '快讯': 'news',
+  '快讯': 'stockquicknews',
 };
 const API_TO_UI_CATEGORY = {
   'headline': '头条',
   'market': '研报',
-  'news': '快讯',
+  'stockquicknews': '快讯',
   'defi': 'DeFi',
   'eth': '以太坊',
   'btc': '比特币',
@@ -82,25 +82,25 @@ const DATA_WIDGET_COMPONENTS = {
 const FALLBACK_ARTICLES = [
   {
     id: '1',
-    title: 'ETF持续录得资金流入，分析师看多比特币上涨',
-    summary: '多家现货ETF报告显示资金流入持续走强，市场分析师看好比特币突破新高',
-    content: '自从SEC批准比特币现货ETF以来，资金持续流入市场...',
+    title: '美股ETF持续录得资金流入，分析师看多科技股上涨',
+    summary: '多家美股ETF报告显示资金流入持续走强，市场分析师看好科技股突破新高',
+    content: '自从美联储政策调整以来，资金持续流入美股市场...',
     date: '1小时前',
-    author: '张金融',
+    author: '小目标',
     image: 'https://via.placeholder.com/800x400',
     category: '市场动态',
-    tags: ['比特币', 'ETF', '投资']
+    tags: ['美股', 'ETF', '投资']
   },
   {
     id: '2',
-    title: 'Solana生态DeFi项目融资2000万美元，由a16z领投',
-    summary: '这个新兴DeFi协议专注于高性能去中心化期权交易，获得了a16z、Paradigm等机构的投资',
-    content: 'Solana生态系统中的新兴DeFi项目Opyn Protocol今日宣布完成2000万美元A轮融资...',
+    title: '苹果公司发布最新财报，营收超市场预期',
+    summary: '苹果公司Q4财报显示营收强劲增长，iPhone销量再创新高',
+    content: '苹果公司今日发布最新季度财报，显示营收超出市场预期...',
     date: '3小时前',
-    author: '李区块',
+    author: '小目标',
     image: 'https://via.placeholder.com/800x400',
-    category: '项目融资',
-    tags: ['Solana', 'DeFi', '融资', 'a16z']
+    category: '公司财报',
+    tags: ['苹果', '财报', '科技股']
   },
 ];
 
@@ -544,7 +544,7 @@ const HomeScreen = () => {
       let articlesData;
       const skip = page * PAGE_SIZE;
       
-      if (apiCategory === 'news') {
+      if (apiCategory === 'stockquicknews') {
         console.log('🔄 HomeScreen: 使用 getLatestNews 获取快讯, skip:', skip, 'limit:', PAGE_SIZE);
         articlesData = await newsService.getLatestNews(skip, PAGE_SIZE);
       } else if (apiCategory === 'headline') {

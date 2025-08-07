@@ -193,7 +193,7 @@ self.addEventListener('fetch', (event) => {
             <head>
               <meta charset="UTF-8">
               <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <title>币链快报 - 连接问题</title>
+              <title>小目标 - 连接问题</title>
               <style>
                 body { 
                   font-family: -apple-system, BlinkMacSystemFont, sans-serif;
@@ -253,7 +253,7 @@ self.addEventListener('fetch', (event) => {
             </head>
             <body>
               <div class="container">
-                <h1>📱 币链快报</h1>
+                <h1>📱 小目标</h1>
                 <p>当前接入点连接失败，请尝试以下备用接入点：</p>
                 
                 <div class="backup-links">

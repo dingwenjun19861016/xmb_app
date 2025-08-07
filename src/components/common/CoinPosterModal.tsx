@@ -93,7 +93,7 @@ const CoinPosterModal: React.FC<CoinPosterModalProps> = ({
       await Share.share({
         message: `查看 ${safeCoinSymbol} (${safeCoinName}) 的最新价格和动态：${shareUrl}`,
         url: shareUrl,
-        title: `${safeCoinSymbol} - 币链快报`,
+        title: `${safeCoinSymbol} - 小目标`,
       });
       onClose();
     } catch (error) {

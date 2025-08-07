@@ -23,7 +23,7 @@ const { width: screenWidth } = Dimensions.get('window');
 const API_TO_UI_CATEGORY: { [key: string]: string } = {
   'headline': '头条',
   'market': '研报',
-  'news': '快讯',
+  'stockquicknews': '快讯',
   'defi': 'DeFi',
   'eth': '以太坊',
   'btc': '比特币',
@@ -40,7 +40,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
   };
 
   // 检查是否是快讯类型
-  const isNews = article.category === 'news' || 
+  const isNews = article.category === 'stockquicknews' || 
                  API_TO_UI_CATEGORY[article.category] === '快讯';
   
   // 判断是否应该显示图片

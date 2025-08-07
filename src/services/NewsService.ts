@@ -55,7 +55,7 @@ interface APIParams {
 
 // 分类映射
 const CATEGORY_MAP: { [key: string]: string } = {
-  'news': '快讯',
+  'stockquicknews': '快讯',
   'headline': '头条',
   'market': '研报',
   'eth': '以太坊',
@@ -68,7 +68,7 @@ const CATEGORY_MAP: { [key: string]: string } = {
 
 // 反向分类映射：从显示名称到API参数
 const REVERSE_CATEGORY_MAP: { [key: string]: string } = {
-  '快讯': 'news',
+  '快讯': 'stockquicknews',
   '头条': 'headline', 
   '研报': 'market',
   '以太坊': 'eth',
@@ -89,7 +89,7 @@ interface CacheItem {
 // 新闻服务类
 class NewsService {
   private readonly DEFAULT_CATEGORIES = "headline,market,eth,ethl2,ethlrt,btclrt,btcl2,defi";
-  private readonly NEWS_CATEGORY = "news";
+  private readonly NEWS_CATEGORY = "stockquicknews";
   private readonly DEBUG = false; // 控制调试输出
   
   // 缓存配置
@@ -180,7 +180,7 @@ class NewsService {
       summary,
       content: fullContent,
       date: formattedDate,
-      author: '币链快报',
+      author: '小目标',
       image: imageUrl,
       category: category,
       tags: [rawData.type || '', rawData.menu || '', rawData.nav || ''].filter(Boolean),
@@ -615,10 +615,10 @@ class NewsService {
   }
 
   private getFullImageUrl(imageUrl?: string): string {
-    if (!imageUrl) return 'https://via.placeholder.com/800x400?text=币链快报+News';
+    if (!imageUrl) return 'https://via.placeholder.com/800x400?text=小目标+News';
     if (imageUrl.startsWith('http')) return imageUrl;
     if (imageUrl.startsWith('/')) return getMainURL(imageUrl.slice(1));
-    return 'https://via.placeholder.com/800x400?text=币链快报+News';
+    return 'https://via.placeholder.com/800x400?text=小目标+News';
   }
 
   private getCategoryName(menu: string): string {

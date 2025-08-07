@@ -208,7 +208,7 @@ const WebPosterModal: React.FC<WebPosterModalProps> = ({
               // 计算logo和文字的位置（同一行）
               const logoSize = 48;
               ctx.font = 'bold 36px "PingFang SC", "Microsoft YaHei", Arial, sans-serif';
-              const textWidth = ctx.measureText('币链快报').width;
+              const textWidth = ctx.measureText('小目标').width;
               const totalWidth = logoSize + 15 + textWidth; // logo + 间距 + 文字宽度
               const startX = (canvasWidth - totalWidth) / 2;
               const centerY = 60; // 垂直居中位置 (120/2)
@@ -236,7 +236,7 @@ const WebPosterModal: React.FC<WebPosterModalProps> = ({
               ctx.font = 'bold 36px "PingFang SC", "Microsoft YaHei", Arial, sans-serif';
               ctx.textAlign = 'left';
               ctx.textBaseline = 'middle';
-              ctx.fillText('币链快报', logoX + logoSize + 15, centerY);
+              ctx.fillText('小目标', logoX + logoSize + 15, centerY);
               
               resolve(true);
             } catch (error) {
@@ -280,7 +280,7 @@ const WebPosterModal: React.FC<WebPosterModalProps> = ({
           ctx.font = 'bold 36px "PingFang SC", "Microsoft YaHei", Arial, sans-serif';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText('币链快报', canvasWidth / 2, 60);
+          ctx.fillText('小目标', canvasWidth / 2, 60);
         }
         
         // 绘制其他内容
@@ -402,7 +402,7 @@ const WebPosterModal: React.FC<WebPosterModalProps> = ({
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `币链快报-${Date.now()}.png`;
+            link.download = `小目标-${Date.now()}.png`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -626,7 +626,7 @@ const WebPosterModal: React.FC<WebPosterModalProps> = ({
                     source={{ uri: resourceURLs.logo }} 
                     style={styles.logoImage}
                   />
-                  <Text style={styles.brandName}>币链快报</Text>
+                  <Text style={styles.brandName}>小目标</Text>
                 </View>
 
                 {/* Content */}

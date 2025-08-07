@@ -17,7 +17,7 @@
 确保在数据库config集合中添加：
 ```javascript
 {
-  group: 'app_config',
+  group: 'xmb_config',
   key: 'GOOGLE_CLIENT_ID', 
   value: '您的Google客户端ID'
 }

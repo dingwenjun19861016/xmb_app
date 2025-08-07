@@ -1,0 +1,819 @@
+[{
+  "group": "xmb_config",
+  "key": "AIRDROP_DETAIL_LOADING_TEXT",
+  "__v": 0,
+  "valid": true,
+  "value": "正在加载空投信息..."
+},
+{
+  "group": "xmb_config",
+  "key": "AIRDROP_DETAIL_TITLE",
+  "__v": 0,
+  "valid": true,
+  "value": "空投活动详情"
+},
+{
+  "group": "xmb_config",
+  "key": "AIRDROP_EMPTY_TEXT",
+  "__v": 0,
+  "valid": true,
+  "value": "暂无空投活动，敬请期待"
+},
+{
+  "group": "xmb_config",
+  "key": "AIRDROP_ENABLE_PARTICIPATE_BUTTON",
+  "__v": 0,
+  "valid": true,
+  "value": "false"
+},
+{
+  "group": "xmb_config",
+  "key": "AIRDROP_ENABLE_SEARCH",
+  "__v": 0,
+  "valid": true,
+  "value": "true"
+},
+{
+  "group": "xmb_config",
+  "key": "AIRDROP_ENABLE_SHARE",
+  "__v": 0,
+  "valid": true,
+  "value": "true"
+},
+{
+  "group": "xmb_config",
+  "key": "AIRDROP_ERROR_TEXT",
+  "__v": 0,
+  "valid": true,
+  "value": "网络异常，请检查网络连接"
+},
+{
+  "group": "xmb_config",
+  "key": "AIRDROP_LINK_UNAVAILABLE_BUTTON",
+  "__v": 0,
+  "valid": true,
+  "value": "我知道了"
+},
+{
+  "group": "xmb_config",
+  "key": "AIRDROP_LINK_UNAVAILABLE_MESSAGE",
+  "__v": 0,
+  "valid": true,
+  "value": "该空投链接暂时不可用，请稍后重试"
+},
+{
+  "group": "xmb_config",
+  "key": "AIRDROP_LINK_UNAVAILABLE_TITLE",
+  "__v": 0,
+  "valid": true,
+  "value": "暂不可用"
+},
+{
+  "group": "xmb_config",
+  "key": "AIRDROP_LOADING_TEXT",
+  "__v": 0,
+  "valid": true,
+  "value": "正在获取空投信息..."
+},
+{
+  "group": "xmb_config",
+  "key": "AIRDROP_LOAD_MORE_TEXT",
+  "__v": 0,
+  "valid": true,
+  "value": "加载更多空投..."
+},
+{
+  "group": "xmb_config",
+  "key": "AIRDROP_NETWORK_ERROR_TEXT",
+  "__v": 0,
+  "valid": true,
+  "value": "网络异常，请检查网络连接"
+},
+{
+  "group": "xmb_config",
+  "key": "AIRDROP_NOT_FOUND_TEXT",
+  "__v": 0,
+  "valid": true,
+  "value": "抱歉，该空投活动不存在或已结束"
+},
+{
+  "group": "xmb_config",
+  "key": "AIRDROP_NO_SEARCH_RESULT_TEXT",
+  "__v": 0,
+  "valid": true,
+  "value": "没有找到匹配的空投项目"
+},
+{
+  "group": "xmb_config",
+  "key": "AIRDROP_PAGE_SIZE",
+  "__v": 0,
+  "valid": true,
+  "value": "15"
+},
+{
+  "group": "xmb_config",
+  "key": "AIRDROP_PARTICIPATE_BUTTON_TEXT",
+  "__v": 0,
+  "valid": true,
+  "value": "立即参与"
+},
+{
+  "group": "xmb_config",
+  "key": "AIRDROP_PUBLISH_DATE_LABEL",
+  "__v": 0,
+  "valid": true,
+  "value": "活动时间"
+},
+{
+  "group": "xmb_config",
+  "key": "AIRDROP_RELATED_SIZE",
+  "__v": 0,
+  "valid": true,
+  "value": "10"
+},
+{
+  "group": "xmb_config",
+  "key": "AIRDROP_RETRY_BUTTON_TEXT",
+  "__v": 0,
+  "valid": true,
+  "value": "重新加载"
+},
+{
+  "group": "xmb_config",
+  "key": "AIRDROP_SCREEN_TITLE",
+  "__v": 0,
+  "valid": true,
+  "value": "精选空投"
+},
+{
+  "group": "xmb_config",
+  "key": "AIRDROP_SEARCH_PLACEHOLDER",
+  "__v": 0,
+  "valid": true,
+  "value": "搜索项目名称..."
+},
+{
+  "group": "xmb_config",
+  "key": "APP_ANDROID_UPDATE_ENABLE",
+  "__v": 0,
+  "valid": true,
+  "value": "true"
+},
+{
+  "group": "xmb_config",
+  "key": "APP_ANDROID_UPDATE_URL",
+  "__v": 0,
+  "valid": true,
+  "value": "https://chainalert.me/app/chainalert.apk"
+},
+{
+  "group": "xmb_config",
+  "key": "APP_ANDROID_UPDATE_VER",
+  "__v": 0,
+  "valid": true,
+  "value": "1.0.8"
+},
+{
+  "group": "xmb_config",
+  "key": "APP_APDATE_ENABLE",
+  "__v": 0,
+  "valid": true,
+  "value": "false"
+},
+{
+  "group": "xmb_config",
+  "key": "APP_IOS_UPDATE_ENABLE",
+  "__v": 0,
+  "valid": true,
+  "value": "true"
+},
+{
+  "group": "xmb_config",
+  "key": "APP_IOS_UPDATE_URL",
+  "__v": 0,
+  "valid": true,
+  "value": "https://chainalert.me/app/chainalert.apk"
+},
+{
+  "group": "xmb_config",
+  "key": "APP_IOS_UPDATE_VER",
+  "__v": 0,
+  "valid": true,
+  "value": "1.014"
+},
+{
+  "group": "xmb_config",
+  "key": "APP_UPDATE_ENABLE",
+  "__v": 0,
+  "valid": true,
+  "value": "false"
+},
+{
+  "group": "xmb_config",
+  "key": "APP_UPDATE_URL",
+  "__v": 0,
+  "valid": true,
+  "value": "https://chainalert.me/app/chainalert.apk"
+},
+{
+  "group": "xmb_config",
+  "key": "ARTICLE_DETAIL_TITLE",
+  "__v": 0,
+  "valid": true,
+  "value": "加密货币消息"
+},
+{
+  "group": "xmb_config",
+  "key": "ARTICLE_EXCHANGE_AD",
+  "__v": 0,
+  "valid": true,
+  "value": "交易所手续费折扣链接，全网最低："
+},
+{
+  "group": "xmb_config",
+  "key": "ARTICLE_EXCHANGE_URL",
+  "__v": 0,
+  "valid": true,
+  "value": "{ \"币安\": \"https://bly.one/bn\", \"OKX\": \"https://bly.one/okx\", \"BitGet\": \"https://bly.one/bitget\", \"GateIO\": \"https://bly.one/gateio\", \"MEXC\": \"https://bly.one/mexc\", \"Bybit\": \"https://bly.one/bybit\" }\t"
+},
+{
+  "group": "xmb_config",
+  "key": "ARTICLE_LOADING_TEXT",
+  "__v": 0,
+  "valid": true,
+  "value": "加载文章中..."
+},
+{
+  "group": "xmb_config",
+  "key": "ARTICLE_NOT_FOUND_TEXT",
+  "__v": 0,
+  "valid": true,
+  "value": "文章未找到，可能已被删除或不存在"
+},
+{
+  "group": "xmb_config",
+  "key": "ARTICLE_RELATED_SIZE",
+  "__v": 0,
+  "valid": true,
+  "value": "10"
+},
+{
+  "group": "xmb_config",
+  "key": "ARTICLE_SHARE_DOMAIN",
+  "__v": 0,
+  "valid": true,
+  "value": "https://chainalert.me"
+},
+{
+  "group": "xmb_config",
+  "key": "ARTICLE_SHOW_EXCHANGE_AD",
+  "__v": 0,
+  "valid": true,
+  "value": "true"
+},
+{
+  "group": "xmb_config",
+  "key": "COIN_LOGO_BASE_URL",
+  "__v": 0,
+  "valid": true,
+  "value": "https://chainalert.me/images/coin/"
+},
+{
+  "group": "xmb_config",
+  "key": "COIN_LOGO_FALLBACK_URL",
+  "__v": 0,
+  "valid": true,
+  "value": "null"
+},
+{
+  "group": "xmb_config",
+  "key": "COMMUNITY_SITE",
+  "__v": 0,
+  "valid": true,
+  "value": "https://chainalert.me/"
+},
+{
+  "group": "xmb_config",
+  "key": "COMMUNITY_TG",
+  "__v": 0,
+  "valid": true,
+  "value": "https://bly.one/tg"
+},
+{
+  "group": "xmb_config",
+  "key": "COMMUNITY_X",
+  "__v": 0,
+  "valid": true,
+  "value": "https://x.com/dwj_eric"
+},
+{
+  "group": "xmb_config",
+  "key": "COMMUNITY_YTB",
+  "__v": 0,
+  "valid": true,
+  "value": "https://www.youtube.com/@chainalertme"
+},
+{
+  "group": "xmb_config",
+  "key": "DATA_CARDS_CONFIG",
+  "__v": 0,
+  "valid": true,
+  "value": "MarketCap,GreedyIndex,AltcoinIndex,ETFData,BTCDIndex,ETHDIndex,Stablecoin,DXY,USBond10YR,USDJPY"
+},
+{
+  "group": "xmb_config",
+  "key": "DATA_MORE_BUTTON_TEXT",
+  "__v": 0,
+  "valid": true,
+  "value": "查看更多数据"
+},
+{
+  "group": "xmb_config",
+  "key": "DATA_MORE_URL",
+  "__v": 0,
+  "valid": true,
+  "value": "https://chainalert.me/data/"
+},
+{
+  "group": "xmb_config",
+  "key": "DATA_SCREEN_TITLE",
+  "__v": 0,
+  "valid": true,
+  "value": "币链数据"
+},
+{
+  "group": "xmb_config",
+  "key": "DATA_SECTION_TITLE",
+  "__v": 0,
+  "valid": true,
+  "value": "加密货币数据"
+},
+{
+  "group": "xmb_config",
+  "key": "DATA_TITLE_ALTCOIN_INDEX",
+  "__v": 0,
+  "valid": true,
+  "value": "山寨币指数"
+},
+{
+  "group": "xmb_config",
+  "key": "DATA_TITLE_BTCD_INDEX",
+  "__v": 0,
+  "valid": true,
+  "value": "BTC.D"
+},
+{
+  "group": "xmb_config",
+  "key": "DATA_TITLE_DXY",
+  "__v": 0,
+  "valid": true,
+  "value": "美元指数"
+},
+{
+  "group": "xmb_config",
+  "key": "DATA_TITLE_ETF_DATA",
+  "__v": 0,
+  "valid": true,
+  "value": "ETF流入/流出"
+},
+{
+  "group": "xmb_config",
+  "key": "DATA_TITLE_ETHD_INDEX",
+  "__v": 0,
+  "valid": true,
+  "value": "ETH.D"
+},
+{
+  "group": "xmb_config",
+  "key": "DATA_TITLE_GREEDY_INDEX",
+  "__v": 0,
+  "valid": true,
+  "value": "贪婪恐惧指数"
+},
+{
+  "group": "xmb_config",
+  "key": "DATA_TITLE_MARKET_CAP",
+  "__v": 0,
+  "valid": true,
+  "value": "总市值"
+},
+{
+  "group": "xmb_config",
+  "key": "DATA_TITLE_STABLECOIN",
+  "__v": 0,
+  "valid": true,
+  "value": "稳定币总市值"
+},
+{
+  "group": "xmb_config",
+  "key": "DATA_TITLE_USDJPY",
+  "__v": 0,
+  "valid": true,
+  "value": "美元日元汇率"
+},
+{
+  "group": "xmb_config",
+  "key": "DATA_TITLE_US_BOND_10YR",
+  "__v": 0,
+  "valid": true,
+  "value": "10年期美债收益率"
+},
+{
+  "group": "xmb_config",
+  "key": "DEFAULT_BASE_URL",
+  "__v": 0,
+  "valid": true,
+  "value": "https://chainalert.me/images/coin/"
+},
+{
+  "group": "xmb_config",
+  "key": "EXCHANGE_AD",
+  "__v": 0,
+  "valid": true,
+  "value": "交易所手续费折扣链接，最低6折"
+},
+{
+  "group": "xmb_config",
+  "key": "EXCHANGE_URL",
+  "__v": 0,
+  "valid": true,
+  "value": "{ \"币安\": \"https://bly.one/bn\", \"OKX\": \"https://bly.one/okx\", \"BitGet\": \"https://bly.one/bitget\", \"GateIO\": \"https://bly.one/gateio\", \"MEXC\": \"https://bly.one/mexc\", \"Bybit\": \"https://bly.one/bybit\" }\t"
+},
+{
+  "group": "xmb_config",
+  "key": "GOOGLE_CLIENT_ID",
+  "__v": 0,
+  "valid": true,
+  "value": "mock-google-client-id"
+},
+{
+  "group": "xmb_config",
+  "key": "HOME_DATA_CARDS_CONFIG",
+  "__v": 0,
+  "valid": true,
+  "value": "MarketCap,BTCDIndex,GreedyIndex, ETFData"
+},
+{
+  "group": "xmb_config",
+  "key": "HOME_FEATURED_AIRDROPS_COUNT",
+  "__v": 0,
+  "valid": true,
+  "value": "2"
+},
+{
+  "group": "xmb_config",
+  "key": "HOME_FEATURED_AIRDROPS_TITLE",
+  "__v": 0,
+  "valid": true,
+  "value": "精选空投"
+},
+{
+  "group": "xmb_config",
+  "key": "HOME_FEATURED_NEWS_COUNT",
+  "__v": 0,
+  "valid": true,
+  "value": "3"
+},
+{
+  "group": "xmb_config",
+  "key": "HOME_FEATURED_NEWS_TITLE",
+  "__v": 0,
+  "valid": true,
+  "value": "精选新闻"
+},
+{
+  "group": "xmb_config",
+  "key": "HOME_LATEST_NEWS_COUNT",
+  "__v": 0,
+  "valid": true,
+  "value": "5"
+},
+{
+  "group": "xmb_config",
+  "key": "HOME_LATEST_NEWS_TITLE",
+  "__v": 0,
+  "valid": true,
+  "value": "今日要闻"
+},
+{
+  "group": "xmb_config",
+  "key": "HOME_MARKET_DISPLAY",
+  "__v": 0,
+  "valid": true,
+  "value": "SPYX,PAXG"
+},
+{
+  "group": "xmb_config",
+  "key": "HOME_MARKET_INDICATORS_TITLE",
+  "__v": 0,
+  "valid": true,
+  "value": "市场数据"
+},
+{
+  "group": "xmb_config",
+  "key": "HOME_MARKET_OVERVIEW_COUNT",
+  "__v": 0,
+  "valid": true,
+  "value": "2"
+},
+{
+  "group": "xmb_config",
+  "key": "HOME_MARKET_OVERVIEW_TITLE",
+  "__v": 0,
+  "valid": true,
+  "value": "行情概览"
+},
+{
+  "group": "xmb_config",
+  "key": "HOME_MODAL_AD_DURATION",
+  "__v": 0,
+  "valid": true,
+  "value": "15"
+},
+{
+  "group": "xmb_config",
+  "key": "HOME_MODAL_AD_ENABLE",
+  "__v": 0,
+  "valid": true,
+  "value": "false"
+},
+{
+  "group": "xmb_config",
+  "key": "HOME_MODAL_AD_IMG",
+  "__v": 0,
+  "valid": true,
+  "value": "https://chainalert.me/images/ad/bn.png"
+},
+{
+  "group": "xmb_config",
+  "key": "HOME_MODAL_AD_TEXT",
+  "__v": 0,
+  "valid": true,
+  "value": "欢迎注册币安"
+},
+{
+  "group": "xmb_config",
+  "key": "HOME_MODAL_AD_URL",
+  "__v": 0,
+  "valid": true,
+  "value": "https://bly.one/bn"
+},
+{
+  "group": "xmb_config",
+  "key": "HOME_SEARCH_PLACEHOLDER",
+  "__v": 0,
+  "valid": true,
+  "value": "搜索资讯..."
+},
+{
+  "group": "xmb_config",
+  "key": "HOME_TITLE",
+  "__v": 0,
+  "valid": true,
+  "value": "小目标"
+},
+{
+  "group": "xmb_config",
+  "key": "HOME_VIEW_MORE_TEXT",
+  "__v": 0,
+  "valid": true,
+  "value": "查看全部"
+},
+{
+  "group": "xmb_config",
+  "key": "MARKET_ALL_COINS_TITLE",
+  "__v": 0,
+  "valid": true,
+  "value": "全部币种"
+},
+{
+  "group": "xmb_config",
+  "key": "MARKET_COIN_ALIAS",
+  "__v": 0,
+  "valid": true,
+  "value": "{\n\"BTC\": [\"bitcoin\", \"btc\", \"比特币\"],\n\"CRCLX\": [\"circle\", \"usdc\"]\n}"
+},
+{
+  "group": "xmb_config",
+  "key": "MARKET_COIN_NG_NEWS",
+  "__v": 0,
+  "valid": true,
+  "value": "{ \n\"AMERICA\": [\"america\", \"american\"], \n\"POL\": [\"polymarket\",\"polychain\",\"polyhedra\",\"polkadot\",\"polkadot\",\"sepolia\"], \n\n\"ENA\": [\"openai\"], \"CRCL\": [\"circle\",\"crcl\"] ,\"COIN\":[\"coin\"],\"FET\":[\"feth\"],\"FIL\":[\"defillama\"],\"LINK\":[\"sharplink\",\"uxlink\",\"neuralink\",\"stonelink\",\"hoopslink\",\"slinky\"],\"DOG\":[\"doge\",\"dogs\",\"babydoge\",\"sundog\",\"dog\"]}"
+},
+{
+  "group": "xmb_config",
+  "key": "MARKET_FAVORITES_DEFAULT_EXPANDED",
+  "__v": 0,
+  "valid": true,
+  "value": "false"
+},
+{
+  "group": "xmb_config",
+  "key": "MARKET_FAVORITES_DEFAULT_SORT",
+  "__v": 0,
+  "valid": true,
+  "value": "desc"
+},
+{
+  "group": "xmb_config",
+  "key": "MARKET_FAVORITES_TITLE",
+  "__v": 0,
+  "valid": true,
+  "value": "我的自选"
+},
+{
+  "group": "xmb_config",
+  "key": "MARKET_HEADER_TITLE",
+  "__v": 0,
+  "valid": true,
+  "value": "行情排行"
+},
+{
+  "group": "xmb_config",
+  "key": "MARKET_HOME_DISPLAY",
+  "__v": 0,
+  "valid": true,
+  "value": "COINX,SPYX,TSLAX"
+},
+{
+  "group": "xmb_config",
+  "key": "MARKET_LIST",
+  "__v": 0,
+  "valid": true,
+  "value": "COINX,SPYX,TSLAX,NVDAX,METAX,GOOGLX,AAPLX,MCDX,CRCLX,HOODX,QQQX,MSTRX,DFDVX"
+},
+{
+  "group": "xmb_config",
+  "key": "MARKET_LIST_1",
+  "__v": 0,
+  "valid": true,
+  "value": "ETH,SOL,BNB,TRX,AVAX,DOT,DOT,APT,SUI,ADA,NEAR,BCH,LTC,S,CFX"
+},
+{
+  "group": "xmb_config",
+  "key": "MARKET_LIST_10",
+  "__v": 0,
+  "valid": true,
+  "value": "AXS,YGG,SAND,GALA"
+},
+{
+  "group": "xmb_config",
+  "key": "MARKET_LIST_11",
+  "__v": 0,
+  "valid": true,
+  "value": "FET,WLD,TAO,INJ,VIRTUAL,GRT,THETA,TURBO,KAITO,LPT,VANA,SAHARA,AIXBT,IO,AWE,ACT"
+},
+{
+  "group": "xmb_config",
+  "key": "MARKET_LIST_12",
+  "__v": 0,
+  "valid": true,
+  "value": "ONDO,CFG,LINK,ENA,USUAL,SKY,SOLV,POWER,BKN,TNGBL"
+},
+{
+  "group": "xmb_config",
+  "key": "MARKET_LIST_2",
+  "__v": 0,
+  "valid": true,
+  "value": "OP,ARB,IMX,POL,STRK,SCR,BLAST,MODE"
+},
+{
+  "group": "xmb_config",
+  "key": "MARKET_LIST_3",
+  "__v": 0,
+  "valid": true,
+  "value": "DOGE,SHIB,PEPE,BONK,WIF,PENGU,FLOKI,MOG,DOG,PNUT"
+},
+{
+  "group": "xmb_config",
+  "key": "MARKET_LIST_4",
+  "__v": 0,
+  "valid": true,
+  "value": "UNI,AAVE,CRV,LINK,ENA,PYTH,SKY,JUP,PENDLE"
+},
+{
+  "group": "xmb_config",
+  "key": "MARKET_LIST_5",
+  "__v": 0,
+  "valid": true,
+  "value": "BNB,OKB,BGB,GT,CRO"
+},
+{
+  "group": "xmb_config",
+  "key": "MARKET_LIST_6",
+  "__v": 0,
+  "valid": true,
+  "value": "LDO,ETHFI,EIGEN,SSV,RENZO,BR,JTO,SWELL,REZ,PUFFER,STO"
+},
+{
+  "group": "xmb_config",
+  "key": "MARKET_LIST_7",
+  "__v": 0,
+  "valid": true,
+  "value": "FIL,AR,STORJ,SC,XCH,BZZ"
+},
+{
+  "group": "xmb_config",
+  "key": "MARKET_LIST_8",
+  "__v": 0,
+  "valid": true,
+  "value": "ATOM,INJ,AXL,TIA,OSMO,SEI,BABY,OM,LUNA,FET,KAVA,LUNC"
+},
+{
+  "group": "xmb_config",
+  "key": "MARKET_LIST_9",
+  "__v": 0,
+  "valid": true,
+  "value": "APE,FLOW"
+},
+{
+  "group": "xmb_config",
+  "key": "MARKET_LIST_HEADERS",
+  "__v": 0,
+  "valid": true,
+  "value": "#,名称,价格/24h"
+},
+{
+  "group": "xmb_config",
+  "key": "MARKET_LIST_HEADERS_ENABLE",
+  "__v": 0,
+  "valid": true,
+  "value": "false"
+},
+{
+  "group": "xmb_config",
+  "key": "MARKET_LIST_LABEL",
+  "__v": 0,
+  "valid": true,
+  "value": "市值,美股,涨跌幅,24h成交量, 价格,公链,L2,MEME,DEFI,AI,RWA,平台币,质押,存储,Cosmos,链游,NFT"
+},
+{
+  "group": "xmb_config",
+  "key": "MARKET_PAGE_SIZE",
+  "__v": 0,
+  "valid": true,
+  "value": "100"
+},
+{
+  "group": "xmb_config",
+  "key": "MARKET_SEARCH_PLACEHOLDER",
+  "__v": 0,
+  "valid": true,
+  "value": "搜索加密货币..."
+},
+{
+  "group": "xmb_config",
+  "key": "MARKET_TITLE",
+  "__v": 0,
+  "valid": true,
+  "value": "行情"
+},
+{
+  "group": "xmb_config",
+  "key": "REALTIME_PRICE_CACHE_DURATION",
+  "__v": 0,
+  "valid": true,
+  "value": "5000"
+},
+{
+  "group": "xmb_config",
+  "key": "REALTIME_PRICE_ENABLE_CACHE",
+  "__v": 0,
+  "valid": true,
+  "value": "true"
+},
+{
+  "group": "xmb_config",
+  "key": "REALTIME_PRICE_MAX_CACHE_SIZE",
+  "__v": 0,
+  "valid": true,
+  "value": "8000"
+},
+{
+  "group": "xmb_config",
+  "key": "US_STOCK_HOME_DISPLAY",
+  "__v": 0,
+  "valid": true,
+  "value": "COINX,SPYX,TSLAX"
+},
+{
+  "group": "xmb_config",
+  "key": "US_STOCK_LIST",
+  "__v": 0,
+  "valid": true,
+  "value": "COINX,SPYX,TSLAX,NVDAX,METAX,GOOGLX,AAPLX,MCDX,CRCLX,HOODX,QQQX,MSTRX,DFDVX"
+},
+{
+  "group": "xmb_config",
+  "key": "exchange_ad",
+  "__v": 0,
+  "valid": true,
+  "value": "交易所手续费折扣链接"
+},
+{
+  "group": "xmb_config",
+  "key": "exchange_url",
+  "__v": 0,
+  "valid": true,
+  "value": "{\n  \"币安\": \"https://bly.one/bn\",\n  \"OKX\": \"https://bly.one/okx\",\n  \"BitGet\": \"https://bly.one/bitget\",\n  \"GateIO\": \"https://bly.one/gateio\",\n  \"MEXC\": \"https://bly.one/mexc\",\n  \"Bybit\": \"https://bly.one/bybit\"\n}"
+}]

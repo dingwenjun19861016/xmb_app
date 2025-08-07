@@ -186,11 +186,11 @@ const PosterModal: React.FC<PosterModalProps> = ({
                           resizeMode="contain"
                           onError={() => setLogoError(true)}
                         />
-                        {!logoError && <Text style={styles.brandNameWithLogo}>币链快报</Text>}
+                        {!logoError && <Text style={styles.brandNameWithLogo}>小目标</Text>}
                       </View>
                     ) : null}
                     {logoError || !fallbackLogoUrl ? (
-                      <Text style={styles.brandName}>币链快报</Text>
+                      <Text style={styles.brandName}>小目标</Text>
                     ) : null}
                     <Text style={styles.brandTagline}>专业的区块链资讯平台</Text>
                   </View>
@@ -216,7 +216,7 @@ const PosterModal: React.FC<PosterModalProps> = ({
                       <Text style={styles.timestampText}>
                         {new Date().toLocaleDateString('zh-CN')}
                       </Text>
-                      <Text style={styles.sourceText}>来源：币链快报</Text>
+                      <Text style={styles.sourceText}>来源：小目标</Text>
                     </View>
                     
                     <View style={styles.qrContainer}>

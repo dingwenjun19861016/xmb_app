@@ -1,6 +1,6 @@
 {
-  "name": "币链快报",
-  "short_name": "币链快报",
+  "name": "小目标",
+  "short_name": "小目标",
   "description": "实时加密货币市场数据和提醒",
   "start_url": "/",
   "display": "standalone",

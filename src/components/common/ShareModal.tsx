@@ -136,7 +136,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
                       <Ionicons name="trending-up" size={32} color="#007AFF" />
                     </View>
                   </View>
-                  <Text style={styles.appName}>币链快报</Text>
+                  <Text style={styles.appName}>小目标</Text>
                 </View>
 
                 {/* 内容描述 */}

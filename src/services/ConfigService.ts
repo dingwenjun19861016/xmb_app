@@ -139,7 +139,7 @@ class ConfigService {
   private async fetchConfigs(): Promise<ConfigItem[]> {
     try {
       console.log('🔄 ConfigService: Fetching app configs...');
-      const response = await apiService.call('listConfig', ['app_config']);
+      const response = await apiService.call('listConfig', ['xmb_config']);
       
       if (Array.isArray(response)) {
         console.log(`✅ ConfigService: Loaded ${response.length} configs`);

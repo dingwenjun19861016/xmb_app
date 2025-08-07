@@ -55,7 +55,7 @@ export const TermsOfServiceModal: React.FC<TermsOfServiceModalProps> = ({
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>重要声明</Text>
             <Text style={styles.sectionText}>
-              欢迎使用币链快报（ChainAlert）应用程序。在使用本应用前，请仔细阅读并理解以下服务条款。
+              欢迎使用小目标（ChainAlert）应用程序。在使用本应用前，请仔细阅读并理解以下服务条款。
             </Text>
           </View>
 

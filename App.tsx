@@ -56,7 +56,7 @@ const App = () => {
       
       addMetaTag('apple-mobile-web-app-capable', 'yes');
       addMetaTag('apple-mobile-web-app-status-bar-style', 'default');
-      addMetaTag('apple-mobile-web-app-title', '币链快报');
+      addMetaTag('apple-mobile-web-app-title', '小目标');
       addMetaTag('theme-color', '#007AFF');
       
       // 添加 manifest 链接
@@ -68,7 +68,7 @@ const App = () => {
       }
       
       // 设置标题
-      document.title = '币链快报 - 加密货币市场数据';
+      document.title = '小目标 - 加密货币市场数据';
       
       // 设置body背景色，让边框效果更明显
       document.body.style.backgroundColor = '#F8F9FA';
