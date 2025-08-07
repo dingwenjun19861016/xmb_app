@@ -883,8 +883,11 @@ const MarketScreen = () => {
       
       console.log(`🔄 MarketScreen: Loading stock batch ${batchIndex}, skip: ${skip}, limit: ${limit}`);
       
-      // 直接调用StockService获取分页数据
-      const stocksData = await stockService.getUSStocksList(skip, limit, "rank", "asc");
+      // 获取排序参数
+      const { sortBy, sortOrder: apiSortOrder } = getSortParams(selectedSort, sortOrder);
+      
+      // 直接调用StockService获取分页数据，使用正确的排序参数
+      const stocksData = await stockService.getUSStocksList(skip, limit, sortBy, apiSortOrder);
       
       if (stocksData.length > 0) {
         // 将StockData转换为CoinData格式，然后再转换为CoinCardData
@@ -950,15 +953,23 @@ const MarketScreen = () => {
     setIsProgressiveLoading(true);
     setProgressiveLoadCompleted(false);
     
+    // 如果是新的加载会话，重置hasMore状态
+    if (startBatch === 0) {
+      setHasMore(true);
+    }
+    
     const maxBatches = startBatch + totalInitialBatches;
     
     try {
-      // 第一步：立即加载第一批数据（0-20条股票）
+      // 第一步：立即加载第一批数据（0-10条股票）
       if (startBatch === 0) {
-        await loadStockBatchData(0, true);
+        const firstResult = await loadStockBatchData(0, true);
+        if (!firstResult.success) {
+          throw new Error('Failed to load first batch');
+        }
       }
       
-      // 第二步：并行加载剩余批次（20-40, 40-60, 60-80, 80-100）
+      // 第二步：并行加载剩余批次
       const batchPromises: Promise<any>[] = [];
       const startIndex = startBatch === 0 ? 1 : startBatch;
       
@@ -971,17 +982,30 @@ const MarketScreen = () => {
       // 等待所有批次完成
       const results = await Promise.all(batchPromises);
       
-      // 检查是否还有更多数据
-      const lastResult = results[results.length - 1] as any;
-      const totalLoaded = maxBatches * progressiveBatchSize;
-      setHasMore(lastResult?.hasMore && totalLoaded < (lastResult?.total || 0));
+      // 检查是否还有更多数据 - 修复逻辑
+      const successfulResults = results.filter((result: any) => result.success);
+      const lastResult = successfulResults[successfulResults.length - 1] as any;
       
+      // 如果最后一批数据量少于期望的limit，说明没有更多数据了
+      const expectedLimit = progressiveBatchSize;
+      const actualLastBatchSize = lastResult ? (lastResult.total - (maxBatches - 1) * progressiveBatchSize) : 0;
+      const hasMoreData = lastResult?.hasMore && actualLastBatchSize >= expectedLimit;
+      
+      setHasMore(hasMoreData);
       setProgressiveLoadCompleted(true);
-      console.log(`✅ MarketScreen: Stock progressive loading completed, ${totalLoaded} stocks loaded`);
+      
+      console.log(`✅ MarketScreen: Stock progressive loading completed`, {
+        totalBatches: results.length,
+        successfulBatches: successfulResults.length,
+        hasMore: hasMoreData,
+        lastBatchSize: actualLastBatchSize,
+        expectedLimit
+      });
       
     } catch (error) {
       console.error('❌ Stock progressive loading failed:', error);
       setUsStocksError(error instanceof Error ? error.message : 'Failed to load stock data');
+      setHasMore(false); // 出错时设置为没有更多数据
     } finally {
       setIsProgressiveLoading(false);
     }
@@ -1074,66 +1098,6 @@ const MarketScreen = () => {
     }
   };
 
-  // 渐进式加载主函数
-  const startProgressiveLoading = async (sortBy: string, apiSortOrder: string, startBatch: number = 0, isNewSession: boolean = false) => {
-    setIsProgressiveLoading(true);
-    setProgressiveLoadCompleted(false);
-    
-    const maxBatches = startBatch + totalInitialBatches;
-    
-    try {
-      // 第一步：立即加载第一批数据（0-10条）
-      if (startBatch === 0) {
-        console.log('🚀 MarketScreen: Starting progressive loading - loading first batch immediately');
-        const firstBatchResult = await loadBatchData(0, sortBy, apiSortOrder, true);
-        
-        if (!firstBatchResult.success) {
-          throw new Error('Failed to load first batch');
-        }
-        
-        // 立即显示第一批数据，用户可以开始浏览
-        setLoading(false);
-      }
-      
-      // 第二步：并行加载剩余批次（10-20, 20-30, ..., 90-100）
-      const batchPromises: Promise<any>[] = [];
-      const startIndex = startBatch === 0 ? 1 : startBatch; // 如果是新会话，从第二批开始
-      
-      for (let batchIndex = startIndex; batchIndex < maxBatches; batchIndex++) {
-        // 添加小延迟，避免同时发起太多请求
-        const delay = (batchIndex - startIndex) * 50; // 每批延迟50ms
-        
-        const batchPromise = new Promise(resolve => {
-          setTimeout(async () => {
-            const result = await loadBatchData(batchIndex, sortBy, apiSortOrder, false);
-            resolve(result);
-          }, delay);
-        });
-        
-        batchPromises.push(batchPromise);
-      }
-      
-      console.log(`📦 MarketScreen: Starting parallel loading of ${batchPromises.length} batches`);
-      
-      // 等待所有批次完成
-      const results = await Promise.all(batchPromises);
-      
-      // 检查是否还有更多数据
-      const lastResult = results[results.length - 1] as any;
-      const totalLoaded = maxBatches * progressiveBatchSize;
-      setHasMore(lastResult?.hasMore && totalLoaded < (lastResult?.total || 0));
-      
-      setProgressiveLoadCompleted(true);
-      console.log(`✅ MarketScreen: Progressive loading completed, ${totalLoaded} coins loaded`);
-      
-    } catch (error) {
-      console.error('❌ Progressive loading failed:', error);
-      setError(error instanceof Error ? error.message : 'Failed to load market data');
-    } finally {
-      setIsProgressiveLoading(false);
-    }
-  };
-
   // 下拉刷新
   const onRefresh = React.useCallback(() => {
     // 下拉刷新时，同时强制刷新logo缓存
@@ -1145,27 +1109,51 @@ const MarketScreen = () => {
   // 添加显示页面状态，用于控制渐进显示已加载的数据
   const [displayedItemCount, setDisplayedItemCount] = useState(20); // 初始显示20条
 
-  // 加载更多
+  // 加载更多 - 恢复正常的分页加载逻辑
   const loadMore = React.useCallback(() => {
-    // 美股APP：虽然数据已经全部加载，但为了更好的用户体验，我们采用渐进显示
-    if (searchText.trim()) {
-      // 如果在搜索状态，不分页
-      console.log('📊 MarketScreen: In search mode, no pagination');
+    console.log('📊 MarketScreen: loadMore called', { 
+      loadingMore, 
+      hasMore, 
+      searchText: searchText.trim(),
+      currentPage,
+      usStocksLength: usStocks.length,
+      displayedItemCount 
+    });
+    
+    // 如果正在加载或没有更多数据或在搜索状态，则不执行加载
+    if (loadingMore || !hasMore || searchText.trim()) {
+      console.log('📊 MarketScreen: loadMore skipped', { 
+        loadingMore, 
+        hasMore, 
+        isSearching: !!searchText.trim() 
+      });
       return;
     }
     
-    const totalAvailableData = usStocks.length;
-    
-    if (displayedItemCount >= totalAvailableData) {
-      console.log('📊 MarketScreen: All data already displayed', { displayed: displayedItemCount, total: totalAvailableData });
+    // 如果还有未显示的数据，先显示已加载的数据
+    if (displayedItemCount < usStocks.length) {
+      const nextCount = Math.min(displayedItemCount + 20, usStocks.length);
+      console.log('📊 MarketScreen: Showing more loaded data', { from: displayedItemCount, to: nextCount });
+      setDisplayedItemCount(nextCount);
       return;
     }
     
-    // 每次显示多20条数据
-    const nextCount = Math.min(displayedItemCount + 20, totalAvailableData);
-    console.log('📊 MarketScreen: Loading more items', { from: displayedItemCount, to: nextCount, total: totalAvailableData });
-    setDisplayedItemCount(nextCount);
-  }, [usStocks.length, displayedItemCount, searchText]);
+    // 如果所有已加载数据都显示了，继续加载更多数据
+    console.log('📊 MarketScreen: Loading next page of data');
+    setLoadingMore(true);
+    setCurrentPage(prev => prev + 1);
+    
+    // 继续渐进式加载更多股票数据
+    startStockProgressiveLoading(Math.floor(usStocks.length / progressiveBatchSize))
+      .catch(error => {
+        console.error('❌ MarketScreen: Failed to load more stocks:', error);
+        setUsStocksError('加载更多数据失败');
+      })
+      .finally(() => {
+        setLoadingMore(false);
+      });
+      
+  }, [loadingMore, hasMore, searchText, currentPage, usStocks.length, displayedItemCount]);
 
   // 组件挂载时先加载配置
   useEffect(() => {
