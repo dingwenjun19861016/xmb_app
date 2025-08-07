@@ -14,7 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 // Import custom components
 import TodayHeader from '../../components/common/TodayHeader';
-import MarketOverview from '../../components/common/MarketOverview';
+import StockOverview from '../../components/common/StockOverview';
 import FeaturedAirdrops from '../../components/common/FeaturedAirdrops';
 import LatestNews from '../../components/common/LatestNews';
 import NewsCard from '../../components/common/NewsCard';
@@ -192,7 +192,7 @@ const HomeScreen = () => {
   // UI文本配置状态
   const [homeTitle, setHomeTitle] = useState('今日行情');
   const [marketIndicatorsTitle, setMarketIndicatorsTitle] = useState('市场指标');
-  const [marketOverviewTitle, setMarketOverviewTitle] = useState('市场概览');
+  const [marketOverviewTitle, setMarketOverviewTitle] = useState('股市行情');
   const [latestNewsTitle, setLatestNewsTitle] = useState('今日要闻');
   const [featuredNewsTitle, setFeaturedNewsTitle] = useState('精选新闻');
   const [featuredAirdropsTitle, setFeaturedAirdropsTitle] = useState('热门空投');
@@ -217,7 +217,7 @@ const HomeScreen = () => {
       // 获取UI文本配置
       const homeTitleConfig = await configService.getConfig('HOME_TITLE', '今日行情');
       const marketIndicatorsTitleConfig = await configService.getConfig('HOME_MARKET_INDICATORS_TITLE', '市场指标');
-      const marketOverviewTitleConfig = await configService.getConfig('HOME_MARKET_OVERVIEW_TITLE', '市场概览');
+      const marketOverviewTitleConfig = await configService.getConfig('HOME_MARKET_OVERVIEW_TITLE', '股市行情');
       const latestNewsTitleConfig = await configService.getConfig('HOME_LATEST_NEWS_TITLE', '今日要闻');
       const featuredNewsTitleConfig = await configService.getConfig('HOME_FEATURED_NEWS_TITLE', '精选新闻');
       const featuredAirdropsTitleConfig = await configService.getConfig('HOME_FEATURED_AIRDROPS_TITLE', '热门空投');
@@ -296,7 +296,7 @@ const HomeScreen = () => {
       // 如果加载配置失败，使用默认值
       setHomeTitle('今日行情');
       setMarketIndicatorsTitle('市场指标');
-      setMarketOverviewTitle('市场概览');
+      setMarketOverviewTitle('股市行情');
       setLatestNewsTitle('今日要闻');
       setFeaturedNewsTitle('精选新闻');
       setFeaturedAirdropsTitle('热门空投');
@@ -1259,8 +1259,8 @@ const HomeScreen = () => {
         </View>
       )}
 
-      {/* 市场概览 */}
-      <MarketOverview 
+      {/* 股市行情 */}
+      <StockOverview 
         limit={marketOverviewCount} 
         showRank={true} 
         title={marketOverviewTitle}
