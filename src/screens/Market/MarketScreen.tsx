@@ -487,8 +487,6 @@ const MarketScreen = () => {
   const { currentUser, logout } = useUser();
   
   const [searchText, setSearchText] = useState('');
-  const [selectedSort, setSelectedSort] = useState('市值');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -528,8 +526,7 @@ const MarketScreen = () => {
   const [favoriteCoinsData, setFavoriteCoinsData] = useState<CoinCardData[]>([]); // 自选币种的完整数据
   const [favoritesSortOrder, setFavoritesSortOrder] = useState<'asc' | 'desc' | 'none'>('none'); // 自选分组排序状态（初始化后会被配置覆盖）
 
-  // 配置相关状态 - 美股APP专用，去掉独立的"美股"按钮
-  const [sortOptionsLabels, setSortOptionsLabels] = useState(['市值', '涨跌幅', '24h成交量', '价格']); // 美股APP简化标签
+  // 配置相关状态 - 美股APP专用
   const [configsLoaded, setConfigsLoaded] = useState(false); // 配置是否已加载
   
   // 分享相关状态
@@ -560,82 +557,25 @@ const MarketScreen = () => {
   const [scrollIndicatorText, setScrollIndicatorText] = useState('');
   const sortListRef = useRef<FlatList>(null);
 
-  // 动态排序选项，使用配置中的标签
-  const SORT_OPTIONS = useMemo(() => sortOptionsLabels, [sortOptionsLabels]);
-
   // 检查初始URL参数
   const getInitialLabelFromURL = () => {
-    if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search);
-      const urlLabel = urlParams.get('label');
-      if (urlLabel) {
-        console.log('🔗 MarketScreen: 从URL获取初始标签:', urlLabel);
-        return urlLabel;
-      }
-    }
-    
-    const params = route?.params as any;
-    if (params?.label) {
-      console.log('🔗 MarketScreen: 从route参数获取初始标签:', params.label);
-      return params.label;
-    }
-    
-    return null;
+    return null; // 移除排序标签后，不再需要URL参数处理
   };
 
   // 检查是否需要显示滚动指示器
   useEffect(() => {
-    console.log('🔄 MarketScreen: Checking scroll indicator:', {
-      labelsCount: sortOptionsLabels.length,
-      labels: sortOptionsLabels,
-      selectedSort: selectedSort
-    });
-    
-    if (sortOptionsLabels.length > 5) { // 改为超过5个标签时显示指示器
-      setShowScrollIndicator(true);
-      const currentIndex = sortOptionsLabels.indexOf(selectedSort);
-      const remainingCount = sortOptionsLabels.length - currentIndex - 1;
-      if (remainingCount > 0) {
-        setScrollIndicatorText(`+${remainingCount}`);
-      } else {
-        setScrollIndicatorText('');
-      }
-      console.log('✅ MarketScreen: Scroll indicator enabled, remaining:', remainingCount);
-    } else {
-      setShowScrollIndicator(false);
-      console.log('❌ MarketScreen: Scroll indicator disabled, not enough labels');
-    }
-  }, [sortOptionsLabels, selectedSort]);
+    // 移除排序标签后，不再需要滚动指示器
+    setShowScrollIndicator(false);
+  }, []);
 
   // 处理滚动指示器点击
   const handleScrollIndicatorPress = () => {
-    const currentIndex = sortOptionsLabels.indexOf(selectedSort);
-    const nextIndex = Math.min(currentIndex + 1, sortOptionsLabels.length - 1);
-    if (nextIndex > currentIndex) {
-      // 滚动到下一个标签并选中
-      sortListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
-      // 可选：自动选择下一个标签
-      // setSelectedSort(sortOptionsLabels[nextIndex]);
-    }
+    // 移除排序标签后不再需要此功能
   };
 
   // 处理标签滚动事件
   const handleSortScroll = (event: any) => {
-    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
-    const isNearEnd = contentOffset.x + layoutMeasurement.width >= contentSize.width - 50;
-    
-    if (isNearEnd) {
-      setScrollIndicatorText('');
-    } else {
-      const visibleWidth = layoutMeasurement.width;
-      const scrollPosition = contentOffset.x;
-      // 估算当前可见的最后一个标签
-      const estimatedItemWidth = 100; // 大概的标签宽度
-      const visibleItems = Math.floor(visibleWidth / estimatedItemWidth);
-      const currentStartIndex = Math.floor(scrollPosition / estimatedItemWidth);
-      const remainingItems = Math.max(0, sortOptionsLabels.length - currentStartIndex - visibleItems);
-      setScrollIndicatorText(remainingItems > 0 ? `+${remainingItems}` : '');
-    }
+    // 移除排序标签后不再需要此功能
   };
 
   // 将API数据转换为CoinCard组件需要的格式 - 美股专用版本
@@ -696,22 +636,10 @@ const MarketScreen = () => {
   };
 
   // 获取排序参数 - 美股APP专用
-  const getSortParams = (sortOption: string, currentSortOrder: 'asc' | 'desc' = sortOrder) => {
-    // 简化的排序逻辑，只支持美股数据的几种排序
-    const sortIndex = sortOptionsLabels.indexOf(sortOption);
-    
-    switch (sortIndex) {
-      case 0: // 第一个位置：市值 (显示美股按market cap排序)
-        return { sortBy: 'rank' as const, sortOrder: currentSortOrder };
-      case 1: // 第二个位置：涨跌幅
-        return { sortBy: 'priceChange24h' as const, sortOrder: currentSortOrder };
-      case 2: // 第三个位置：24h成交量
-        return { sortBy: 'volume' as const, sortOrder: currentSortOrder };
-      case 3: // 第四个位置：价格
-        return { sortBy: 'currentPrice' as const, sortOrder: currentSortOrder };
-      default:
-        return { sortBy: 'rank' as const, sortOrder: 'asc' as const };
-    }
+  const getSortParams = () => {
+    // 简化的排序逻辑，只支持美股数据的基本排序
+    // 默认按市值排序
+    return { sortBy: 'rank' as const, sortOrder: 'asc' as const };
   };
 
   // 加载配置
@@ -720,11 +648,10 @@ const MarketScreen = () => {
       console.log('🔄 MarketScreen: Loading configs...');
       
       // 并行初始化配置服务和获取配置
-      const [_, labelsString, headerTitleConfig, searchPlaceholderConfig, favoritesTitleConfig, allCoinsTitleConfig, listHeadersConfig, listHeadersEnabledConfig, pageSizeConfig, favoritesExpandedConfig, favoritesSortConfig] = await Promise.all([
+      const [_, headerTitleConfig, searchPlaceholderConfig, favoritesTitleConfig, allCoinsTitleConfig, listHeadersConfig, listHeadersEnabledConfig, pageSizeConfig, favoritesExpandedConfig, favoritesSortConfig] = await Promise.all([
         // 确保ConfigService完全初始化
         configService.init(),
         // 并行获取所有配置
-        configService.getConfig('MARKET_LIST_LABEL', '市值,涨跌幅,24h成交量,价格'), // 美股APP简化配置
         configService.getConfig('MARKET_HEADER_TITLE', '行情'),
         configService.getConfig('MARKET_SEARCH_PLACEHOLDER', '搜索美股...'), // 美股APP搜索提示
         configService.getConfig('MARKET_FAVORITES_TITLE', '我的自选'),
@@ -737,28 +664,14 @@ const MarketScreen = () => {
       ]);
       
       console.log('✅ MarketScreen: ConfigService initialized');
-      console.log('🔄 MarketScreen: Raw labels config:', labelsString);
       
-      // 解析配置字符串为数组
-      const labels = labelsString.split(',').map(label => label.trim()).filter(label => label.length > 0);
-      console.log('🔄 MarketScreen: Parsed labels:', labels);
+      setConfigsLoaded(true); // 标记配置已加载
       
-      // 使用配置中的所有标签，如果没有配置或配置不完整则使用默认值
-      const defaultLabels = ['市值', '涨跌幅', '24h成交量', '价格']; // 美股APP简化标签
-      const finalLabels = labels.length >= 3 ? labels : defaultLabels; // 至少3个标签
-      
-      setSortOptionsLabels(finalLabels);
-      console.log(`✅ MarketScreen: Sort options labels loaded:`, finalLabels);
-      
-      // 检查是否有URL参数需要应用
-      const initialLabel = getInitialLabelFromURL();
-      if (initialLabel && finalLabels.includes(initialLabel)) {
-        console.log('🔗 MarketScreen: 应用URL标签:', initialLabel);
-        setSelectedSort(initialLabel);
-      } else if (!selectedSort || selectedSort === '市值') {
-        console.log('🔗 MarketScreen: 使用默认第一个标签:', finalLabels[0]);
-        setSelectedSort(finalLabels[0]);
-      }
+      // 重置渐进式加载状态
+      setProgressiveLoadCompleted(false);
+      setIsProgressiveLoading(false);
+      setCurrentLoadingBatch(0);
+      setActiveBatchLoaders(new Set());
       
       // 设置UI文本
       setHeaderTitle(headerTitleConfig);
@@ -788,14 +701,6 @@ const MarketScreen = () => {
       const defaultSortOrder = ['asc', 'desc', 'none'].includes(favoritesSortConfig) ? favoritesSortConfig as 'asc' | 'desc' | 'none' : 'none';
       setFavoritesSortOrder(defaultSortOrder);
       
-      setConfigsLoaded(true); // 标记配置已加载
-      
-      // 重置渐进式加载状态
-      setProgressiveLoadCompleted(false);
-      setIsProgressiveLoading(false);
-      setCurrentLoadingBatch(0);
-      setActiveBatchLoaders(new Set());
-      
       console.log(`✅ MarketScreen: UI text configs loaded:`, {
         headerTitle: headerTitleConfig,
         searchPlaceholder: searchPlaceholderConfig,
@@ -814,17 +719,6 @@ const MarketScreen = () => {
     } catch (error) {
       console.error('❌ MarketScreen: Failed to load configs:', error);
       // 如果加载配置失败，使用默认值
-      const defaultLabels = ['市值', '涨跌幅', '24h成交量', '价格']; // 美股APP简化标签
-      setSortOptionsLabels(defaultLabels);
-      
-      // 检查URL参数
-      const initialLabel = getInitialLabelFromURL();
-      if (initialLabel && defaultLabels.includes(initialLabel)) {
-        setSelectedSort(initialLabel);
-      } else {
-        setSelectedSort(defaultLabels[0]);
-      }
-      
       setHeaderTitle('行情');
       setSearchPlaceholder('搜索美股...');  // 美股APP默认搜索提示
       setFavoritesTitle('我的自选');
@@ -879,7 +773,7 @@ const MarketScreen = () => {
       console.log(`🔄 MarketScreen: Loading stock batch ${batchIndex}, skip: ${skip}, limit: ${limit}`);
       
       // 获取排序参数
-      const { sortBy, sortOrder: apiSortOrder } = getSortParams(selectedSort, sortOrder);
+      const { sortBy, sortOrder: apiSortOrder } = getSortParams();
       
       // 直接调用StockService获取分页数据，使用正确的排序参数
       const stocksData = await stockService.getUSStocksList(skip, limit, sortBy, apiSortOrder);
@@ -928,38 +822,17 @@ const MarketScreen = () => {
           setUsStocks(prev => {
             const combined = [...prev, ...transformedStocks];
             // 根据当前选择的排序方式重新排序
-            const { sortBy: currentSortBy } = getSortParams(selectedSort, sortOrder);
+            const { sortBy: currentSortBy } = getSortParams();
             
             return combined.sort((a, b) => {
               let valueA, valueB;
               
-              switch (currentSortBy) {
-                case 'rank':
-                  valueA = parseInt(a.rank) || 999999;
-                  valueB = parseInt(b.rank) || 999999;
-                  break;
-                case 'currentPrice':
-                  // 价格字段格式为"$123.45"，需要去掉$符号
-                  valueA = parseFloat(a.price.replace('$', '')) || 0;
-                  valueB = parseFloat(b.price.replace('$', '')) || 0;
-                  break;
-                case 'priceChange24h':
-                  // 涨跌幅字段格式为"-1.23%"或"1.23%"
-                  valueA = parseFloat(a.change.replace('%', '')) || 0;
-                  valueB = parseFloat(b.change.replace('%', '')) || 0;
-                  break;
-                case 'volume':
-                  // 成交量字段可能包含中文单位，先简单按字符串排序
-                  valueA = parseFloat(a.volume.replace(/[万亿]/g, '')) || 0;
-                  valueB = parseFloat(b.volume.replace(/[万亿]/g, '')) || 0;
-                  break;
-                default:
-                  valueA = parseInt(a.rank) || 999999;
-                  valueB = parseInt(b.rank) || 999999;
-              }
+              // 默认按rank排序
+              valueA = parseInt(a.rank) || 999999;
+              valueB = parseInt(b.rank) || 999999;
               
-              // 根据排序顺序决定升序还是降序
-              return sortOrder === 'asc' ? valueA - valueB : valueB - valueA;
+              // 升序排序
+              return valueA - valueB;
             });
           });
         }
@@ -1133,7 +1006,7 @@ const MarketScreen = () => {
   const onRefresh = React.useCallback(() => {
     // 下拉刷新时，同时强制刷新logo缓存
     fetchMarketData(0, true);
-  }, [selectedSort, sortOrder]);
+  }, []);
 
 
 
@@ -1192,27 +1065,12 @@ const MarketScreen = () => {
     loadConfigs();
   }, []);
 
-  // 处理URL参数定位功能
+  // 数据加载：配置加载完成时
   useEffect(() => {
-    // 只有在配置已加载但URL参数还没有应用时才处理
     if (configsLoaded) {
-      const initialLabel = getInitialLabelFromURL();
-      if (initialLabel && sortOptionsLabels.includes(initialLabel) && selectedSort !== initialLabel) {
-        console.log('🔗 MarketScreen: 应用URL参数标签:', initialLabel);
-        setSelectedSort(initialLabel);
-        setSortOrder('asc');
-      }
-    }
-  }, [configsLoaded, route?.params]);
-
-  // 数据加载：配置加载完成且有选中的排序选项时
-  useEffect(() => {
-    if (configsLoaded && selectedSort) {
       console.log('🔄 MarketScreen: 数据加载useEffect触发:', { 
-        selectedSort, 
-        sortOptionsLabels,
         configsLoaded,
-        triggerReason: '配置加载完成且有选中标签'
+        triggerReason: '配置加载完成'
       });
       // 重置显示数量到初始状态
       setDisplayedItemCount(20);
@@ -1220,11 +1078,10 @@ const MarketScreen = () => {
     } else {
       console.log('🔄 MarketScreen: 数据加载跳过:', { 
         configsLoaded, 
-        selectedSort,
-        reason: '配置未加载或未选中标签'
+        reason: '配置未加载'
       });
     }
-  }, [configsLoaded, selectedSort, sortOrder]);
+  }, [configsLoaded]);
 
   // 管理实时价格轮询
   useEffect(() => {
@@ -1395,7 +1252,7 @@ const MarketScreen = () => {
       favorites: sortedFavorites, // 使用排序后的自选币种数据
       others: displayCoins // 美股数据
     };
-  }, [displayCoins, userFavoriteCoins, currentUser, searchText, selectedSort, isFavoritesExpanded, favoriteCoinsData, favoritesSortOrder]);
+  }, [displayCoins, userFavoriteCoins, currentUser, searchText, isFavoritesExpanded, favoriteCoinsData, favoritesSortOrder]);
 
   // 获取用户自选币种列表
   const fetchUserFavoriteCoins = async () => {
@@ -1482,20 +1339,6 @@ const MarketScreen = () => {
       setFavoritesSortOrder('asc');  // 降序 → 升序（跌幅大的在前）
     } else {
       setFavoritesSortOrder('none'); // 升序 → 无排序（恢复原始顺序）
-    }
-  };
-
-  // 更新URL参数
-  const updateURL = (label: string) => {
-    if (Platform.OS === 'web') {
-      try {
-        const url = new URL(window.location.href);
-        url.searchParams.set('label', label);
-        window.history.pushState({}, '', url.toString());
-        console.log('🔗 MarketScreen: URL已更新为:', url.toString());
-      } catch (error) {
-        console.error('❌ MarketScreen: 更新URL失败:', error);
-      }
     }
   };
 
@@ -1670,9 +1513,8 @@ const MarketScreen = () => {
     const coinSymbol = (item.symbol || item.name).toUpperCase();
     const isUserFavorite = userFavoriteCoins.has(coinSymbol);
     
-    // 检测是否为股票数据：通过当前选择的分类或数据来源判断
-    const isStock = selectedSort === '美股' || (section === 'stocks') || 
-                   (typeof item.symbol === 'string' && item.symbol.length <= 5 && /^[A-Z]+$/.test(item.symbol));
+    // 美股APP统一处理股票数据
+    const isStock = true;
     
     return (
       <CoinCard
@@ -1684,9 +1526,7 @@ const MarketScreen = () => {
           if (fullName) {
             params.fullName = fullName;
           }
-          if (isStock) {
-            params.isStock = true; // 标记为股票详情
-          }
+          params.isStock = true; // 标记为股票详情
           navigation.navigate('CoinDetail', params);
         }}
         showRank={true}
@@ -1810,24 +1650,9 @@ const MarketScreen = () => {
     // 添加其他币种（始终显示，不管自选是否展开）
     if (others.length > 0) {
       if (favorites.length > 0) {
-        // 美股APP简化：根据当前排序显示相应的标题
-        let headerTitle, headerIcon;
-        if (selectedSort === '市值') {
-          headerTitle = '按市值排序'; // 市值排序
-          headerIcon = 'trending-up';
-        } else if (selectedSort === '涨跌幅') {
-          headerTitle = '按涨跌幅排序';
-          headerIcon = 'trending-up';
-        } else if (selectedSort === '24h成交量') {
-          headerTitle = '按成交量排序';
-          headerIcon = 'bar-chart';
-        } else if (selectedSort === '价格') {
-          headerTitle = '按价格排序';
-          headerIcon = 'cash';
-        } else {
-          headerTitle = allCoinsTitle;
-          headerIcon = 'list';
-        }
+        // 美股APP简化：统一显示标题
+        const headerTitle = allCoinsTitle;
+        const headerIcon = 'list';
         
         data.push({
           id: 'others-header',
@@ -1855,7 +1680,7 @@ const MarketScreen = () => {
     console.log('📊 MarketScreen: FlatList data created with', data.length, 'total items');
     
     return data;
-  }, [groupedCoins, isFavoritesExpanded, selectedSort]);
+  }, [groupedCoins, isFavoritesExpanded]);
 
   // 统一的renderItem函数，处理标题和数据项
   const renderFlatListItem = ({ item }: { item: any }) => {
@@ -1876,105 +1701,6 @@ const MarketScreen = () => {
     }
     
     return renderCoinItem({ item, section: item.section });
-  };
-
-  const renderSortOption = ({ item }) => {
-    const isSelected = selectedSort === item;
-    
-    // 定义分类标签，这些标签不支持排序切换
-    const categoryLabels = ['美股', '公链', 'L2', 'MEME', 'DEFI', '平台币', '质押', '存储', 'Cosmos', 'NFT', '链游', 'AI', 'RWA'];
-    const isCategoryTag = categoryLabels.some(label => sortOptionsLabels.includes(label) && item === label);
-    
-    const handleSortPress = () => {
-      // 专门的类别标签（美股、公链、L2、MEME、DEFI、平台币、质押、存储、Cosmos、NFT、链游、AI、RWA）不支持排序切换，只是选择
-      const categoryLabels = ['美股', '公链', 'L2', 'MEME', 'DEFI', '平台币', '质押', '存储', 'Cosmos', 'NFT', '链游', 'AI', 'RWA'];
-      const isCategoryLabel = categoryLabels.some(label => sortOptionsLabels.includes(label) && item === label);
-      
-      // 市值按钮（第一个位置）不支持排序切换，始终为升序（从排名1开始）
-      const sortIndex = sortOptionsLabels.indexOf(item);
-      const isMarketCapSort = sortIndex === 0; // 第一个位置是市值
-      
-      if (item === sortOptionsLabels[1] || isCategoryLabel || isMarketCapSort) {
-        setSelectedSort(item);
-        setSortOrder('asc'); // 市值、美股和分类标签都固定为升序
-        // 重置渐进式加载状态
-        setProgressiveLoadCompleted(false);
-        setIsProgressiveLoading(false);
-        setCurrentLoadingBatch(0);
-        setActiveBatchLoaders(new Set());
-        // 更新URL
-        updateURL(item);
-        return;
-      }
-      
-      if (isSelected) {
-        // 如果点击的是已选中的按钮，切换排序顺序（市值除外）
-        setSortOrder(prevOrder => prevOrder === 'asc' ? 'desc' : 'asc');
-        // 重置渐进式加载状态
-        setProgressiveLoadCompleted(false);
-        setIsProgressiveLoading(false);
-        setCurrentLoadingBatch(0);
-        setActiveBatchLoaders(new Set());
-      } else {
-        // 选择新的排序选项
-        setSelectedSort(item);
-        // 重置渐进式加载状态
-        setProgressiveLoadCompleted(false);
-        setIsProgressiveLoading(false);
-        setCurrentLoadingBatch(0);
-        setActiveBatchLoaders(new Set());
-        // 更新URL
-        updateURL(item);
-        // 根据不同的排序选项设置默认排序顺序
-        switch (sortIndex) {
-          case 0: // 第一个位置：市值
-            setSortOrder('asc'); // 市值排序固定为升序（rank从小到大，即排名从1开始）
-            break;
-          case 2: // 第三个位置：涨跌幅
-            setSortOrder('desc'); // 涨跌幅排序默认为降序（从高到低）
-            break;
-          case 3: // 第四个位置：24h成交量
-            setSortOrder('desc'); // 成交量排序默认为降序（从高到低）
-            break;
-          case 4: // 第五个位置：价格
-            setSortOrder('desc'); // 价格排序默认为降序（从高到低）
-            break;
-          default:
-            setSortOrder('asc');
-        }
-      }
-    };
-
-    return (
-      <TouchableOpacity 
-        style={[
-          styles.sortOption, 
-          isSelected && styles.selectedSortOption
-        ]}
-        onPress={handleSortPress}
-      >
-        <View style={styles.sortOptionContent}>
-          <Text style={[
-            styles.sortOptionText,
-            isSelected && styles.selectedSortOptionText
-          ]}>
-            {item}
-          </Text>
-          {isSelected && !isCategoryTag && ( // 分类标签不显示箭头
-            <Ionicons 
-              name={
-                sortOptionsLabels.indexOf(item) === 0  // 第一个位置：市值
-                  ? (sortOrder === 'asc' ? 'arrow-down' : 'arrow-up')  // 市值：asc=rank从小到大=市值从高到低，所以显示向下箭头
-                  : (sortOrder === 'asc' ? 'arrow-up' : 'arrow-down')   // 其他：正常显示
-              }
-              size={12} 
-              color={isSelected ? 'white' : '#666'} 
-              style={styles.sortArrow}
-            />
-          )}
-        </View>
-      </TouchableOpacity>
-    );
   };
 
   // 渲染加载状态
@@ -2032,21 +1758,17 @@ const MarketScreen = () => {
       <Text style={styles.emptyText}>
         {searchText ? (
           isSearching ? '搜索中...' : (
-            searchError ? searchError : '未找到相关币种'
+            searchError ? searchError : '未找到相关股票'
           )
-        ) : selectedSort === sortOptionsLabels[1] ? ( // 第二个位置的标签（美股/其他市场）
-          usStocksError ? usStocksError : `暂无${sortOptionsLabels[1]}数据`
-        ) : '暂无数据'}
+        ) : usStocksError ? usStocksError : '暂无美股数据'}
       </Text>
       {(error || searchError || usStocksError) && (
         <TouchableOpacity 
           onPress={() => {
             if (searchText) {
               searchCoins(searchText);
-            } else if (selectedSort === sortOptionsLabels[1]) { // 第二个位置的标签（美股/其他市场）
-              fetchUSStockData();
             } else {
-              fetchMarketData(0);
+              fetchUSStockData();
             }
           }} 
           style={styles.retryButton}
@@ -2085,39 +1807,6 @@ const MarketScreen = () => {
             <Ionicons name="close-circle" size={18} color="#999" />
           </TouchableOpacity>
         )}
-      </View>
-
-      {/* Sort Options */}
-      <View style={styles.filtersContainer}>
-        <View style={styles.filtersWrapper}>
-          <FlatList
-            ref={sortListRef}
-            data={SORT_OPTIONS}
-            renderItem={renderSortOption}
-            keyExtractor={item => item}
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.sortOptionsList}
-            onScroll={handleSortScroll}
-            scrollEventThrottle={16}
-          />
-          
-          {/* 滚动指示器 */}
-          {showScrollIndicator && scrollIndicatorText && (
-            <TouchableOpacity 
-              style={styles.scrollIndicator}
-              onPress={handleScrollIndicatorPress}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.scrollIndicatorText}>{scrollIndicatorText}</Text>
-            </TouchableOpacity>
-          )}
-          
-          {/* 右侧渐变遮罩效果 */}
-          {showScrollIndicator && (
-            <View style={styles.gradientMask} />
-          )}
-        </View>
       </View>
 
       {/* Coins List */}
@@ -2183,9 +1872,9 @@ const MarketScreen = () => {
       <ShareModal
         visible={shareModalVisible}
         onClose={() => setShareModalVisible(false)}
-        title={`${selectedSort}行情`}
-        description={`查看${selectedSort}相关的加密货币行情数据`}
-        url={getWebAppURL(`market?label=${encodeURIComponent(selectedSort)}`)}
+        title="美股行情"
+        description="查看美股相关的行情数据"
+        url={getWebAppURL('market')}
         onShowMessage={showMessageModal}
       />
     </View>
