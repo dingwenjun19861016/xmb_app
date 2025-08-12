@@ -554,10 +554,26 @@ const MarketScreen = () => {
   // 性能配置状态
   const [pageSize, setPageSize] = useState(100);
   
+  // 过滤和排序状态
+  const [selectedSortField, setSelectedSortField] = useState('rank'); // 当前选中的排序字段
+  const [selectedSortOrder, setSelectedSortOrder] = useState<'asc' | 'desc'>('asc'); // 当前排序方向
+  const [availableFilters, setAvailableFilters] = useState<Array<{
+    key: string;
+    label: string;
+    isSelected: boolean;
+    sortOrder: 'asc' | 'desc' | 'none';
+  }>>([
+    { key: 'rank', label: '排名', isSelected: true, sortOrder: 'asc' },
+    { key: 'currentPrice', label: '最新价', isSelected: false, sortOrder: 'none' },
+    { key: 'volume', label: '成交量', isSelected: false, sortOrder: 'none' },
+    { key: 'peRatio', label: '市盈率', isSelected: false, sortOrder: 'none' },
+    { key: 'priceChangePercent', label: '涨跌幅', isSelected: false, sortOrder: 'none' }
+  ]);
+  
   // 优化加载状态 - 渐进式分批加载
-  const [initialBatchSize] = useState(10); // 首次快速加载的数量
-  const [progressiveBatchSize] = useState(10); // 渐进式每批加载的数量
-  const [totalInitialBatches] = useState(10); // 初始总批次数 (0-100条数据)
+  const [initialBatchSize] = useState(30); // 首次快速加载的数量（提升到30条）
+  const [progressiveBatchSize] = useState(25); // 渐进式每批加载的数量（提升到25条）
+  const [totalInitialBatches] = useState(4); // 初始总批次数 (0-100条数据：30+25+25+25=105条)
   const [isProgressiveLoading, setIsProgressiveLoading] = useState(false); // 渐进式加载状态
   const [currentLoadingBatch, setCurrentLoadingBatch] = useState(0); // 当前加载到第几批
   const [progressiveLoadCompleted, setProgressiveLoadCompleted] = useState(false); // 渐进式加载完成标志
@@ -585,18 +601,36 @@ const MarketScreen = () => {
 
   // 检查是否需要显示滚动指示器
   useEffect(() => {
-    // 移除排序标签后，不再需要滚动指示器
-    setShowScrollIndicator(false);
-  }, []);
+    // 检查过滤选项是否需要滚动指示器
+    if (availableFilters.length > 3) { // 当过滤选项超过3个时显示指示器
+      setShowScrollIndicator(true);
+      setScrollIndicatorText('更多');
+    } else {
+      setShowScrollIndicator(false);
+    }
+  }, [availableFilters]);
 
   // 处理滚动指示器点击
   const handleScrollIndicatorPress = () => {
-    // 移除排序标签后不再需要此功能
+    // 滚动到过滤选项列表的末尾
+    if (sortListRef.current) {
+      sortListRef.current.scrollToEnd({ animated: true });
+    }
   };
 
-  // 处理标签滚动事件
+  // 处理过滤选项滚动事件
   const handleSortScroll = (event: any) => {
-    // 移除排序标签后不再需要此功能
+    const scrollX = event.nativeEvent.contentOffset.x;
+    const contentWidth = event.nativeEvent.contentSize.width;
+    const containerWidth = event.nativeEvent.layoutMeasurement.width;
+    
+    // 当滚动接近末尾时隐藏指示器
+    if (scrollX + containerWidth >= contentWidth - 20) {
+      setShowScrollIndicator(false);
+    } else if (availableFilters.length > 3) {
+      setShowScrollIndicator(true);
+      setScrollIndicatorText('更多');
+    }
   };
 
   // 将股票数据转换为CoinCard组件需要的格式 - 美股专用版本
@@ -658,9 +692,59 @@ const MarketScreen = () => {
 
   // 获取排序参数 - 美股APP专用
   const getSortParams = () => {
-    // 简化的排序逻辑，只支持美股数据的基本排序
-    // 默认按市值排序
-    return { sortBy: 'rank' as const, sortOrder: 'asc' as const };
+    // 使用当前选中的过滤字段和排序方向
+    return { 
+      sortBy: selectedSortField as const, 
+      sortOrder: selectedSortOrder as const 
+    };
+  };
+
+  // 处理过滤选项点击
+  const handleFilterPress = (filterKey: string) => {
+    console.log('🔄 MarketScreen: Filter pressed:', filterKey);
+    
+    setAvailableFilters(prevFilters => {
+      const updatedFilters = prevFilters.map(filter => {
+        if (filter.key === filterKey) {
+          let newSortOrder: 'asc' | 'desc' | 'none';
+          
+          if (filter.sortOrder === 'none') {
+            newSortOrder = 'desc'; // 首次点击：降序
+          } else if (filter.sortOrder === 'desc') {
+            newSortOrder = 'asc';  // 第二次点击：升序
+          } else {
+            newSortOrder = 'desc'; // 第三次点击：回到降序
+          }
+          
+          // 更新全局选中状态
+          setSelectedSortField(filterKey);
+          setSelectedSortOrder(newSortOrder);
+          
+          return {
+            ...filter,
+            isSelected: true,
+            sortOrder: newSortOrder
+          };
+        } else {
+          // 其他选项设为未选中
+          return {
+            ...filter,
+            isSelected: false,
+            sortOrder: 'none'
+          };
+        }
+      });
+      
+      console.log('✅ MarketScreen: Updated filters:', updatedFilters);
+      return updatedFilters;
+    });
+    
+    // 重置数据并重新加载
+    setUsStocks([]);
+    setDisplayedItemCount(30); // 重置为30条
+    setCurrentPage(0);
+    setHasMore(true);
+    fetchMarketData(0, true);
   };
 
   // 加载配置
@@ -743,7 +827,19 @@ const MarketScreen = () => {
           };
           
           setMarketListLabels(updatedLabels);
+          
+          // 根据后端配置更新过滤选项
+          const updatedFilters = [
+            { key: 'rank', label: updatedLabels.rank, isSelected: true, sortOrder: 'asc' as const },
+            { key: 'currentPrice', label: updatedLabels.currentPrice, isSelected: false, sortOrder: 'none' as const },
+            { key: 'volume', label: updatedLabels.volume, isSelected: false, sortOrder: 'none' as const },
+            { key: 'peRatio', label: updatedLabels.peRatio, isSelected: false, sortOrder: 'none' as const },
+            { key: 'priceChangePercent', label: updatedLabels.priceChangePercent, isSelected: false, sortOrder: 'none' as const }
+          ];
+          setAvailableFilters(updatedFilters);
+          
           console.log('✅ MarketScreen: Market list labels updated from backend:', updatedLabels);
+          console.log('✅ MarketScreen: Filter options updated:', updatedFilters);
         } catch (error) {
           console.warn('⚠️ MarketScreen: Failed to parse MARKET_LIST_LABEL config, using defaults:', error);
           // 解析失败时保持默认值
@@ -793,6 +889,15 @@ const MarketScreen = () => {
         name: "名称"
       });
       
+      // 设置默认的过滤选项
+      setAvailableFilters([
+        { key: 'rank', label: '排名', isSelected: true, sortOrder: 'asc' },
+        { key: 'currentPrice', label: '最新价', isSelected: false, sortOrder: 'none' },
+        { key: 'volume', label: '成交量', isSelected: false, sortOrder: 'none' },
+        { key: 'peRatio', label: '市盈率', isSelected: false, sortOrder: 'none' },
+        { key: 'priceChangePercent', label: '涨跌幅', isSelected: false, sortOrder: 'none' }
+      ]);
+      
       setConfigsLoaded(true);
       
       // 重置渐进式加载状态
@@ -812,12 +917,12 @@ const MarketScreen = () => {
         // 清空现有数据，开始新的加载
         setUsStocks([]);
         // 重置显示数量
-        setDisplayedItemCount(20);
+        setDisplayedItemCount(30); // 更新为30条
       }
       
       console.log('🔄 MarketScreen: Fetching US stocks list with progressive loading...', { page, isRefresh });
       
-      // 使用渐进式加载：首次加载20条，然后逐步加载更多
+      // 使用渐进式加载：首次加载30条，然后逐步加载更多
       await startStockProgressiveLoading(page === 0 ? 0 : page);
       
     } catch (err) {
@@ -832,16 +937,18 @@ const MarketScreen = () => {
   // 股票渐进式加载单个批次的数据
   const loadStockBatchData = async (batchIndex: number, isNewSession: boolean = false) => {
     try {
-      const skip = batchIndex * progressiveBatchSize;
-      const limit = progressiveBatchSize;
+      // 第一批使用 initialBatchSize，后续批次使用 progressiveBatchSize
+      const isFirstBatch = batchIndex === 0;
+      const currentBatchSize = isFirstBatch ? initialBatchSize : progressiveBatchSize;
+      const skip = isFirstBatch ? 0 : initialBatchSize + (batchIndex - 1) * progressiveBatchSize;
       
-      console.log(`🔄 MarketScreen: Loading stock batch ${batchIndex}, skip: ${skip}, limit: ${limit}`);
+      console.log(`🔄 MarketScreen: Loading stock batch ${batchIndex}, skip: ${skip}, limit: ${currentBatchSize}`);
       
       // 获取排序参数
       const { sortBy, sortOrder: apiSortOrder } = getSortParams();
       
       // 直接调用StockService获取分页数据，使用正确的排序参数
-      const stocksData = await stockService.getUSStocksList(skip, limit, sortBy, apiSortOrder);
+      const stocksData = await stockService.getUSStocksList(skip, currentBatchSize, sortBy, apiSortOrder);
       
       if (stocksData.length > 0) {
         // 将StockData转换为CoinData格式，然后再转换为CoinCardData
@@ -880,26 +987,11 @@ const MarketScreen = () => {
         
         const transformedStocks = await transformStockData(coinDataFormat, false); // 改为使用transformStockData处理股票数据
         
-        // 更新股票列表 - 追加方式并根据当前排序重新排序
+        // 更新股票列表 - 简单追加方式，保持后端API的排序
         if (isNewSession && batchIndex === 0) {
           setUsStocks(transformedStocks);
         } else {
-          setUsStocks(prev => {
-            const combined = [...prev, ...transformedStocks];
-            // 根据当前选择的排序方式重新排序
-            const { sortBy: currentSortBy } = getSortParams();
-            
-            return combined.sort((a, b) => {
-              let valueA, valueB;
-              
-              // 默认按rank排序
-              valueA = parseInt(a.rank) || 999999;
-              valueB = parseInt(b.rank) || 999999;
-              
-              // 升序排序
-              return valueA - valueB;
-            });
-          });
+          setUsStocks(prev => [...prev, ...transformedStocks]);
         }
         
         console.log(`✅ MarketScreen: Stock batch ${batchIndex} loaded successfully, ${transformedStocks.length} stocks`);
@@ -907,8 +999,9 @@ const MarketScreen = () => {
       
       return { 
         success: true, 
-        hasMore: stocksData.length === limit, // 如果返回的数据等于limit，可能还有更多
-        total: skip + stocksData.length 
+        hasMore: stocksData.length === currentBatchSize, // 如果返回的数据等于当前批次大小，可能还有更多
+        total: skip + stocksData.length,
+        batchSize: currentBatchSize
       };
       
     } catch (error) {
@@ -1082,7 +1175,7 @@ const MarketScreen = () => {
 
 
   // 添加显示页面状态，用于控制渐进显示已加载的数据
-  const [displayedItemCount, setDisplayedItemCount] = useState(20); // 初始显示20条
+  const [displayedItemCount, setDisplayedItemCount] = useState(30); // 初始显示30条，与initialBatchSize一致
 
   // 加载更多 - 恢复正常的分页加载逻辑
   const loadMore = React.useCallback(() => {
@@ -1107,7 +1200,7 @@ const MarketScreen = () => {
     
     // 如果还有未显示的数据，先显示已加载的数据
     if (displayedItemCount < usStocks.length) {
-      const nextCount = Math.min(displayedItemCount + 20, usStocks.length);
+      const nextCount = Math.min(displayedItemCount + 25, usStocks.length); // 每次显示更多25条
       console.log('📊 MarketScreen: Showing more loaded data', { from: displayedItemCount, to: nextCount });
       setDisplayedItemCount(nextCount);
       return;
@@ -1119,7 +1212,15 @@ const MarketScreen = () => {
     setCurrentPage(prev => prev + 1);
     
     // 继续渐进式加载更多股票数据
-    startStockProgressiveLoading(Math.floor(usStocks.length / progressiveBatchSize))
+    // 计算下一个批次索引：第一批30条，后续每批25条
+    let nextBatchIndex;
+    if (usStocks.length <= initialBatchSize) {
+      nextBatchIndex = 1; // 下一批是第二批
+    } else {
+      nextBatchIndex = Math.floor((usStocks.length - initialBatchSize) / progressiveBatchSize) + 1;
+    }
+    
+    startStockProgressiveLoading(nextBatchIndex)
       .catch(error => {
         console.error('❌ MarketScreen: Failed to load more stocks:', error);
         setUsStocksError('加载更多数据失败');
@@ -1140,6 +1241,12 @@ const MarketScreen = () => {
   useEffect(() => {
     console.log('🏷️ MarketScreen: Market list labels updated:', marketListLabels);
   }, [marketListLabels]);
+
+  // 调试：监听过滤选项变化
+  useEffect(() => {
+    console.log('🔄 MarketScreen: Available filters updated:', availableFilters);
+    console.log('🔄 MarketScreen: Selected sort field:', selectedSortField, 'order:', selectedSortOrder);
+  }, [availableFilters, selectedSortField, selectedSortOrder]);
 
   // 数据加载：配置加载完成时
   useEffect(() => {
@@ -1892,6 +1999,64 @@ const MarketScreen = () => {
           </TouchableOpacity>
         )}
       </View>
+
+      {/* Filter Options - 只在非搜索状态显示 */}
+      {!searchText && (
+        <View style={styles.filtersContainer}>
+          <View style={styles.filtersWrapper}>
+            <FlatList
+              ref={sortListRef}
+              data={availableFilters}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={[
+                    styles.sortOption,
+                    item.isSelected && styles.selectedSortOption
+                  ]}
+                  onPress={() => handleFilterPress(item.key)}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.sortOptionContent}>
+                    <Text
+                      style={[
+                        styles.sortOptionText,
+                        item.isSelected && styles.selectedSortOptionText
+                      ]}
+                    >
+                      {item.label}
+                    </Text>
+                    {item.isSelected && item.sortOrder !== 'none' && (
+                      <Ionicons
+                        name={item.sortOrder === 'asc' ? 'chevron-up' : 'chevron-down'}
+                        size={14}
+                        color="white"
+                        style={styles.sortArrow}
+                      />
+                    )}
+                  </View>
+                </TouchableOpacity>
+              )}
+              keyExtractor={item => item.key}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              style={styles.sortOptionsList}
+              onScroll={handleSortScroll}
+              scrollEventThrottle={16}
+            />
+            
+            {/* 滚动指示器 */}
+            {showScrollIndicator && (
+              <TouchableOpacity 
+                style={styles.scrollIndicator}
+                onPress={handleScrollIndicatorPress}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.scrollIndicatorText}>{scrollIndicatorText}</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+      )}
 
       {/* Coins List */}
       {(loading || usStocksLoading) ? (
