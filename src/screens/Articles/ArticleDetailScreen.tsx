@@ -74,10 +74,6 @@ const ArticleDetailScreen = () => {
   const [error, setError] = useState<string | null>(null);
   const [imageLoadFailed, setImageLoadFailed] = useState(false);
   
-  // Exchange ad states
-  const [exchangeAd, setExchangeAd] = useState<string>('');
-  const [exchangeUrls, setExchangeUrls] = useState<Record<string, string>>({});
-
   // Poster modal state
   const [showPosterModal, setShowPosterModal] = useState(false);
 
@@ -99,7 +95,6 @@ const ArticleDetailScreen = () => {
   const [pageTitle, setPageTitle] = useState<string>('文章详情');
   const [loadingText, setLoadingText] = useState<string>('加载文章中...');
   const [notFoundText, setNotFoundText] = useState<string>('文章未找到，可能已被删除或不存在');
-  const [showExchangeAd, setShowExchangeAd] = useState<boolean>(true);
 
   // Handle back button press with web support
   const handleBack = () => {
@@ -131,23 +126,20 @@ const ArticleDetailScreen = () => {
      
     // 所有其他情况都使用导航返回
     console.log('📱 使用导航返回');
+    console.log('📱 导航状态:', {
+      canGoBack: navigation.canGoBack(),
+      routeState: navigation.getState()
+    });
+    
     if (navigation.canGoBack()) {
+      console.log('📱 执行 navigation.goBack()');
       navigation.goBack();
     } else {
-      // 如果没有可返回的页面，导航到文章列表
-      navigation.navigate('Articles');
-    }
-  };
-
-  // Handle exchange button press
-  const handleExchangePress = async (exchangeName: string, url: string) => {
-    try {
-      const supported = await Linking.canOpenURL(url);
-      if (supported) {
-        await Linking.openURL(url);
-      }
-    } catch (error) {
-      console.error('Failed to open exchange URL:', error);
+      // 如果没有可返回的页面，导航到文章列表主页面
+      console.log('📱 导航到 ArticlesMain');
+      navigation.navigate('Articles', { 
+        screen: 'ArticlesMain'
+      });
     }
   };
 
@@ -212,32 +204,16 @@ const ArticleDetailScreen = () => {
           const [
             titleConfig,
             loadingConfig,
-            notFoundConfig,
-            showExchangeConfig,
-            adContent,
-            urlsContent
+            notFoundConfig
           ] = await Promise.all([
             configService.getConfig('ARTICLE_DETAIL_TITLE', '文章详情'),
             configService.getConfig('ARTICLE_LOADING_TEXT', '加载文章中...'),
-            configService.getConfig('ARTICLE_NOT_FOUND_TEXT', '文章未找到，可能已被删除或不存在'),
-            configService.getConfig('ARTICLE_SHOW_EXCHANGE_AD', 'true'),
-            configService.getConfig('ARTICLE_EXCHANGE_AD', ''),
-            configService.getConfig('ARTICLE_EXCHANGE_URL', '{}')
+            configService.getConfig('ARTICLE_NOT_FOUND_TEXT', '文章未找到，可能已被删除或不存在')
           ]);
 
           setPageTitle(titleConfig);
           setLoadingText(loadingConfig);
           setNotFoundText(notFoundConfig);
-          setShowExchangeAd(showExchangeConfig === 'true');
-          setExchangeAd(adContent);
-          
-          try {
-            const parsedUrls = JSON.parse(urlsContent);
-            setExchangeUrls(parsedUrls);
-          } catch (parseError) {
-            console.warn('❌ ArticleDetailScreen: 交易所URL解析失败:', parseError);
-            setExchangeUrls({});
-          }
         } catch (configError) {
           console.warn('❌ ArticleDetailScreen: 配置加载失败:', configError);
         }
@@ -360,15 +336,6 @@ const ArticleDetailScreen = () => {
             <SkeletonBox width="94%" height={18} style={{ marginBottom: 12 }} />
             <SkeletonBox width="87%" height={18} />
           </View>
-        </View>
-      </View>
-
-      {/* Exchange Ad Skeleton */}
-      <View style={styles.exchangeAdContainer}>
-        <SkeletonBox width="100%" height={50} borderRadius={8} style={{ marginBottom: 12 }} />
-        <View style={styles.exchangeButtonsContainer}>
-          <SkeletonBox width={100} height={36} borderRadius={18} style={{ marginRight: 12 }} />
-          <SkeletonBox width={100} height={36} borderRadius={18} />
         </View>
       </View>
 
@@ -551,25 +518,7 @@ const ArticleDetailScreen = () => {
           </View>
         </View>
 
-        {/* Exchange Advertisement */}
-        {showExchangeAd && exchangeAd && exchangeAd.trim() !== '' && (
-          <View style={styles.exchangeAdContainer}>
-            <Text style={styles.exchangeAdText}>{exchangeAd}</Text>
-            {Object.keys(exchangeUrls).length > 0 && (
-              <View style={styles.exchangeButtonsContainer}>
-                {Object.entries(exchangeUrls).map(([exchangeName, url]) => (
-                  <TouchableOpacity
-                    key={exchangeName}
-                    style={styles.exchangeButton}
-                    onPress={() => handleExchangePress(exchangeName, url)}
-                  >
-                    <Text style={styles.exchangeButtonText}>{exchangeName}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-          </View>
-        )}
+
 
 
 
@@ -583,7 +532,8 @@ const ArticleDetailScreen = () => {
                 style={styles.relatedItem}
                 onPress={() => navigation.push('ArticleDetail', { 
                   articleId: item.id,
-                  returnTo: returnTo || 'home' // 继承当前页面的returnTo参数，或默认返回首页
+                  article: item, // 传递完整的文章数据
+                  returnTo: returnTo || 'articles' // 修正返回目标
                 })}
               >
                 <View style={styles.relatedContent}>
@@ -708,34 +658,42 @@ const styles = StyleSheet.create({
   timelineContainer: {
     flexDirection: 'row',
     paddingHorizontal: 16,
-    paddingVertical: 20,
-    backgroundColor: '#F8F9FA', // 更浅的背景色
+    paddingVertical: 24,
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 12,
+    marginTop: 12,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
   },
   timelineLeft: {
-    width: 24,
+    width: 20,
     alignItems: 'center',
-    marginRight: 12, // 减少间距
-    paddingTop: 6, // 减少顶部间距
+    marginRight: 16,
+    paddingTop: 8,
   },
   timelineDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
     backgroundColor: '#007AFF',
-    borderWidth: 2,
-    borderColor: '#fff',
+    borderWidth: 3,
+    borderColor: '#ffffff',
     shadowColor: '#007AFF',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.3,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 3,
+    elevation: 3,
   },
   timelineLine: {
     flex: 1,
-    width: 2, // 更细的线条
-    backgroundColor: '#E8F4FD',
-    marginTop: 8,
-    minHeight: 150, // 减少最小高度
+    width: 2,
+    backgroundColor: '#E5F3FF',
+    marginTop: 12,
+    minHeight: 200,
   },
   timelineContent: {
     flex: 1,
@@ -744,44 +702,40 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8, // 减少底部间距
+    marginBottom: 12,
   },
   timeText: {
-    fontSize: 13,
+    fontSize: 14,
     color: '#007AFF',
     fontWeight: '600',
   },
   categoryBadge: {
     backgroundColor: '#F0F8FF',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: '#007AFF20',
   },
   categoryText: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#007AFF',
-    fontWeight: '500',
+    fontWeight: '600',
   },
   articleCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16, // 减少内边距
-    borderWidth: 1,
-    borderColor: '#F2F2F7',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    backgroundColor: 'transparent',
+    borderRadius: 0,
+    padding: 0,
+    borderWidth: 0,
+    shadowColor: 'transparent',
+    elevation: 0,
   },
   title: {
-    fontSize: 18, // 稍微减少字体大小
+    fontSize: 20,
     fontWeight: '700',
     color: '#1D1D1F',
-    lineHeight: 25,
-    marginBottom: 12, // 减少底部间距
+    lineHeight: 28,
+    marginBottom: 16,
   },
 
   coverImage: {
@@ -806,46 +760,6 @@ const styles = StyleSheet.create({
   date: {
     fontSize: 14,
     color: '#999',
-  },
-  
-  // Exchange advertisement styles
-  exchangeAdContainer: {
-    backgroundColor: '#F8F9FA',
-    padding: 15,
-    marginBottom: 8,
-    borderRadius: 8,
-    marginHorizontal: 15,
-  },
-  exchangeAdText: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  exchangeButtonsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: 4,
-  },
-  exchangeButton: {
-    width: '31%',
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    backgroundColor: '#E8F0FE',
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#D1E7FF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 3,
-  },
-  exchangeButtonText: {
-    color: '#1976D2',
-    fontSize: 11,
-    fontWeight: '600',
-    textAlign: 'center',
   },
 
   summary: {
@@ -902,42 +816,55 @@ const styles = StyleSheet.create({
   // Related articles
   relatedContainer: {
     backgroundColor: 'white',
-    padding: 20,
+    marginHorizontal: 12,
+    marginTop: 12,
     marginBottom: 20,
+    borderRadius: 12,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
   },
   relatedTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 10,
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1D1D1F',
+    marginBottom: 16,
   },
   relatedItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: '#F2F2F7',
   },
   relatedContent: {
     flex: 1,
-    marginRight: 10,
+    marginRight: 12,
   },
   relatedItemTitle: {
-    fontSize: 15,
-    fontWeight: '500',
-    marginBottom: 5,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1D1D1F',
+    lineHeight: 22,
+    marginBottom: 8,
   },
   relatedMeta: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
   },
   relatedCategory: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#007AFF',
+    fontWeight: '500',
   },
   relatedDate: {
-    fontSize: 12,
-    color: '#999',
+    fontSize: 13,
+    color: '#8E8E93',
   },
 
   // 骨架加载样式
@@ -961,75 +888,80 @@ const styles = StyleSheet.create({
 // Markdown styles for rich text content
 const markdownStyles = {
   body: {
-    fontSize: 15, // 稍微减少字体大小
-    lineHeight: 22, // 减少行高
-    color: '#333',
+    fontSize: 16,
+    lineHeight: 26,
+    color: '#1D1D1F',
   },
   heading1: {
-    fontSize: 22, // 减少标题字体大小
-    fontWeight: 'bold',
-    marginTop: 16,
-    marginBottom: 8,
-    color: '#000',
+    fontSize: 24,
+    fontWeight: '700',
+    marginTop: 20,
+    marginBottom: 12,
+    color: '#1D1D1F',
   },
   heading2: {
-    fontSize: 19,
-    fontWeight: 'bold',
-    marginTop: 14,
-    marginBottom: 7,
-    color: '#000',
+    fontSize: 21,
+    fontWeight: '700',
+    marginTop: 18,
+    marginBottom: 10,
+    color: '#1D1D1F',
   },
   heading3: {
-    fontSize: 17,
-    fontWeight: 'bold',
-    marginTop: 12,
-    marginBottom: 6,
-    color: '#000',
+    fontSize: 19,
+    fontWeight: '600',
+    marginTop: 16,
+    marginBottom: 8,
+    color: '#1D1D1F',
   },
   paragraph: {
-    fontSize: 15,
-    lineHeight: 22,
-    marginBottom: 10, // 减少段落间距
-    color: '#333',
+    fontSize: 16,
+    lineHeight: 26,
+    marginBottom: 14,
+    color: '#1D1D1F',
   },
   strong: {
-    fontWeight: 'bold',
+    fontWeight: '700',
+    color: '#1D1D1F',
   },
   em: {
     fontStyle: 'italic',
+    color: '#1D1D1F',
   },
   blockquote: {
     backgroundColor: '#F8F9FA',
-    borderLeftWidth: 3,
+    borderLeftWidth: 4,
     borderLeftColor: '#007AFF',
-    paddingLeft: 12,
-    paddingVertical: 8,
-    marginVertical: 8,
+    paddingLeft: 16,
+    paddingVertical: 12,
+    marginVertical: 12,
     fontStyle: 'italic',
+    borderRadius: 6,
   },
   code_inline: {
-    backgroundColor: '#F1F3F4',
-    paddingHorizontal: 3,
-    paddingVertical: 1,
-    borderRadius: 3,
-    fontFamily: 'monospace',
-    fontSize: 13,
+    backgroundColor: '#F2F2F7',
+    paddingHorizontal: 4,
+    paddingVertical: 2,
+    borderRadius: 4,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    fontSize: 14,
   },
   code_block: {
-    backgroundColor: '#F1F3F4',
-    padding: 10,
-    borderRadius: 6,
-    marginVertical: 6,
-    fontFamily: 'monospace',
-    fontSize: 13,
+    backgroundColor: '#F2F2F7',
+    padding: 12,
+    borderRadius: 8,
+    marginVertical: 10,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    fontSize: 14,
   },
   link: {
     color: '#007AFF',
+    textDecorationLine: 'underline',
   },
   list_item: {
-    fontSize: 15,
-    lineHeight: 20,
-    marginBottom: 4,
+    fontSize: 16,
+    lineHeight: 24,
+    marginBottom: 6,
+    color: '#1D1D1F',
   },
 };
 

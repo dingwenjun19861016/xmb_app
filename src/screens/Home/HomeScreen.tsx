@@ -1081,12 +1081,16 @@ const HomeScreen = () => {
             searchText: searchText
           });
           
-          navigation.navigate('ArticleDetail', { 
-            articleId: article.id,
-            returnTo: 'articles',
-            selectedCategory: selectedCategory,
-            searchText: searchText,
-            isSearchMode: isSearchMode
+          navigation.navigate('Articles', {
+            screen: 'ArticleDetail',
+            params: {
+              articleId: article.id,
+              article: article, // 传递完整的文章数据
+              returnTo: 'home',
+              selectedCategory: selectedCategory,
+              searchText: searchText,
+              isSearchMode: isSearchMode
+            }
           });
         }}
         variant={isSearchMode ? 'search' : 'flash'}
@@ -1179,9 +1183,13 @@ const HomeScreen = () => {
                 key={article.id}
                 article={article}
                 onPress={(article) => {
-                  navigation.navigate('ArticleDetail', { 
-                    articleId: article.id,
-                    returnTo: 'home'
+                  navigation.navigate('Articles', {
+                    screen: 'ArticleDetail',
+                    params: {
+                      articleId: article.id,
+                      article: article, // 传递完整的文章数据
+                      returnTo: 'home'
+                    }
                   });
                 }}
                 cardStyle="compact"
@@ -1198,9 +1206,13 @@ const HomeScreen = () => {
         viewMoreText={viewMoreText}
         onViewAllPress={() => setActiveTab('articles')}
         onArticlePress={(article) => {
-          navigation.navigate('ArticleDetail', { 
-            articleId: article.id,
-            returnTo: 'home'
+          navigation.navigate('Articles', {
+            screen: 'ArticleDetail',
+            params: {
+              articleId: article.id,
+              article: article, // 传递完整的文章数据
+              returnTo: 'home'
+            }
           });
         }}
         loading={loading}
