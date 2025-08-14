@@ -53,13 +53,15 @@ const ArticleDetailScreen = () => {
   
   const { 
     articleId, 
+    article: passedArticle,  // 接收传递过来的文章数据
     returnTo, 
     selectedCategory, 
     searchText, 
     isSearchMode 
   } = route.params || { 
     articleId: '1', 
-    returnTo: undefined, // 不设置默认值，让逻辑自动判断
+    article: null,
+    returnTo: undefined,
     selectedCategory: '全部',
     searchText: '',
     isSearchMode: false
@@ -203,7 +205,7 @@ const ArticleDetailScreen = () => {
       try {
         setLoading(true);
         setError(null);
-        setImageLoadFailed(false); // 重置图片加载状态
+        setImageLoadFailed(false);
 
         // Load page configurations
         try {
@@ -223,16 +225,12 @@ const ArticleDetailScreen = () => {
             configService.getConfig('ARTICLE_EXCHANGE_URL', '{}')
           ]);
 
-          // Set page configurations
           setPageTitle(titleConfig);
           setLoadingText(loadingConfig);
           setNotFoundText(notFoundConfig);
           setShowExchangeAd(showExchangeConfig === 'true');
-
-          // Set exchange ad configurations
           setExchangeAd(adContent);
           
-          // Parse exchange URLs
           try {
             const parsedUrls = JSON.parse(urlsContent);
             setExchangeUrls(parsedUrls);
@@ -244,58 +242,55 @@ const ArticleDetailScreen = () => {
           console.warn('❌ ArticleDetailScreen: 配置加载失败:', configError);
         }
 
-        // Fetch the specific article
-        let articleData = null;
-        
-        try {
-          articleData = await newsService.getArticleById(articleId);
-        } catch (fetchError) {
-          console.warn('❌ ArticleDetailScreen: API获取文章失败:', fetchError);
-        }
-        
-        if (articleData) {
-          setArticle(articleData);
-          
-          // Fetch related articles (same category or recent articles)
+        // 优先使用传递过来的文章数据
+        if (passedArticle) {
+          console.log('✅ ArticleDetailScreen: 使用传递的文章数据:', passedArticle.title);
+          setArticle(passedArticle);
+        } else if (articleId) {
+          // 如果没有传递文章数据，则通过 API 获取
+          console.log('🔍 ArticleDetailScreen: 通过API获取文章数据, ID:', articleId);
           try {
-            // Get the number of related articles to display from config (default: 8)
-            const relatedSizeStr = await configService.getConfig('ARTICLE_RELATED_SIZE', '8');
-            const relatedSize = parseInt(relatedSizeStr) || 8;
-            
-            // Fetch more articles than needed to ensure we have enough after filtering
-            const fetchSize = Math.max(relatedSize + 5, 10);
-            const related = await newsService.getNewsByCategory(articleData.category, 0, fetchSize);
-            
-            // Filter out the current article
-            const filteredRelated = related.filter(item => item.id !== articleId);
-            const finalRelated = filteredRelated.slice(0, relatedSize);
-            
-            setRelatedArticles(finalRelated);
-          } catch (relatedError) {
-            console.warn('❌ ArticleDetailScreen: 相关文章获取失败:', relatedError);
-            setRelatedArticles([]);
+            const articleData = await newsService.getArticleById(articleId);
+            if (articleData) {
+              setArticle(articleData);
+            } else {
+              throw new Error('文章不存在');
+            }
+          } catch (fetchError) {
+            console.warn('❌ ArticleDetailScreen: API获取文章失败:', fetchError);
+            // 使用 fallback 数据
+            setArticle(FALLBACK_ARTICLE);
           }
         } else {
-          // 如果API获取失败，使用fallback数据
+          // 既没有传递数据也没有 ID，使用 fallback
           console.log('📰 ArticleDetailScreen: 使用fallback文章数据');
           setArticle(FALLBACK_ARTICLE);
+        }
+
+        // 获取相关文章
+        try {
+          const relatedSizeStr = await configService.getConfig('ARTICLE_RELATED_SIZE', '8');
+          const relatedSize = parseInt(relatedSizeStr) || 8;
+          const currentArticle = passedArticle || article;
           
-          // 为fallback文章获取一些相关文章
-          try {
-            const relatedSizeStr = await configService.getConfig('ARTICLE_RELATED_SIZE', '8');
-            const relatedSize = parseInt(relatedSizeStr) || 8;
+          if (currentArticle && currentArticle.category) {
+            const fetchSize = Math.max(relatedSize + 5, 10);
+            const related = await newsService.getNewsByCategory(currentArticle.category, 0, fetchSize);
+            const filteredRelated = related.filter(item => item.id !== (currentArticle.id || currentArticle._id));
+            setRelatedArticles(filteredRelated.slice(0, relatedSize));
+          } else {
+            // 如果没有分类信息，获取最新文章作为相关文章
             const related = await newsService.getFeaturedLatestNews(relatedSize);
             setRelatedArticles(related);
-          } catch (relatedError) {
-            console.warn('❌ ArticleDetailScreen: fallback相关文章获取失败:', relatedError);
-            setRelatedArticles([]);
           }
+        } catch (relatedError) {
+          console.warn('❌ ArticleDetailScreen: 相关文章获取失败:', relatedError);
+          setRelatedArticles([]);
         }
 
       } catch (fetchError) {
         console.error('💥 ArticleDetailScreen: 获取文章失败:', fetchError);
         setError(fetchError.message);
-        // Use fallback data
         setArticle(FALLBACK_ARTICLE);
         setRelatedArticles([]);
       } finally {
@@ -304,7 +299,7 @@ const ArticleDetailScreen = () => {
     };
 
     fetchArticleData();
-  }, [articleId]);
+  }, [articleId, passedArticle]);
 
   // Share article function
   const handleShare = async () => {
@@ -714,33 +709,33 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingHorizontal: 16,
     paddingVertical: 20,
-    backgroundColor: '#F2F2F7',
+    backgroundColor: '#F8F9FA', // 更浅的背景色
   },
   timelineLeft: {
     width: 24,
     alignItems: 'center',
-    marginRight: 16,
-    paddingTop: 8,
+    marginRight: 12, // 减少间距
+    paddingTop: 6, // 减少顶部间距
   },
   timelineDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     backgroundColor: '#007AFF',
-    borderWidth: 3,
+    borderWidth: 2,
     borderColor: '#fff',
     shadowColor: '#007AFF',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 2,
+    elevation: 2,
   },
   timelineLine: {
     flex: 1,
-    width: 3,
+    width: 2, // 更细的线条
     backgroundColor: '#E8F4FD',
-    marginTop: 12,
-    minHeight: 200,
+    marginTop: 8,
+    minHeight: 150, // 减少最小高度
   },
   timelineContent: {
     flex: 1,
@@ -749,30 +744,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8, // 减少底部间距
   },
   timeText: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#007AFF',
     fontWeight: '600',
   },
   categoryBadge: {
-    backgroundColor: '#F2F2F7',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
+    backgroundColor: '#F0F8FF',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E5E5EA',
+    borderColor: '#007AFF20',
   },
   categoryText: {
     fontSize: 12,
-    color: '#8E8E93',
+    color: '#007AFF',
     fontWeight: '500',
   },
   articleCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    padding: 20,
+    padding: 16, // 减少内边距
     borderWidth: 1,
     borderColor: '#F2F2F7',
     shadowColor: '#000',
@@ -782,11 +777,11 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   title: {
-    fontSize: 20,
+    fontSize: 18, // 稍微减少字体大小
     fontWeight: '700',
     color: '#1D1D1F',
-    lineHeight: 28,
-    marginBottom: 16,
+    lineHeight: 25,
+    marginBottom: 12, // 减少底部间距
   },
 
   coverImage: {
@@ -966,35 +961,35 @@ const styles = StyleSheet.create({
 // Markdown styles for rich text content
 const markdownStyles = {
   body: {
-    fontSize: 16,
-    lineHeight: 24,
+    fontSize: 15, // 稍微减少字体大小
+    lineHeight: 22, // 减少行高
     color: '#333',
   },
   heading1: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginTop: 20,
-    marginBottom: 10,
-    color: '#000',
-  },
-  heading2: {
-    fontSize: 20,
+    fontSize: 22, // 减少标题字体大小
     fontWeight: 'bold',
     marginTop: 16,
     marginBottom: 8,
     color: '#000',
   },
+  heading2: {
+    fontSize: 19,
+    fontWeight: 'bold',
+    marginTop: 14,
+    marginBottom: 7,
+    color: '#000',
+  },
   heading3: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: 'bold',
     marginTop: 12,
     marginBottom: 6,
     color: '#000',
   },
   paragraph: {
-    fontSize: 16,
-    lineHeight: 24,
-    marginBottom: 12,
+    fontSize: 15,
+    lineHeight: 22,
+    marginBottom: 10, // 减少段落间距
     color: '#333',
   },
   strong: {
@@ -1005,36 +1000,36 @@ const markdownStyles = {
   },
   blockquote: {
     backgroundColor: '#F8F9FA',
-    borderLeftWidth: 4,
+    borderLeftWidth: 3,
     borderLeftColor: '#007AFF',
-    paddingLeft: 15,
-    paddingVertical: 10,
-    marginVertical: 10,
+    paddingLeft: 12,
+    paddingVertical: 8,
+    marginVertical: 8,
     fontStyle: 'italic',
   },
   code_inline: {
     backgroundColor: '#F1F3F4',
-    paddingHorizontal: 4,
-    paddingVertical: 2,
+    paddingHorizontal: 3,
+    paddingVertical: 1,
     borderRadius: 3,
     fontFamily: 'monospace',
-    fontSize: 14,
+    fontSize: 13,
   },
   code_block: {
     backgroundColor: '#F1F3F4',
-    padding: 12,
+    padding: 10,
     borderRadius: 6,
-    marginVertical: 8,
+    marginVertical: 6,
     fontFamily: 'monospace',
-    fontSize: 14,
+    fontSize: 13,
   },
   link: {
     color: '#007AFF',
   },
   list_item: {
-    fontSize: 16,
-    lineHeight: 22,
-    marginBottom: 5,
+    fontSize: 15,
+    lineHeight: 20,
+    marginBottom: 4,
   },
 };
 

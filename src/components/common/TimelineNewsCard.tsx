@@ -4,7 +4,6 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  Image,
   ViewStyle,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -23,6 +22,34 @@ const TimelineNewsCard: React.FC<TimelineNewsCardProps> = ({
   style,
   isLast = false 
 }) => {
+  const formatTime = () => {
+    if (!article.date) return '';
+    
+    // 如果已经是相对时间格式（如 "8分钟前"），直接显示
+    if (typeof article.date === 'string' && 
+        (article.date.includes('分钟前') || 
+         article.date.includes('小时前') || 
+         article.date.includes('天前') || 
+         article.date === '刚刚')) {
+      return article.date;
+    }
+    
+    // 尝试解析为日期并格式化为时间
+    try {
+      const date = new Date(article.date);
+      if (isNaN(date.getTime())) {
+        return article.date; // 如果解析失败，返回原字符串
+      }
+      return date.toLocaleTimeString('zh-CN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      });
+    } catch (e) {
+      return article.date; // 出错时返回原字符串
+    }
+  };
+
   return (
     <TouchableOpacity
       style={[styles.container, style]}
@@ -39,50 +66,47 @@ const TimelineNewsCard: React.FC<TimelineNewsCardProps> = ({
       <View style={styles.contentContainer}>
         {/* 时间标签 */}
         <View style={styles.timeContainer}>
-          <Text style={styles.timeText}>{article.date}</Text>
+          <Text style={styles.timeText}>
+            {formatTime()}
+          </Text>
           {article.source && (
-            <Text style={styles.sourceText}>来源: {article.source}</Text>
+            <Text style={styles.sourceText}>{article.source}</Text>
           )}
         </View>
 
         {/* 文章内容 */}
         <View style={styles.articleContent}>
-          <Text style={styles.title} numberOfLines={3}>
+          <Text style={styles.title} numberOfLines={4}>
             {article.title}
           </Text>
           
-          {article.summary && (
+          {/* 快讯通常不显示摘要，但如果有可以显示 */}
+          {article.summary && article.category !== '快讯' && (
             <Text style={styles.summary} numberOfLines={2}>
               {article.summary}
             </Text>
           )}
 
-          {/* 文章图片 */}
-          {article.image && (
-            <View style={styles.imageContainer}>
-              <Image 
-                source={{ uri: article.image }} 
-                style={styles.articleImage}
-                resizeMode="cover"
-              />
-            </View>
-          )}
-
           {/* 底部信息 */}
           <View style={styles.metaInfo}>
             <View style={styles.tagContainer}>
-              <Ionicons name="pricetag-outline" size={12} color="#666" />
+              <Ionicons name="pricetag-outline" size={12} color="#007AFF" />
               <Text style={styles.category}>
                 {article.category || '快讯'}
               </Text>
             </View>
             
-            {article.readCount && (
-              <View style={styles.readContainer}>
-                <Ionicons name="eye-outline" size={12} color="#666" />
-                <Text style={styles.readCount}>{article.readCount}</Text>
-              </View>
-            )}
+            <View style={styles.rightMeta}>
+              {article.readCount && (
+                <View style={styles.readContainer}>
+                  <Ionicons name="eye-outline" size={12} color="#666" />
+                  <Text style={styles.readCount}>{article.readCount}</Text>
+                </View>
+              )}
+              {article.source && (
+                <Text style={styles.metaSource}>{article.source}</Text>
+              )}
+            </View>
           </View>
         </View>
       </View>
@@ -164,16 +188,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginBottom: 12,
   },
-  imageContainer: {
-    marginBottom: 12,
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  articleImage: {
-    width: '100%',
-    height: 160,
-    backgroundColor: '#F2F2F7',
-  },
+
   metaInfo: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -185,25 +200,37 @@ const styles = StyleSheet.create({
   tagContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F2F2F7',
+    backgroundColor: '#F0F8FF',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#007AFF20',
   },
   category: {
     fontSize: 12,
-    color: '#8E8E93',
+    color: '#007AFF',
     marginLeft: 4,
     fontWeight: '500',
+  },
+  rightMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   readContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginRight: 12,
   },
   readCount: {
     fontSize: 12,
     color: '#8E8E93',
     marginLeft: 4,
+  },
+  metaSource: {
+    fontSize: 12,
+    color: '#8E8E93',
+    fontStyle: 'italic',
   },
 });
 
