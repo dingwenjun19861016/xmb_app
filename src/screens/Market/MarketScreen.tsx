@@ -706,48 +706,50 @@ const MarketScreen = () => {
   const handleFilterPress = (filterKey: string) => {
     console.log('🔄 MarketScreen: Filter pressed:', filterKey);
     
-    setAvailableFilters(prevFilters => {
-      const updatedFilters = prevFilters.map(filter => {
-        if (filter.key === filterKey) {
-          let newSortOrder: 'asc' | 'desc' | 'none';
-          
-          if (filter.sortOrder === 'none') {
-            newSortOrder = 'desc'; // 首次点击：降序
-          } else if (filter.sortOrder === 'desc') {
-            newSortOrder = 'asc';  // 第二次点击：升序
-          } else {
-            newSortOrder = 'desc'; // 第三次点击：回到降序
-          }
-          
-          // 更新全局选中状态
-          setSelectedSortField(filterKey);
-          setSelectedSortOrder(newSortOrder);
-          
-          return {
-            ...filter,
-            isSelected: true,
-            sortOrder: newSortOrder
-          };
-        } else {
-          // 其他选项设为未选中
-          return {
-            ...filter,
-            isSelected: false,
-            sortOrder: 'none'
-          };
-        }
-      });
-      
-      console.log('✅ MarketScreen: Updated filters:', updatedFilters);
-      return updatedFilters;
-    });
+    // 先计算新的排序状态
+    const currentFilter = availableFilters.find(f => f.key === filterKey);
+    let newSortOrder: 'asc' | 'desc' | 'none';
     
-    // 重置数据并重新加载
+    // 特殊处理rank字段（市值），只支持从大到小排序
+    if (filterKey === 'rank') {
+      // rank字段只有一种排序：从小rank到大rank（即从大市值到小市值）
+      newSortOrder = 'asc'; // rank=1是最大市值，所以用asc排序
+    } else {
+      // 其他字段的正常排序逻辑
+      if (!currentFilter || currentFilter.sortOrder === 'none') {
+        // 首次点击：对于数值字段，默认从大到小（desc）
+        newSortOrder = 'desc';
+      } else if (currentFilter.sortOrder === 'desc') {
+        // 第二次点击：从小到大（asc）
+        newSortOrder = 'asc';
+      } else {
+        // 第三次点击：回到从大到小（desc）
+        newSortOrder = 'desc';
+      }
+    }
+    
+    console.log('🔄 MarketScreen: Calculated new sort order:', { filterKey, newSortOrder });
+    
+    // 同时更新所有相关状态
+    setSelectedSortField(filterKey);
+    setSelectedSortOrder(newSortOrder);
+    
+    setAvailableFilters(prevFilters => 
+      prevFilters.map(filter => ({
+        ...filter,
+        isSelected: filter.key === filterKey,
+        sortOrder: filter.key === filterKey ? newSortOrder : 'none'
+      }))
+    );
+    
+    // 立即重置数据并重新加载，使用计算出的新参数
     setUsStocks([]);
-    setDisplayedItemCount(30); // 重置为30条
+    setDisplayedItemCount(30);
     setCurrentPage(0);
     setHasMore(true);
-    fetchMarketData(0, true);
+    
+    // 直接调用加载函数，传入新的排序参数
+    fetchMarketDataWithSort(filterKey, newSortOrder);
   };
 
   // 加载配置
@@ -926,7 +928,7 @@ const MarketScreen = () => {
       console.log('🔄 MarketScreen: Fetching US stocks list with progressive loading...', { page, isRefresh });
       
       // 使用渐进式加载：首次加载30条，然后逐步加载更多
-      await startStockProgressiveLoading(page === 0 ? 0 : page);
+      await startStockProgressiveLoadingWithSort(selectedSortField, selectedSortOrder, page === 0 ? 0 : page);
       
     } catch (err) {
       console.error('❌ MarketScreen: Failed to fetch US stocks:', err);
@@ -1029,12 +1031,54 @@ const MarketScreen = () => {
     }
   };
 
-  // 股票渐进式加载主函数
-  const startStockProgressiveLoading = async (startBatch: number = 0) => {
+  // 获取美股市场数据 - 带排序参数版本
+  const fetchMarketDataWithSort = async (sortField: string, sortOrder: 'asc' | 'desc', page: number = 0, isRefresh: boolean = true) => {
+    try {
+      setUsStocksLoading(true);
+      setUsStocksError(null);
+      
+      console.log('🔄 MarketScreen: Fetching US stock market data with sort...', { sortField, sortOrder, page, isRefresh });
+      
+      // 直接调用美股数据加载，传入排序参数
+      await fetchUSStockDataWithSort(sortField, sortOrder, page, isRefresh);
+      
+    } catch (err) {
+      console.error('❌ MarketScreen: Failed to fetch market data with sort:', err);
+      setUsStocksError('加载市场数据失败，请稍后再试');
+    } finally {
+      setUsStocksLoading(false);
+    }
+  };
+
+  // 获取美股数据 - 带排序参数版本
+  const fetchUSStockDataWithSort = async (sortField: string, sortOrder: 'asc' | 'desc', page: number = 0, isRefresh: boolean = false) => {
+    try {
+      if (isRefresh || page === 0) {
+        setUsStocksLoading(true);
+        setUsStocksError(null);
+        setUsStocks([]);
+        setDisplayedItemCount(30);
+      }
+      
+      console.log('🔄 MarketScreen: Fetching US stocks list with sort...', { sortField, sortOrder, page, isRefresh });
+      
+      // 使用传入的排序参数进行渐进式加载
+      await startStockProgressiveLoadingWithSort(sortField, sortOrder, page === 0 ? 0 : page);
+      
+    } catch (err) {
+      console.error('❌ MarketScreen: Failed to fetch US stocks with sort:', err);
+      setUsStocksError('加载美股数据失败，请稍后再试');
+      setUsStocks([]);
+    } finally {
+      setUsStocksLoading(false);
+    }
+  };
+
+  // 股票渐进式加载主函数 - 带排序参数版本
+  const startStockProgressiveLoadingWithSort = async (sortField: string, sortOrder: 'asc' | 'desc', startBatch: number = 0) => {
     setIsProgressiveLoading(true);
     setProgressiveLoadCompleted(false);
     
-    // 如果是新的加载会话，重置hasMore状态
     if (startBatch === 0) {
       setHasMore(true);
     }
@@ -1042,9 +1086,9 @@ const MarketScreen = () => {
     const maxBatches = startBatch + totalInitialBatches;
     
     try {
-      // 第一步：立即加载第一批数据（0-10条股票）
+      // 第一步：立即加载第一批数据
       if (startBatch === 0) {
-        const firstResult = await loadStockBatchData(0, true);
+        const firstResult = await loadStockBatchDataWithSort(0, sortField, sortOrder, true);
         if (!firstResult.success) {
           throw new Error('Failed to load first batch');
         }
@@ -1055,19 +1099,16 @@ const MarketScreen = () => {
       const startIndex = startBatch === 0 ? 1 : startBatch;
       
       for (let batchIndex = startIndex; batchIndex < maxBatches; batchIndex++) {
-        batchPromises.push(loadStockBatchData(batchIndex, false));
+        batchPromises.push(loadStockBatchDataWithSort(batchIndex, sortField, sortOrder, false));
       }
       
-      console.log(`📦 MarketScreen: Starting parallel loading of ${batchPromises.length} stock batches`);
+      console.log(`📦 MarketScreen: Starting parallel loading of ${batchPromises.length} stock batches with sort`);
       
-      // 等待所有批次完成
       const results = await Promise.all(batchPromises);
       
-      // 检查是否还有更多数据 - 修复逻辑
       const successfulResults = results.filter((result: any) => result.success);
       const lastResult = successfulResults[successfulResults.length - 1] as any;
       
-      // 如果最后一批数据量少于期望的limit，说明没有更多数据了
       const expectedLimit = progressiveBatchSize;
       const actualLastBatchSize = lastResult ? (lastResult.total - (maxBatches - 1) * progressiveBatchSize) : 0;
       const hasMoreData = lastResult?.hasMore && actualLastBatchSize >= expectedLimit;
@@ -1075,20 +1116,86 @@ const MarketScreen = () => {
       setHasMore(hasMoreData);
       setProgressiveLoadCompleted(true);
       
-      console.log(`✅ MarketScreen: Stock progressive loading completed`, {
+      console.log(`✅ MarketScreen: Stock progressive loading completed with sort`, {
+        sortField,
+        sortOrder,
         totalBatches: results.length,
         successfulBatches: successfulResults.length,
-        hasMore: hasMoreData,
-        lastBatchSize: actualLastBatchSize,
-        expectedLimit
+        hasMore: hasMoreData
       });
       
     } catch (error) {
-      console.error('❌ Stock progressive loading failed:', error);
+      console.error('❌ Stock progressive loading with sort failed:', error);
       setUsStocksError(error instanceof Error ? error.message : 'Failed to load stock data');
-      setHasMore(false); // 出错时设置为没有更多数据
+      setHasMore(false);
     } finally {
       setIsProgressiveLoading(false);
+    }
+  };
+
+  // 股票渐进式加载单个批次的数据 - 带排序参数版本
+  const loadStockBatchDataWithSort = async (batchIndex: number, sortField: string, sortOrder: 'asc' | 'desc', isNewSession: boolean = false) => {
+    try {
+      const isFirstBatch = batchIndex === 0;
+      const currentBatchSize = isFirstBatch ? initialBatchSize : progressiveBatchSize;
+      const skip = isFirstBatch ? 0 : initialBatchSize + (batchIndex - 1) * progressiveBatchSize;
+      
+      console.log(`🔄 MarketScreen: Loading stock batch ${batchIndex} with sort, skip: ${skip}, limit: ${currentBatchSize}`, { sortField, sortOrder });
+      
+      // 使用传入的排序参数直接调用StockService
+      const stocksData = await stockService.getUSStocksList(skip, currentBatchSize, sortField as any, sortOrder);
+      
+      if (stocksData.length > 0) {
+        // 将StockData转换为StockCardData格式
+        const stockDataFormat = stocksData.map(stock => ({
+          _id: stock._id,
+          coin_id: stock._id,
+          rank: stock.rank,
+          name: stock.code,
+          fullName: stock.name,
+          symbol: stock.code,
+          currentPrice: stock.currentPrice,
+          priceChange24h: stock.priceChangePercent,
+          priceChangePercent: stock.priceChangePercent,
+          marketCap: stock.baseinfo?.marketCap || stock.marketCap || '',
+          volume: stock.baseinfo?.volume || stock.volume || '',
+          fdv: stock.baseinfo?.marketCap || stock.marketCap || '',
+          totalSupply: stock.baseinfo?.sharesOutstanding || '',
+          circulatingSupply: stock.baseinfo?.sharesOutstanding || '',
+          description: `${stock.name} (${stock.code}) - ${stock.sector}`,
+          logo: stockLogoService.getLogoUrlSync(stock.code),
+          cexInfos: [],
+          valid: true,
+          created_at: stock.created_at,
+          date: stock.date || '',
+          updated_at: stock.updated_at,
+          stock24h: stock.usstock24h?.map(item => ({
+            price: parseFloat(item.price),
+            createdAt: item.createdAt
+          })) || []
+        }));
+        
+        const transformedStocks = await transformStockData(stockDataFormat, false);
+        
+        if (isNewSession && batchIndex === 0) {
+          setUsStocks(transformedStocks);
+        } else {
+          setUsStocks(prev => [...prev, ...transformedStocks]);
+        }
+        
+        console.log(`✅ MarketScreen: Stock batch ${batchIndex} loaded successfully with sort, ${transformedStocks.length} stocks`);
+      }
+      
+      return { 
+        success: true, 
+        hasMore: stocksData.length === currentBatchSize,
+        total: skip + stocksData.length,
+        batchSize: currentBatchSize
+      };
+      
+    } catch (error) {
+      console.error(`❌ Failed to load stock batch ${batchIndex} with sort:`, error);
+      return { success: false, hasMore: false, total: 0 };
     }
   };
 
@@ -1239,7 +1346,7 @@ const MarketScreen = () => {
       nextBatchIndex = Math.floor((usStocks.length - initialBatchSize) / progressiveBatchSize) + 1;
     }
     
-    startStockProgressiveLoading(nextBatchIndex)
+    startStockProgressiveLoadingWithSort(selectedSortField, selectedSortOrder, nextBatchIndex)
       .catch(error => {
         console.error('❌ MarketScreen: Failed to load more stocks:', error);
         setUsStocksError('加载更多数据失败');
@@ -2048,7 +2155,13 @@ const MarketScreen = () => {
                     </Text>
                     {item.isSelected && item.sortOrder !== 'none' && (
                       <Ionicons
-                        name={item.sortOrder === 'asc' ? 'chevron-up' : 'chevron-down'}
+                        name={
+                          item.key === 'rank' 
+                            ? 'chevron-down' // rank字段：从大市值到小市值，箭头向下
+                            : item.sortOrder === 'desc' 
+                              ? 'chevron-down' // 其他字段：desc（从大到小）用向下箭头
+                              : 'chevron-up'   // 其他字段：asc（从小到大）用向上箭头
+                        }
                         size={14}
                         color="white"
                         style={styles.sortArrow}
