@@ -395,9 +395,16 @@ const ArticleScreen = () => {
   }, [filteredArticles]);
 
   const handleArticlePress = (article: NewsArticle) => {
+    console.log('🔗 ArticleScreen: 导航到文章详情:', article.title);
+    console.log('🌐 平台环境:', Platform.OS);
+    console.log('📱 当前导航状态:', navigation.getState());
+    
+    // 使用navigate而不是push，与MarketScreen保持一致
     navigation.navigate('ArticleDetail', { 
       articleId: article._id,
-      article: article
+      article: article,
+      fromArticleScreen: true,
+      returnTo: 'articles'
     });
   };
 

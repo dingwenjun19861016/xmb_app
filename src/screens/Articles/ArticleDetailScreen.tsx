@@ -3,7 +3,7 @@ import {
   View, 
   Text, 
   StyleSheet, 
-  ScrollView, 
+  ScrollView,
   TouchableOpacity, 
   Image, 
   Share,
@@ -57,14 +57,16 @@ const ArticleDetailScreen = () => {
     returnTo, 
     selectedCategory, 
     searchText, 
-    isSearchMode 
+    isSearchMode,
+    fromArticleScreen // 添加来源标记
   } = route.params || { 
     articleId: '1', 
     article: null,
     returnTo: undefined,
     selectedCategory: '全部',
     searchText: '',
-    isSearchMode: false
+    isSearchMode: false,
+    fromArticleScreen: false
   };
 
   // State management
@@ -96,50 +98,23 @@ const ArticleDetailScreen = () => {
   const [loadingText, setLoadingText] = useState<string>('加载文章中...');
   const [notFoundText, setNotFoundText] = useState<string>('文章未找到，可能已被删除或不存在');
 
-  // Handle back button press with web support
+  // Handle back button press - 参考USStockDetailScreen的实现
   const handleBack = () => {
-    console.log('🔙 处理返回操作...');
-    
-    // Web环境下检查是否为直接URL访问
-    if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      const currentUrl = window.location.href;
-      console.log('📍 当前URL:', currentUrl);
-      
-      // 检查是否是通过URL直接访问的（没有导航历史记录）
-      const isDirectAccess = window.history.length <= 1;
-      
-      if (isDirectAccess) {
-        // 只有直接URL访问才重定向到文章列表页
-        console.log('🌐 直接URL访问，重定向到文章列表页');
-        try {
-          const url = new URL(currentUrl);
-          const articlesUrl = `${url.origin}/articles`;
-          window.location.href = articlesUrl;
-          return;
-        } catch (urlError) {
-          console.error('❌ ArticleDetailScreen: URL解析失败:', urlError);
-          window.location.href = '/articles';
-          return;
-        }
-      }
-    }
-     
-    // 所有其他情况都使用导航返回
-    console.log('📱 使用导航返回');
-    console.log('📱 导航状态:', {
+    console.log('🔙 ArticleDetailScreen: 处理返回按钮点击', { fromArticleScreen, returnTo });
+    console.log('� 导航状态:', {
       canGoBack: navigation.canGoBack(),
-      routeState: navigation.getState()
+      routeName: route.name,
+      params: route.params
     });
     
-    if (navigation.canGoBack()) {
-      console.log('📱 执行 navigation.goBack()');
+    try {
+      // 简化逻辑：无论什么环境都优先使用navigation.goBack()
+      console.log('✅ 直接使用 navigation.goBack()，忽略环境差异');
       navigation.goBack();
-    } else {
-      // 如果没有可返回的页面，导航到文章列表主页面
-      console.log('📱 导航到 ArticlesMain');
-      navigation.navigate('Articles', { 
-        screen: 'ArticlesMain'
-      });
+    } catch (error) {
+      console.error('❌ ArticleDetailScreen: goBack失败:', error);
+      // 只有在goBack失败时才使用其他方案
+      navigation.navigate('Articles' as never);
     }
   };
 
