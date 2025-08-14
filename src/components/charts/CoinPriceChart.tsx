@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Dimensions, TouchableOpacity, Platform } from 'react-native';
 import { LineChart as RNLineChart } from 'react-native-chart-kit';
-import { CoinInfo } from '../../services/CoinInfoService';
+import { CoinInfo } from '../../services/StockInfoService';
 import { DateUtils } from '../../utils/dateUtils';
 // 仅在Web环境中导入Chart.js相关库
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';

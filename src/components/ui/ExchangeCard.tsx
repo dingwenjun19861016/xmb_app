@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Linking, Platform } from 'react-native';
-import { CexInfo } from '../../services/CoinInfoService';
+import { CexInfo } from '../../services/StockInfoService';
 import { Ionicons } from '@expo/vector-icons';
 
 interface ExchangeCardProps {

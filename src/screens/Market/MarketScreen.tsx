@@ -783,7 +783,7 @@ const MarketScreen = () => {
       setHeaderTitle(headerTitleConfig);
       setSearchPlaceholder(searchPlaceholderConfig);
       setFavoritesTitle(favoritesTitleConfig);
-      setAllCoinsTitle(allCoinsTitleConfig);
+      setAllStocksTitle(allCoinsTitleConfig);
       
       // 解析列表头部配置
       const headers = listHeadersConfig.split(',').map(header => header.trim()).filter(header => header.length > 0);
@@ -853,7 +853,7 @@ const MarketScreen = () => {
         headerTitle: headerTitleConfig,
         searchPlaceholder: searchPlaceholderConfig,
         favoritesTitle: favoritesTitleConfig,
-        allCoinsTitle: allCoinsTitleConfig,
+        allStocksTitle: allCoinsTitleConfig,
         listHeaders: finalHeaders,
         listHeadersEnabled: headersEnabled,
         marketListLabels: marketListLabels
@@ -871,7 +871,7 @@ const MarketScreen = () => {
       setHeaderTitle('行情');
       setSearchPlaceholder('搜索美股...');  // 美股APP默认搜索提示
       setFavoritesTitle('我的自选');
-      setAllCoinsTitle('全部股票');
+      setAllStocksTitle('全部股票');
       setListHeaders(['#', '名称', '价格/24h']);
       setListHeadersEnabled(true); // 默认显示表头
       setPageSize(100);
