@@ -365,10 +365,14 @@ const StockCard: React.FC<StockCardProps> = ({
         {/* 右侧：图表和涨跌幅 */}
         <View style={styles.chartAndChangeContainer}>
           {/* 24小时价格图表 */}
-          {showChart && data.stock24h && data.stock24h.length > 1 && (
+          {showChart && (
             <View style={styles.chartContainer}>
+              {/* 临时调试 */}
+              {console.log(`📈 StockCard ${data.name}: stock24h =`, data.stock24h?.length || 'undefined', 'items')}
+              {data.stock24h && data.stock24h.length > 0 && console.log('First item:', data.stock24h[0])}
+              
               <SVGMiniPriceChart
-                data={data.stock24h}
+                data={data.stock24h || []}
                 isPositive={data.isPositive}
                 width={context === 'home' ? 50 : 55}
                 height={context === 'home' ? 24 : 26}

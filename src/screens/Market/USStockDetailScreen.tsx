@@ -29,6 +29,7 @@ import InfoCard from '../../components/ui/InfoCard';
 import PriceCard from '../../components/ui/PriceCard';
 import ExchangeCard from '../../components/ui/ExchangeCard';
 import CoinPriceChart from '../../components/charts/CoinPriceChart';
+import SmartStockChart from '../../components/charts/SmartStockChart';
 import MessageModal from '../../components/common/MessageModal';
 import LoginModal from '../../components/auth/LoginModal';
 import TodayHeader from '../../components/common/TodayHeader';
@@ -522,53 +523,56 @@ const USStockDetailScreen = () => {
     }
   };
 
-  // 处理返回按钮点击 - 支持returnTo参数
+  // 处理返回按钮点击 - 修复版本
   const handleBackPress = () => {
-    // Web环境下的修复方案
-    if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      const currentUrl = window.location.href;
-      console.log('📍 当前URL:', currentUrl);
-      
-      // 如果是从MarketScreen进入的，使用与"行情"tab相同的逻辑返回到MarketScreen
-      if (fromMarketScreen) {
-        try {
-          navigation.goBack();
-          return;
-        } catch (error) {
-          console.error('❌ USStockDetailScreen: 返回到MarketScreen失败:', error);
-        }
-      }
-      
-      // 如果returnTo参数是home，则返回到首页
-      if (returnTo === 'home') {
-        try {
-          navigation.goBack();
-          return;
-        } catch (urlError) {
-          console.error('❌ USStockDetailScreen: 返回到首页失败:', urlError);
-        }
-      }
-      
-      // 没有returnTo参数，默认回到行情列表
-      if (currentUrl.includes('/market/')) {
-        try {
-          const url = new URL(currentUrl);
-          const targetUrl = `${url.origin}/market`;          
-          // 直接导航到目标页面
-          window.location.href = targetUrl;
-          return;
-        } catch (urlError) {
-          console.error('❌ USStockDetailScreen: URL解析失败:', urlError);
-        }
-      }
-      
-      // 如果URL解析失败，尝试使用相对路径
-      console.log('🔧 使用相对路径导航');
-      window.location.href = '/market';
-      return;
-    }
+    console.log('🔙 USStockDetailScreen: 处理返回按钮点击', { fromMarketScreen, returnTo });
     
-    navigation.goBack();
+    try {
+      // 首先尝试正常的导航返回
+      if (navigation.canGoBack()) {
+        console.log('✅ 使用 navigation.goBack()');
+        navigation.goBack();
+        return;
+      }
+      
+      // 如果无法正常返回，根据来源进行处理
+      if (fromMarketScreen) {
+        console.log('🏠 返回到 MarketScreen');
+        navigation.navigate('Market' as never);
+        return;
+      }
+      
+      if (returnTo === 'home') {
+        console.log('🏠 返回到首页');
+        navigation.navigate('Home' as never);
+        return;
+      }
+      
+      // Web 环境特殊处理
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        const currentUrl = window.location.href;
+        console.log('🌐 Web环境返回处理，当前URL:', currentUrl);
+        
+        if (currentUrl.includes('/market/')) {
+          window.history.back();
+          return;
+        }
+      }
+      
+      // 最后的保底方案
+      console.log('🔙 使用保底方案：导航到Market');
+      navigation.navigate('Market' as never);
+      
+    } catch (error) {
+      console.error('❌ USStockDetailScreen: 返回处理失败:', error);
+      
+      // 错误情况下的最终保底
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        window.history.back();
+      } else {
+        navigation.navigate('Market' as never);
+      }
+    }
   };
 
   // Format price with dollar sign
@@ -940,12 +944,13 @@ const USStockDetailScreen = () => {
           <ChartSkeleton />
         ) : (
           <View style={styles.chartSection}>
-            <CoinPriceChart 
+            <SmartStockChart 
               historicalData={historicalData}
               selectedTimePeriod={selectedTimePeriod}
               onTimePeriodChange={setSelectedTimePeriod}
               isPositive={isPriceChangePositive()}
               showRankChart={true}
+              stockCode={stockCode}
             />
           </View>
         )}

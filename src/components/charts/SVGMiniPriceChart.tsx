@@ -25,6 +25,11 @@ const SVGMiniPriceChart: React.FC<SVGMiniPriceChartProps> = ({
   showFill = false
 }) => {
   const pathData = useMemo(() => {
+    console.log('📊 SVGMiniPriceChart: data =', data?.length || 'no data', 'items');
+    if (data && data.length > 0) {
+      console.log('📊 SVGMiniPriceChart: first item =', data[0]);
+    }
+    
     if (!data || data.length < 2) {
       return { points: '', fillPath: '' };
     }

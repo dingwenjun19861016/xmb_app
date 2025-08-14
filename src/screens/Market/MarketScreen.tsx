@@ -682,8 +682,11 @@ const MarketScreen = () => {
         logo: logos[stock.name || stock.code],
         // 添加价格变动标志
         priceChangeDirection,
-        // 添加24小时价格数据
-        stock24h: stock.usstock24h || [],
+        // 添加24小时价格数据 - 处理两种可能的数据格式
+        stock24h: stock.stock24h || stock.usstock24h?.map(item => ({
+          price: parseFloat(item.price) || 0,
+          createdAt: item.createdAt || item.updatedAt || new Date().toISOString()
+        })) || [],
       };
     });
 
@@ -985,7 +988,23 @@ const MarketScreen = () => {
           };
         });
         
+        // 添加调试日志来检查数据结构
+        if (stocksData && stocksData.length > 0) {
+          const sampleStock = stocksData[0];
+          console.log(`📊 Sample stock: ${sampleStock.name} (${sampleStock.code})`);
+          console.log(`📈 Price: ${sampleStock.currentPrice}, Change: ${sampleStock.priceChangePercent}`);
+          console.log(`📉 24h data points: ${sampleStock.usstock24h?.length || 0}`);
+          if (sampleStock.usstock24h && sampleStock.usstock24h.length > 0) {
+            console.log(`🔍 First 24h point: ${JSON.stringify(sampleStock.usstock24h[0])}`);
+          }
+        }
+        
         const transformedStocks = await transformStockData(stockDataFormat, false); // 改为使用transformStockData处理股票数据
+        
+        // 检查转换后的数据
+        if (transformedStocks[0]) {
+          console.log(`✅ Transformed stock24h length: ${transformedStocks[0].stock24h?.length || 0}`);
+        }
         
         // 更新股票列表 - 简单追加方式，保持后端API的排序
         if (isNewSession && batchIndex === 0) {
