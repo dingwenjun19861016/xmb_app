@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import coinLogoService from '../../services/CoinLogoService';
 import stockLogoService from '../../services/StockLogoService';
-import userCoinService from '../../services/UserCoinService';
+import userStockService from '../../services/UserStockService';
 import { useUser } from '../../contexts/UserContext';
 // 导入图表组件
 import SVGMiniPriceChart from '../charts/SVGMiniPriceChart';
@@ -21,8 +20,8 @@ const UI_COLORS = {
   danger: '#FF3B30',
 };
 
-// 定义币种卡片数据接口
-export interface CoinCardData {
+// 定义股票卡片数据接口
+export interface StockCardData {
   id: string;
   name: string;
   fullName?: string; // 添加完整名称字段
@@ -35,36 +34,35 @@ export interface CoinCardData {
   marketCap?: string;
   volume?: string;
   priceChangeDirection?: 'up' | 'down' | null;
-  coin24h?: Array<{    // 24小时价格变化数据
+  stock24h?: Array<{   // 24小时股票价格变化数据
     price: number;
     createdAt: string;
   }>;
 }
 
 // 定义卡片样式类型
-export type CoinCardVariant = 'default' | 'compact' | 'detailed' | 'large';
+export type StockCardVariant = 'default' | 'compact' | 'detailed' | 'large';
 
 // 定义使用场景类型
-export type CoinCardContext = 'home' | 'market' | 'search';
+export type StockCardContext = 'home' | 'market' | 'search';
 
-interface CoinCardProps {
-  data: CoinCardData;
-  variant?: CoinCardVariant;
-  context?: CoinCardContext; // 新增：使用场景
-  onPress?: (name: string, fullName?: string) => void; // 更新参数以支持fullName
+interface StockCardProps {
+  data: StockCardData;
+  variant?: StockCardVariant;
+  context?: StockCardContext; // 使用场景
+  onPress?: (name: string, fullName?: string) => void;
   showRank?: boolean;
   showMarketCap?: boolean;
   showVolume?: boolean;
   customStyle?: any;
-  showFavoriteButton?: boolean; // 新增：是否显示自选按钮
-  isFavorited?: boolean; // 新增：是否已自选
-  onFavoritePress?: (coinSymbol: string, isAdding: boolean) => void; // 新增：自选按钮回调
-  onLoginRequired?: () => void; // 新增：需要登录时的回调
-  showChart?: boolean; // 新增：是否显示24小时价格图表
-  isStock?: boolean; // 新增：是否为股票数据
+  showFavoriteButton?: boolean; // 是否显示自选按钮
+  isFavorited?: boolean; // 是否已自选
+  onFavoritePress?: (stockSymbol: string, isAdding: boolean) => void; // 自选按钮回调
+  onLoginRequired?: () => void; // 需要登录时的回调
+  showChart?: boolean; // 是否显示24小时价格图表
 }
 
-const CoinCard: React.FC<CoinCardProps> = ({
+const StockCard: React.FC<StockCardProps> = ({
   data,
   variant = 'default',
   context = 'home', // 默认为首页场景
@@ -78,7 +76,6 @@ const CoinCard: React.FC<CoinCardProps> = ({
   onFavoritePress,
   onLoginRequired,
   showChart = true, // 默认显示图表，包括首页
-  isStock = false, // 默认不是股票
 }) => {
   const [imageError, setImageError] = useState(false);
   const [currentLogoUrl, setCurrentLogoUrl] = useState(data.logo || '');
@@ -103,29 +100,17 @@ const CoinCard: React.FC<CoinCardProps> = ({
           // 使用symbol或name来获取图标
           const symbol = data.symbol || data.name;
           
-          if (isStock) {
-            // 如果是股票，使用StockLogoService
-            const syncUrl = stockLogoService.getLogoUrlSync(symbol);
-            setCurrentLogoUrl(syncUrl);
-            
-            setIsLoadingIcon(true);
-            const asyncUrl = await stockLogoService.getLogoUrl(symbol);
-            if (asyncUrl !== syncUrl) {
-              setCurrentLogoUrl(asyncUrl);
-            }
-          } else {
-            // 如果是加密货币，使用CoinLogoService
-            const syncUrl = coinLogoService.getLogoUrlSync(symbol);
-            setCurrentLogoUrl(syncUrl);
-            
-            setIsLoadingIcon(true);
-            const asyncUrl = await coinLogoService.getLogoUrl(symbol);
-            if (asyncUrl !== syncUrl) {
-              setCurrentLogoUrl(asyncUrl);
-            }
+          // 使用StockLogoService获取股票logo
+          const syncUrl = stockLogoService.getLogoUrlSync(symbol);
+          setCurrentLogoUrl(syncUrl);
+          
+          setIsLoadingIcon(true);
+          const asyncUrl = await stockLogoService.getLogoUrl(symbol);
+          if (asyncUrl !== syncUrl) {
+            setCurrentLogoUrl(asyncUrl);
           }
         } catch (error) {
-          console.warn('Failed to load icon:', error);
+          console.warn('Failed to load stock icon:', error);
           // 如果异步加载失败，保持同步URL
         } finally {
           setIsLoadingIcon(false);
@@ -134,11 +119,11 @@ const CoinCard: React.FC<CoinCardProps> = ({
     };
 
     loadIcon();
-  }, [data.symbol, data.name, data.logo, imageError, isStock]);
+  }, [data.symbol, data.name, data.logo, imageError]);
 
   const handlePress = () => {
     if (onPress) {
-      // 传递coin.symbol而不是id，以及fullName用于区分同名币种
+      // 传递股票代码和公司全名
       onPress(data.name, data.fullName);
     }
   };
@@ -148,8 +133,8 @@ const CoinCard: React.FC<CoinCardProps> = ({
     const isRemoving = isFavorited; // 如果当前是已自选状态，则执行移除操作
     const actionText = isRemoving ? '移除自选' : '添加自选';
     
-    console.log('🔥 CoinCard: 自选按钮被点击!', { 
-      coinName: data.name, 
+    console.log('🔥 StockCard: 自选按钮被点击!', { 
+      stockName: data.name, 
       currentUser: !!currentUser,
       userEmail: currentUser?.email || 'null',
       action: actionText,
@@ -158,39 +143,38 @@ const CoinCard: React.FC<CoinCardProps> = ({
     
     // 检查用户是否登录
     if (!currentUser) {
-      console.log('❌ CoinCard: 用户未登录，触发登录回调');
+      console.log('❌ StockCard: 用户未登录，触发登录回调');
       if (onLoginRequired) {
         onLoginRequired();
       } else {
-        // 如果没有登录回调，显示简单提示（但在MarketScreen中应该有回调）
-        console.warn('⚠️ CoinCard: 没有提供onLoginRequired回调');
+        console.warn('⚠️ StockCard: 没有提供onLoginRequired回调');
       }
       return;
     }
 
     try {
-      console.log(`⏳ CoinCard: 开始${actionText}...`);
+      console.log(`⏳ StockCard: 开始${actionText}...`);
       setIsAddingToFavorites(true);
       
-      const coinSymbol = data.symbol || data.name;
-      console.log('🪙 CoinCard: 币种符号:', coinSymbol);
-      console.log('👤 CoinCard: 当前用户邮箱:', currentUser.email);
+      const stockSymbol = data.symbol || data.name;
+      console.log('📈 StockCard: 股票代码:', stockSymbol);
+      console.log('👤 StockCard: 当前用户邮箱:', currentUser.email);
       
       // 根据当前状态选择API
       const response = isRemoving 
-        ? await userCoinService.removeUserCoin(currentUser.email, coinSymbol)
-        : await userCoinService.addUserCoin(currentUser.email, coinSymbol);
+        ? await userStockService.removeUserCoin(currentUser.email, stockSymbol)
+        : await userStockService.addUserCoin(currentUser.email, stockSymbol);
         
-      console.log(`✅ CoinCard: ${actionText} API响应:`, response);
+      console.log(`✅ StockCard: ${actionText} API响应:`, response);
       
       if (response.success && response.data) {
         // 设置成功状态
         setFavoriteAdded(true);
-        console.log(`🎉 CoinCard: ${actionText}成功，显示提示消息`);
+        console.log(`🎉 StockCard: ${actionText}成功，显示提示消息`);
         
         if (onFavoritePress) {
           // 传递操作类型：添加(true)或移除(false)
-          onFavoritePress(coinSymbol, !isRemoving);
+          onFavoritePress(stockSymbol, !isRemoving);
         }
         
         // 3秒后恢复原始状态
@@ -201,11 +185,11 @@ const CoinCard: React.FC<CoinCardProps> = ({
         throw new Error(response.error || `${actionText}失败`);
       }
     } catch (error: any) {
-      console.error(`❌ CoinCard: ${actionText}失败:`, error);
+      console.error(`❌ StockCard: ${actionText}失败:`, error);
       
       // 检查是否为登录过期错误
       if (error.message && error.message.includes('登录已过期')) {
-        console.log('🚫 CoinCard: 检测到登录过期，提示用户重新登录');
+        console.log('🚫 StockCard: 检测到登录过期，提示用户重新登录');
         if (onLoginRequired) {
           onLoginRequired();
         }
@@ -214,37 +198,33 @@ const CoinCard: React.FC<CoinCardProps> = ({
       
       // 这里不显示Alert，让父组件处理错误提示
       if (onFavoritePress) {
-        // 可以通过回调通知父组件发生了错误
-        console.log(`📢 CoinCard: 通知父组件${actionText}失败`);
+        console.log(`📢 StockCard: 通知父组件${actionText}失败`);
       }
     } finally {
       setIsAddingToFavorites(false);
-      console.log(`🏁 CoinCard: ${actionText}操作完成`);
+      console.log(`🏁 StockCard: ${actionText}操作完成`);
     }
   };
 
   // 处理图标加载失败，尝试回退
   const handleImageError = () => {
-    console.warn('Image load failed for:', data.name, 'URL:', currentLogoUrl);
+    console.warn('Stock image load failed for:', data.name, 'URL:', currentLogoUrl);
     setImageError(true);
     
-    // 根据是否为股票选择合适的logo服务
     try {
-      const fallbackUrl = isStock 
-        ? stockLogoService.handleLogoError(data.symbol || data.name, currentLogoUrl)
-        : coinLogoService.handleIconError(data.symbol || data.name, currentLogoUrl);
+      const fallbackUrl = stockLogoService.handleLogoError(data.symbol || data.name, currentLogoUrl);
         
       if (fallbackUrl && fallbackUrl !== currentLogoUrl) {
         setCurrentLogoUrl(fallbackUrl);
         setImageError(false); // 重置错误状态，给回退URL一个机会
       }
     } catch (error) {
-      console.warn('Fallback also failed:', error);
+      console.warn('Stock logo fallback also failed:', error);
     }
   };
 
   const getCardStyle = () => {
-    const baseStyles = [styles.coinCard];
+    const baseStyles = [styles.stockCard];
     
     // 根据variant添加样式
     switch (variant) {
@@ -293,7 +273,7 @@ const CoinCard: React.FC<CoinCardProps> = ({
   const renderLogo = () => {
     const logoSize = getLogoSize();
     const logoStyles = [
-      styles.coinLogo, 
+      styles.stockLogo, 
       context === 'home' && styles.homeContextLogo, // 首页特定的logo样式
       logoSize
     ];
@@ -333,17 +313,17 @@ const CoinCard: React.FC<CoinCardProps> = ({
 
   const renderMainInfo = () => (
     <View style={[
-      styles.coinInfo,
+      styles.stockInfo,
       // 根据是否有收藏按钮动态调整右边距
-      showFavoriteButton ? styles.coinInfoWithFavorite : styles.coinInfoDefault
+      showFavoriteButton ? styles.stockInfoWithFavorite : styles.stockInfoDefault
     ]}>
       <View style={styles.topRow}>
-        {/* 左侧：币名（不包含排名） */}
+        {/* 左侧：股票名称（不包含排名） */}
         <View style={styles.nameContainer}>
           <Text style={[
-            styles.coinName, 
-            variant === 'compact' ? styles.compactCoinName : {},
-            variant === 'large' ? styles.largeCoinName : {}
+            styles.stockName, 
+            variant === 'compact' ? styles.compactStockName : {},
+            variant === 'large' ? styles.largeStockName : {}
           ]}>
             {data.name}
           </Text>
@@ -360,7 +340,7 @@ const CoinCard: React.FC<CoinCardProps> = ({
         
         {/* 右侧：价格 */}
         <Text style={[
-          styles.coinPrice,
+          styles.stockPrice,
           variant === 'compact' ? styles.compactPrice : {},
           variant === 'large' ? styles.largePrice : {}
         ]}>
@@ -370,7 +350,7 @@ const CoinCard: React.FC<CoinCardProps> = ({
       
       {/* 第二行：交易量和图表+涨跌幅 */}
       <View style={styles.bottomRow}>
-        {/* 左侧：交易量（与币名左对齐） */}
+        {/* 左侧：交易量（与股票名称左对齐） */}
         <View style={styles.volumeContainer}>
           {data.volume && (
             <Text style={[
@@ -385,10 +365,10 @@ const CoinCard: React.FC<CoinCardProps> = ({
         {/* 右侧：图表和涨跌幅 */}
         <View style={styles.chartAndChangeContainer}>
           {/* 24小时价格图表 */}
-          {data.coin24h && data.coin24h.length > 1 && (
+          {showChart && data.stock24h && data.stock24h.length > 1 && (
             <View style={styles.chartContainer}>
               <SVGMiniPriceChart
-                data={data.coin24h}
+                data={data.stock24h}
                 isPositive={data.isPositive}
                 width={context === 'home' ? 50 : 55}
                 height={context === 'home' ? 24 : 26}
@@ -400,7 +380,7 @@ const CoinCard: React.FC<CoinCardProps> = ({
           
           {/* 涨跌幅 */}
           <Text style={[
-            styles.coinChange,
+            styles.stockChange,
             { color: data.isPositive ? UI_COLORS.success : UI_COLORS.danger },
             variant === 'compact' ? styles.compactChange : {}
           ]}>
@@ -424,7 +404,7 @@ const CoinCard: React.FC<CoinCardProps> = ({
     <View style={getCardStyle()}>
       <TouchableOpacity 
         style={[
-          styles.coinCardContent,
+          styles.stockCardContent,
           context === 'home' && styles.homeContextContent // 首页特定的内容样式
         ]}
         onPress={handlePress}
@@ -450,8 +430,8 @@ const CoinCard: React.FC<CoinCardProps> = ({
             favoriteAdded && styles.favoriteButtonSuccess
           ]}
           onPress={() => {
-            console.log('🔥 CoinCard: 自选按钮TouchableOpacity被点击!', { 
-              coinName: data.name, 
+            console.log('🔥 StockCard: 自选按钮TouchableOpacity被点击!', { 
+              stockName: data.name, 
               isFavorited: isFavorited,
               favoriteAdded: favoriteAdded 
             });
@@ -489,7 +469,7 @@ const CoinCard: React.FC<CoinCardProps> = ({
 };
 
 const styles = StyleSheet.create({
-  coinCard: {
+  stockCard: {
     position: 'relative',
     flexDirection: 'row',
     alignItems: 'center',
@@ -524,7 +504,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  coinLogo: {
+  stockLogo: {
     marginRight: 12, // 增加与右侧内容的间距
     backgroundColor: '#F0F0F0',
   },
@@ -550,13 +530,13 @@ const styles = StyleSheet.create({
   largePlaceholderText: {
     fontSize: 18,
   },
-  coinInfo: {
+  stockInfo: {
     flex: 1,
   },
-  coinInfoDefault: {
+  stockInfoDefault: {
     paddingRight: 8, // 无收藏按钮时的右边距
   },
-  coinInfoWithFavorite: {
+  stockInfoWithFavorite: {
     paddingRight: 50, // 有收藏按钮时增加右侧空间
   },
   bottomRow: {
@@ -593,7 +573,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     opacity: 0.8,
   },
-  coinName: {
+  stockName: {
     fontSize: 16, // 稍微增大字体
     fontWeight: '600',
     color: UI_COLORS.text,
@@ -601,32 +581,18 @@ const styles = StyleSheet.create({
     letterSpacing: -0.2,
     maxWidth: '65%', // 限制最大宽度，避免挤压价格
   },
-  compactCoinName: {
+  compactStockName: {
     fontSize: 14,
   },
-  largeCoinName: {
+  largeStockName: {
     fontSize: 18,
-  },
-  coinSymbol: {
-    fontSize: 13,
-    color: UI_COLORS.secondaryText,
-    marginTop: 2,
-    lineHeight: 16,
-  },
-  compactCoinSymbol: {
-    fontSize: 12,
   },
   marketCapText: {
     fontSize: 12,
     color: '#888',
     marginTop: 4,
   },
-  volumeText: {
-    fontSize: 12,
-    color: '#888',
-    marginTop: 2,
-  },
-  coinCardContent: {
+  stockCardContent: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
@@ -706,7 +672,7 @@ const styles = StyleSheet.create({
   compactVolume: {
     fontSize: 11,
   },
-  coinPrice: {
+  stockPrice: {
     fontSize: 16, // 稍微增大价格字体
     fontWeight: '700', // 加粗价格
     color: UI_COLORS.text,
@@ -720,7 +686,7 @@ const styles = StyleSheet.create({
   largePrice: {
     fontSize: 18,
   },
-  coinChange: {
+  stockChange: {
     fontSize: 13, // 稍微增大涨跌幅字体
     fontWeight: '600',
     lineHeight: 16,
@@ -749,4 +715,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default CoinCard;
+export default StockCard;

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, Alert, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import CoinCard, { CoinCardData } from '../ui/CoinCard';
+import StockCard, { StockCardData } from '../ui/StockCard';
 import stockService, { TransformedStockData } from '../../services/StockService';
 import stockLogoService from '../../services/StockLogoService';
 import { useUSStockRealTimePrice } from '../../contexts/USStockRealTimePriceContext';
@@ -37,7 +37,7 @@ const StockOverview: React.FC<StockOverviewProps> = ({
   viewMoreText = '查看全部 >' // 添加默认查看更多文本
 }) => {
   const navigation = useNavigation();
-  const [stocks, setStocks] = useState<CoinCardData[]>([]);
+  const [stocks, setStocks] = useState<StockCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [realTimePrices, setRealTimePrices] = useState<{[key: string]: number}>({});
@@ -47,8 +47,8 @@ const StockOverview: React.FC<StockOverviewProps> = ({
   // 使用实时价格Context（虽然当前可能不支持股票，但保留接口）
   const { realTimePrices: contextPrices, priceChanges: contextPriceChanges, getPrice, getPriceChange, startPolling } = useUSStockRealTimePrice();
 
-  // 将股票数据转换为CoinCard组件需要的格式
-  const transformStockData = (stocksData: TransformedStockData[]): CoinCardData[] => {
+  // 将股票数据转换为StockCard组件需要的格式
+  const transformStockData = (stocksData: TransformedStockData[]): StockCardData[] => {
     return stocksData.map(stock => {
       // 解析价格变动是否为正值
       const priceChangeNum = parseFloat(stock.priceChangePercent.replace('%', ''));
@@ -190,8 +190,8 @@ const StockOverview: React.FC<StockOverviewProps> = ({
   };
 
   // 渲染股票卡片
-  const renderStockItem = ({ item }: { item: CoinCardData }) => (
-    <CoinCard
+  const renderStockItem = ({ item }: { item: StockCardData }) => (
+    <StockCard
       data={item}
       variant={variant}
       context="home" // 指定为首页场景

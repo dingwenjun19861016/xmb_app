@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { useNavigation, useFocusEffect, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import CoinCard, { CoinCardData } from '../../components/ui/CoinCard';
+import StockCard, { StockCardData } from '../../components/ui/StockCard';
 
 // 骨架屏组件 - 带动画效果
 const SkeletonCard = () => {
@@ -69,7 +69,7 @@ const SkeletonList = ({ count = 10 }: { count?: number }) => (
 
 import stockService, { StockData, TransformedStockData } from '../../services/StockService';
 import stockLogoService from '../../services/StockLogoService';
-import userCoinService from '../../services/UserCoinService';
+import userStockService from '../../services/UserStockService';
 import configService from '../../services/ConfigService';
 import { useUSStockRealTimePrice } from '../../contexts/USStockRealTimePriceContext';
 import { useUser } from '../../contexts/UserContext';
@@ -493,13 +493,13 @@ const MarketScreen = () => {
   const [error, setError] = useState<string | null>(null);
 
   // 美股相关状态
-  const [usStocks, setUsStocks] = useState<CoinCardData[]>([]);
+  const [usStocks, setUsStocks] = useState<StockCardData[]>([]);
   const [usStocksLoading, setUsStocksLoading] = useState(false);
   const [usStocksError, setUsStocksError] = useState<string | null>(null);
 
   // 防抖搜索文本
   const debouncedSearchText = useDebounce(searchText, 500);
-  const [searchResults, setSearchResults] = useState<CoinCardData[]>([]);
+  const [searchResults, setSearchResults] = useState<StockCardData[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
 
@@ -518,10 +518,10 @@ const MarketScreen = () => {
   const [loginModalVisible, setLoginModalVisible] = useState(false);
 
   // 用户自选股票状态
-  const [userFavoriteCoins, setUserFavoriteCoins] = useState<Set<string>>(new Set());
-  const [loadingUserCoins, setLoadingUserCoins] = useState(false);
+  const [userFavoriteStocks, setUserFavoriteStocks] = useState<Set<string>>(new Set());
+  const [loadingUserStocks, setLoadingUserStocks] = useState(false);
   const [isFavoritesExpanded, setIsFavoritesExpanded] = useState(false); // 自选分组展开状态，默认收起
-  const [favoriteCoinsData, setFavoriteCoinsData] = useState<CoinCardData[]>([]); // 自选股票的完整数据
+  const [favoriteStocksData, setFavoriteStocksData] = useState<StockCardData[]>([]); // 自选股票的完整数据
   const [favoritesSortOrder, setFavoritesSortOrder] = useState<'asc' | 'desc' | 'none'>('none'); // 自选分组排序状态（初始化后会被配置覆盖）
 
   // 配置相关状态 - 美股APP专用
@@ -532,9 +532,9 @@ const MarketScreen = () => {
   
   // UI文本配置状态
   const [headerTitle, setHeaderTitle] = useState('行情');
-  const [searchPlaceholder, setSearchPlaceholder] = useState('搜索加密货币...');
+  const [searchPlaceholder, setSearchPlaceholder] = useState('搜索股票...');
   const [favoritesTitle, setFavoritesTitle] = useState('我的自选');
-  const [allCoinsTitle, setAllCoinsTitle] = useState('全部股票');
+  const [allStocksTitle, setAllStocksTitle] = useState('全部股票');
   const [listHeaders, setListHeaders] = useState(['#', '名称', '价格/24h']);
   const [listHeadersEnabled, setListHeadersEnabled] = useState(true); // 表头显示开关
   
@@ -633,8 +633,8 @@ const MarketScreen = () => {
     }
   };
 
-  // 将股票数据转换为CoinCard组件需要的格式 - 美股专用版本
-  const transformStockData = async (stockData: any[], useRealTimePrices = false): Promise<CoinCardData[]> => {
+  // 将股票数据转换为StockCard组件需要的格式 - 美股专用版本
+  const transformStockData = async (stockData: any[], useRealTimePrices = false): Promise<StockCardData[]> => {
     // 简化处理：美股APP只处理股票数据，统一使用股票logo服务
     const symbols = stockData.map(stock => stock.name || stock.code);
     
@@ -683,7 +683,7 @@ const MarketScreen = () => {
         // 添加价格变动标志
         priceChangeDirection,
         // 添加24小时价格数据
-        coin24h: stock.usstock24h || [],
+        stock24h: stock.usstock24h || [],
       };
     });
 
@@ -951,8 +951,8 @@ const MarketScreen = () => {
       const stocksData = await stockService.getUSStocksList(skip, currentBatchSize, sortBy, apiSortOrder);
       
       if (stocksData.length > 0) {
-        // 将StockData转换为CoinData格式，然后再转换为CoinCardData
-        const coinDataFormat = stocksData.map(stock => {
+        // 将StockData转换为StockCardData格式，然后再转换为StockCardData
+        const stockDataFormat = stocksData.map(stock => {
           // 确保currentPrice是正确的当前股价，不是历史数据
           const currentStockPrice = stock.currentPrice;
           
@@ -978,14 +978,14 @@ const MarketScreen = () => {
             created_at: stock.created_at,
             date: stock.date || '',
             updated_at: stock.updated_at,
-            coin24h: stock.usstock24h?.map(item => ({
+            stock24h: stock.usstock24h?.map(item => ({
               price: parseFloat(item.price),
               createdAt: item.createdAt
             })) || []
           };
         });
         
-        const transformedStocks = await transformStockData(coinDataFormat, false); // 改为使用transformStockData处理股票数据
+        const transformedStocks = await transformStockData(stockDataFormat, false); // 改为使用transformStockData处理股票数据
         
         // 更新股票列表 - 简单追加方式，保持后端API的排序
         if (isNewSession && batchIndex === 0) {
@@ -1293,7 +1293,7 @@ const MarketScreen = () => {
     // 美股APP：使用美股实时价格
     const hasStockPrices = Object.keys(stockRealTimePrices).length > 0;
     
-    if (hasStockPrices && (usStocks.length > 0 || favoriteCoinsData.length > 0)) {
+    if (hasStockPrices && (usStocks.length > 0 || favoriteStocksData.length > 0)) {
       // 使用防抖机制来减少频繁的状态更新
       const timeoutId = setTimeout(() => {
         // 更新美股价格
@@ -1322,8 +1322,8 @@ const MarketScreen = () => {
         }
 
         // 更新自选币种价格（美股）
-        if (favoriteCoinsData.length > 0) {
-          setFavoriteCoinsData(prevFavorites => prevFavorites.map(item => {
+        if (favoriteStocksData.length > 0) {
+          setFavoriteStocksData(prevFavorites => prevFavorites.map(item => {
             const itemKey = item.name.toLowerCase();
             
             // 使用美股实时价格
@@ -1380,10 +1380,10 @@ const MarketScreen = () => {
       
       return () => clearTimeout(timeoutId);
     }
-  }, [stockRealTimePrices, stockPriceChanges, searchResults.length, usStocks.length, favoriteCoinsData.length]);
+  }, [stockRealTimePrices, stockPriceChanges, searchResults.length, usStocks.length, favoriteStocksData.length]);
 
   // 根据搜索状态决定显示的币种列表
-  const displayCoins = useMemo(() => {
+  const displayStocks = useMemo(() => {
     // 美股APP简化：如果有搜索文本，显示搜索结果，否则显示股票数据
     if (searchText.trim()) {
       console.log('🔍 MarketScreen: Displaying search results:', searchResults.length);
@@ -1396,18 +1396,18 @@ const MarketScreen = () => {
     return limitedStocks;
   }, [searchText, searchResults, usStocks, displayedItemCount]);
 
-  // 分组显示币种：自选在前，全部币种包含所有（包括已自选的）
-  const groupedCoins = useMemo(() => {
-    if (!currentUser || userFavoriteCoins.size === 0 || searchText.trim()) {
+  // 分组显示股票：自选在前，全部股票包含所有（包括已自选的）
+  const groupedStocks = useMemo(() => {
+    if (!currentUser || userFavoriteStocks.size === 0 || searchText.trim()) {
       // 如果未登录、没有自选、在搜索，则不分组
       return {
         favorites: [],
-        others: displayCoins
+        others: displayStocks
       };
     }
 
-    // 对自选币种进行排序处理
-    let sortedFavorites = [...favoriteCoinsData];
+    // 对自选股票进行排序处理
+    let sortedFavorites = [...favoriteStocksData];
     if (favoritesSortOrder !== 'none') {
       sortedFavorites.sort((a, b) => {
         // 解析涨跌幅百分比
@@ -1430,79 +1430,81 @@ const MarketScreen = () => {
       });
     }
 
-    // 美股APP简化：股票数据模式下，favorites使用独立的favoriteCoinsData，others使用股票数据
+    // 美股APP简化：股票数据模式下，favorites使用独立的favoriteStocksData，others使用股票数据
     return {
-      favorites: sortedFavorites, // 使用排序后的自选币种数据
-      others: displayCoins // 美股数据
+      favorites: sortedFavorites, // 使用排序后的自选股票数据
+      others: displayStocks // 美股数据
     };
-  }, [displayCoins, userFavoriteCoins, currentUser, searchText, isFavoritesExpanded, favoriteCoinsData, favoritesSortOrder]);
+  }, [displayStocks, userFavoriteStocks, currentUser, searchText, isFavoritesExpanded, favoriteStocksData, favoritesSortOrder]);
 
-  // 获取用户自选币种列表
-  const fetchUserFavoriteCoins = async () => {
+  // 获取用户自选股票列表
+  const fetchUserFavoriteStocks = async () => {
     if (!currentUser) {
       console.log('🔄 MarketScreen: 用户未登录，清空自选数据');
-      setUserFavoriteCoins(new Set());
-      setFavoriteCoinsData([]);
+      setUserFavoriteStocks(new Set());
+      setFavoriteStocksData([]);
       setIsFavoritesExpanded(false); // 用户登出时收起自选分组
       return;
     }
 
     try {
-      setLoadingUserCoins(true);
-      console.log('🔄 MarketScreen: 获取用户自选币种...', currentUser.email);
+      setLoadingUserStocks(true);
+      console.log('🔄 MarketScreen: 获取用户自选股票...', currentUser.email);
       
-      const result = await userCoinService.getUserCoins(currentUser.email);
+      const result = await userStockService.getUserCoins(currentUser.email);
       
       if (result.success && result.data) {
-        const favoriteCoinsData = result.data as any; // getUserCoinsResponse
-        const coinSymbols = favoriteCoinsData.coins.map((item: any) => item.coin.toUpperCase());
-        const coinSet = new Set(coinSymbols);
-        setUserFavoriteCoins(coinSet);
-        console.log('✅ MarketScreen: 获取用户自选股票成功:', coinSymbols);          // 获取自选股票的完整数据
-        if (coinSymbols.length > 0) {
+        const favoriteStocksData = result.data as any; // getUserCoinsResponse
+        const stockSymbols = favoriteStocksData.coins.map((item: any) => item.coin.toUpperCase());
+        const stockSet = new Set(stockSymbols);
+        setUserFavoriteStocks(stockSet);
+        console.log('✅ MarketScreen: 获取用户自选股票成功:', stockSymbols);
+
+        // 获取自选股票的完整数据
+        if (stockSymbols.length > 0) {
           console.log('🔄 MarketScreen: 获取自选股票的完整数据...');
           // 从所有股票数据中过滤出自选的股票
           const allStocks = await stockService.getUSStocksList(0, 1000);
           const favoriteStocks = allStocks.filter(stock => 
-            coinSymbols.includes(stock.code.toUpperCase())
+            stockSymbols.includes(stock.code.toUpperCase())
           );
           const transformedFavoriteData = await transformStockData(favoriteStocks, false);
-          setFavoriteCoinsData(transformedFavoriteData);
+          setFavoriteStocksData(transformedFavoriteData);
           console.log('✅ MarketScreen: 获取自选股票数据成功:', transformedFavoriteData.length, '个股票');
           
           // 保持自选分组默认收起状态，不自动展开
           // 用户可以手动点击展开按钮查看自选股票
         } else {
-          setFavoriteCoinsData([]);
+          setFavoriteStocksData([]);
           setIsFavoritesExpanded(false); // 没有自选股票时收起分组
         }
       } else {
-        console.error('❌ MarketScreen: 获取用户自选币种失败:', result.error);
-        setUserFavoriteCoins(new Set());
-        setFavoriteCoinsData([]);
+        console.error('❌ MarketScreen: 获取用户自选股票失败:', result.error);
+        setUserFavoriteStocks(new Set());
+        setFavoriteStocksData([]);
         setIsFavoritesExpanded(false);
       }
     } catch (error: any) {
-      console.error('❌ MarketScreen: 获取用户自选币种异常:', error);
+      console.error('❌ MarketScreen: 获取用户自选股票异常:', error);
       
       // 检查是否为登录过期错误
       if (error.message && error.message.includes('登录已过期')) {
-        console.log('🚫 MarketScreen: 检测到登录过期（获取自选币种时）');
+        console.log('🚫 MarketScreen: 检测到登录过期（获取自选股票时）');
         // 这里不自动打开登录modal，让用户在主动操作时再提示
       }
       
-      setUserFavoriteCoins(new Set());
-      setFavoriteCoinsData([]);
+      setUserFavoriteStocks(new Set());
+      setFavoriteStocksData([]);
       setIsFavoritesExpanded(false);
     } finally {
-      setLoadingUserCoins(false);
+      setLoadingUserStocks(false);
     }
   };
 
-  // 监听用户登录状态变化，获取自选币种
+  // 监听用户登录状态变化，获取自选股票
   useEffect(() => {
     console.log('🔄 MarketScreen: 用户状态变化，currentUser:', currentUser?.email || 'null');
-    fetchUserFavoriteCoins();
+    fetchUserFavoriteStocks();
   }, [currentUser]);
 
   // 监听页面焦点变化，当从其他页面返回时刷新自选数据
@@ -1511,7 +1513,7 @@ const MarketScreen = () => {
       console.log('🔄 MarketScreen: 页面获得焦点，刷新自选数据');
       // 当页面获得焦点时，如果用户已登录，则刷新自选数据
       if (currentUser) {
-        fetchUserFavoriteCoins();
+        fetchUserFavoriteStocks();
       }
     }, [currentUser])
   );
@@ -1551,28 +1553,28 @@ const MarketScreen = () => {
   };
 
   // 处理自选按钮点击
-  const handleFavoritePress = (coinSymbol: string, isAdding: boolean) => {
-    console.log('✅ MarketScreen: 自选操作完成', { coinSymbol, isAdding });
+  const handleFavoritePress = (stockSymbol: string, isAdding: boolean) => {
+    console.log('✅ MarketScreen: 自选操作完成', { stockSymbol, isAdding });
     
     if (isAdding) {
-      // 添加成功后，更新本地自选币种状态
-      setUserFavoriteCoins(prev => new Set([...prev, coinSymbol.toUpperCase()]));
+      // 添加成功后，更新本地自选股票状态
+      setUserFavoriteStocks(prev => new Set([...prev, stockSymbol.toUpperCase()]));
       
       // 不自动展开自选分组，让用户手动控制显示
-      // 用户可以点击自选分组标题来查看新添加的币种
+      // 用户可以点击自选分组标题来查看新添加的股票
       
       // 显示成功消息
       showMessageModal(
         'success',
         '添加成功',
-        `${coinSymbol} 已添加到自选列表，点击"${favoritesTitle}"可查看`,
+        `${stockSymbol} 已添加到自选列表，点击"${favoritesTitle}"可查看`,
         [{ text: '确定', onPress: () => setModalVisible(false) }]
       );
     } else {
-      // 移除成功后，更新本地自选币种状态
-      setUserFavoriteCoins(prev => {
+      // 移除成功后，更新本地自选股票状态
+      setUserFavoriteStocks(prev => {
         const newSet = new Set(prev);
-        newSet.delete(coinSymbol.toUpperCase());
+        newSet.delete(stockSymbol.toUpperCase());
         return newSet;
       });
       
@@ -1580,13 +1582,13 @@ const MarketScreen = () => {
       showMessageModal(
         'success',
         '移除成功',
-        `${coinSymbol} 已从自选列表中移除`,
+        `${stockSymbol} 已从自选列表中移除`,
         [{ text: '确定', onPress: () => setModalVisible(false) }]
       );
     }
     
     // 刷新自选分组数据
-    fetchUserFavoriteCoins();
+    fetchUserFavoriteStocks();
   };
 
   // 处理登录按钮点击
@@ -1647,18 +1649,18 @@ const MarketScreen = () => {
         console.log('🔄 MarketScreen: 强制刷新用户自选数据...');
         
         // 直接使用传入的user参数，避免依赖Context状态更新
-        const result = await userCoinService.getUserCoins(user.email);
+        const result = await userStockService.getUserCoins(user.email);
         
         if (result.success && result.data) {
-          const favoriteCoinsData = result.data as any;
-          const coinSymbols = favoriteCoinsData.coins.map((item: any) => item.coin.toUpperCase());
-          const coinSet = new Set(coinSymbols);
+          const favoriteStocksData = result.data as any;
+          const stockSymbols = favoriteStocksData.coins.map((item: any) => item.coin.toUpperCase());
+          const stockSet = new Set(stockSymbols);
           
-          console.log('✅ MarketScreen: 强制刷新用户自选股票成功:', coinSymbols);
-          setUserFavoriteCoins(coinSet);
+          console.log('✅ MarketScreen: 强制刷新用户自选股票成功:', stockSymbols);
+          setUserFavoriteStocks(stockSet);
           
           // 获取自选股票的完整数据
-          if (coinSymbols.length > 0) {
+          if (stockSymbols.length > 0) {
             console.log('🔄 MarketScreen: 强制刷新自选股票的完整数据...');
             // 从所有股票数据中过滤出自选的股票
             const allStocks = await stockService.getUSStocksList(0, 1000);
@@ -1666,24 +1668,24 @@ const MarketScreen = () => {
               coinSymbols.includes(stock.code.toUpperCase())
             );
             const transformedFavoriteData = await transformStockData(favoriteStocks, false);
-            setFavoriteCoinsData(transformedFavoriteData);
+            setFavoriteStocksData(transformedFavoriteData);
             console.log('✅ MarketScreen: 强制刷新自选股票数据成功:', transformedFavoriteData.length, '个股票');
             
             // 保持自选分组默认收起状态，即使登录成功也不自动展开
             // 用户可以手动点击展开按钮查看自选币种
           } else {
-            setFavoriteCoinsData([]);
+            setFavoriteStocksData([]);
           }
         } else {
           console.warn('⚠️ MarketScreen: 强制刷新用户自选币种无数据');
-          setUserFavoriteCoins(new Set());
-          setFavoriteCoinsData([]);
+          setUserFavoriteStocks(new Set());
+          setFavoriteStocksData([]);
         }
       } catch (error) {
         console.error('❌ MarketScreen: 强制刷新用户数据失败:', error);
         // 即使刷新失败，也保证基础状态正确
-        setUserFavoriteCoins(new Set());
-        setFavoriteCoinsData([]);
+        setUserFavoriteStocks(new Set());
+        setFavoriteStocksData([]);
       }
     };
     
@@ -1693,22 +1695,22 @@ const MarketScreen = () => {
     // 再设置一个后备刷新，确保UI状态正确
     setTimeout(() => {
       console.log('🔄 MarketScreen: 后备刷新检查...');
-      if (userFavoriteCoins.size === 0) {
+      if (userFavoriteStocks.size === 0) {
         console.log('🔄 MarketScreen: 检测到自选数据为空，执行后备刷新');
         refreshUserData();
       }
     }, 500);
   };
 
-  const renderCoinItem = ({ item, section }: { item: CoinCardData; section?: string }) => {
-    const coinSymbol = (item.symbol || item.name).toUpperCase();
-    const isUserFavorite = userFavoriteCoins.has(coinSymbol);
+  const renderStockItem = ({ item, section }: { item: StockCardData; section?: string }) => {
+    const stockSymbol = (item.symbol || item.name).toUpperCase();
+    const isUserFavorite = userFavoriteStocks.has(stockSymbol);
     
     // 美股APP统一处理股票数据
     const isStock = true;
     
     return (
-      <CoinCard
+      <StockCard
         data={item}
         variant="default"
         context="market" // 指定为market场景
@@ -1725,12 +1727,12 @@ const MarketScreen = () => {
         isFavorited={isUserFavorite} // 新增：标识是否已自选
         showChart={true} // 启用24小时价格图表
         isStock={isStock} // 传递股票标记
-        onFavoritePress={(coinSymbol, isAdding) => {
-          console.log('🔥 MarketScreen: 收到CoinCard的自选点击回调', { coinSymbol, isAdding });
-          handleFavoritePress(coinSymbol, isAdding);
+        onFavoritePress={(stockSymbol, isAdding) => {
+          console.log('🔥 MarketScreen: 收到StockCard的自选点击回调', { stockSymbol, isAdding });
+          handleFavoritePress(stockSymbol, isAdding);
         }}
         onLoginRequired={() => {
-          console.log('🔐 MarketScreen: 收到CoinCard的登录需求回调');
+          console.log('🔐 MarketScreen: 收到StockCard的登录需求回调');
           handleLoginRequired();
         }}
       />
@@ -1805,12 +1807,12 @@ const MarketScreen = () => {
 
   // 创建用于FlatList的数据源
   const flatListData = useMemo(() => {
-    const { favorites, others } = groupedCoins;
-    const data: Array<CoinCardData & { isHeader?: boolean; headerTitle?: string; headerIcon?: string; section?: string; isExpandable?: boolean }> = [];
+    const { favorites, others } = groupedStocks;
+    const data: Array<StockCardData & { isHeader?: boolean; headerTitle?: string; headerIcon?: string; section?: string; isExpandable?: boolean }> = [];
     
     console.log('📊 MarketScreen: Creating FlatList data, favorites:', favorites.length, 'others:', others.length);
     
-    // 添加自选币种
+    // 添加自选股票
     if (favorites.length > 0) {
       // 添加自选标题（可展开/收起）
       data.push({
@@ -1826,23 +1828,23 @@ const MarketScreen = () => {
         isExpandable: true,
       } as any);
       
-      // 只有在展开状态时才添加自选币种
+      // 只有在展开状态时才添加自选股票
       if (isFavoritesExpanded) {
-        favorites.forEach(coin => {
+        favorites.forEach(stock => {
           data.push({ 
-            ...coin, 
-            id: `favorites-${coin.id}`, // 给自选分组的币种添加前缀，确保key唯一
+            ...stock, 
+            id: `favorites-${stock.id}`, // 给自选分组的股票添加前缀，确保key唯一
             section: 'favorites' 
           });
         });
       }
     }
     
-    // 添加其他币种（始终显示，不管自选是否展开）
+    // 添加其他股票（始终显示，不管自选是否展开）
     if (others.length > 0) {
       if (favorites.length > 0) {
         // 美股APP简化：统一显示标题
-        const headerTitle = allCoinsTitle;
+        const headerTitle = allStocksTitle;
         const headerIcon = 'list';
         
         data.push({
@@ -1859,10 +1861,10 @@ const MarketScreen = () => {
         } as any);
       }
       
-      others.forEach(coin => {
+      others.forEach(stock => {
         data.push({ 
-          ...coin, 
-          id: `others-${coin.id}`, // 给全部币种分组的币种添加前缀，确保key唯一
+          ...stock, 
+          id: `others-${stock.id}`, // 给全部股票分组的股票添加前缀，确保key唯一
           section: 'others' 
         });
       });
@@ -1871,12 +1873,12 @@ const MarketScreen = () => {
     console.log('📊 MarketScreen: FlatList data created with', data.length, 'total items');
     
     return data;
-  }, [groupedCoins, isFavoritesExpanded]);
+  }, [groupedStocks, isFavoritesExpanded]);
 
   // 统一的renderItem函数，处理标题和数据项
   const renderFlatListItem = ({ item }: { item: any }) => {
     if (item.isHeader) {
-      const { favorites, others } = groupedCoins;
+      const { favorites, others } = groupedStocks;
       const count = item.headerTitle === favoritesTitle ? favorites.length : 0;
       const showSortButton = item.headerTitle === favoritesTitle; // 只在自选分组显示排序按钮
       const isFavorites = item.headerTitle === favoritesTitle; // 是否为自选分组
@@ -1891,7 +1893,7 @@ const MarketScreen = () => {
       );
     }
     
-    return renderCoinItem({ item, section: item.section });
+    return renderStockItem({ item, section: item.section });
   };
 
   // 渲染加载状态
