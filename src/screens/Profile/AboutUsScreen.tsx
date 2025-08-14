@@ -78,10 +78,10 @@ const AboutUsScreen: React.FC = () => {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>产品介绍</Text>
             <Text style={styles.paragraph}>
-              小目标是一款专业的加密货币数据分析应用，为用户提供实时的市场数据、深度分析和行业资讯。
+              小目标是一款专业的美股数据分析应用，为用户提供实时的美股市场数据、深度分析和行业资讯。
             </Text>
             <Text style={styles.paragraph}>
-              我们致力于为加密货币投资者和爱好者提供准确、及时的市场信息，帮助用户更好地了解市场动态。
+              我们致力于为美股投资者和爱好者提供准确、及时的市场信息，帮助用户更好地了解美国股市动态。
             </Text>
           </View>
 
@@ -101,8 +101,8 @@ const AboutUsScreen: React.FC = () => {
                 <Text style={styles.featureText}>行业资讯推送</Text>
               </View>
               <View style={styles.featureItem}>
-                <Ionicons name="gift" size={20} color="#9C27B0" />
-                <Text style={styles.featureText}>空投信息聚合</Text>
+                <Ionicons name="trending-up" size={20} color="#9C27B0" />
+                <Text style={styles.featureText}>美股实时追踪</Text>
               </View>
             </View>
           </View>
@@ -156,7 +156,7 @@ const AboutUsScreen: React.FC = () => {
           {/* 版权信息 */}
           <View style={styles.footer}>
             <Text style={styles.footerText}>© 2024 ChainAlert. All rights reserved.</Text>
-            <Text style={styles.footerText}>专业的加密货币数据分析平台</Text>
+            <Text style={styles.footerText}>专业的美股数据分析平台</Text>
           </View>
         </View>
       </ScrollView>

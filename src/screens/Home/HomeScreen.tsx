@@ -15,24 +15,17 @@ import { Ionicons } from '@expo/vector-icons';
 // Import custom components
 import TodayHeader from '../../components/common/TodayHeader';
 import StockOverview from '../../components/common/StockOverview';
-import FeaturedAirdrops from '../../components/common/FeaturedAirdrops';
 import LatestNews from '../../components/common/LatestNews';
 import NewsCard from '../../components/common/NewsCard';
 import NewsFlashCard from '../../components/common/NewsFlashCard';
 import GreedyIndexWidget from '../../components/common/GreedyIndexWidget';
-import BTCDIndexWidget from '../../components/common/BTCDIndexWidget';
-import AltcoinIndexWidget from '../../components/common/AltcoinIndexWidget';
 import ETFDataWidget from '../../components/common/ETFDataWidget';
-import MarketCapWidget from '../../components/common/MarketCapWidget';
-import ETHDIndexWidget from '../../components/common/ETHDIndexWidget';
-import StablecoinWidget from '../../components/common/StablecoinWidget';
 import DXYWidget from '../../components/common/DXYWidget';
 import USBond10YRWidget from '../../components/common/USBond10YRWidget';
 import USDJPYWidget from '../../components/common/USDJPYWidget';
 import SkeletonBox from '../../components/common/SkeletonBox';
 // Import services
 import { newsService, NewsArticle } from '../../services/NewsService';
-import { airdropService, AirdropItem } from '../../services/AirdropService';
 import userCoinService from '../../services/UserCoinService';
 import configService from '../../services/ConfigService';
 
@@ -64,15 +57,10 @@ const API_TO_UI_CATEGORY = {
   'btc': '比特币',
 };
 
-// 首页数据卡片组件映射
+// 首页数据卡片组件映射 - 仅保留美股相关指标
 const DATA_WIDGET_COMPONENTS = {
   GreedyIndex: GreedyIndexWidget,
-  MarketCap: MarketCapWidget,
-  AltcoinIndex: AltcoinIndexWidget,
   ETFData: ETFDataWidget,
-  BTCDIndex: BTCDIndexWidget,
-  ETHDIndex: ETHDIndexWidget,
-  Stablecoin: StablecoinWidget,
   DXY: DXYWidget,
   USBond10YR: USBond10YRWidget,
   USDJPY: USDJPYWidget,
@@ -104,25 +92,6 @@ const FALLBACK_ARTICLES = [
   },
 ];
 
-const FALLBACK_AIRDROPS = [
-  {
-    id: '1',
-    title: 'Jupiter Protocol',
-    description: 'Solana生态最大DEX聚合器空投',
-    deadline: '2025年5月15日截止',
-    value: '预估 $500-1000',
-    logo: 'https://via.placeholder.com/60',
-    background: 'https://via.placeholder.com/300x150',
-    requirements: ['连接钱包', '在Jupiter上进行交易', '持有JUP代币'],
-    tags: ['Solana', 'DEX'],
-    status: 'active' as const,
-    link: 'https://jup.io',
-    date: '2小时前',
-    category: '代币空投',
-    content: ''
-  },
-];
-
 const HomeScreen = () => {
   const navigation = useNavigation();
   const route = useRoute();
@@ -149,9 +118,6 @@ const HomeScreen = () => {
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [isSearchMode, setIsSearchMode] = useState(false);
-  const [featuredAirdrops, setFeaturedAirdrops] = useState<AirdropItem[]>([]);
-  const [airdropLoading, setAirdropLoading] = useState(true);
-  const [airdropError, setAirdropError] = useState<string | null>(null);
   
   // 登录模态框状态
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -195,18 +161,16 @@ const HomeScreen = () => {
   const [marketOverviewTitle, setMarketOverviewTitle] = useState('股市行情');
   const [latestNewsTitle, setLatestNewsTitle] = useState('今日要闻');
   const [featuredNewsTitle, setFeaturedNewsTitle] = useState('精选新闻');
-  const [featuredAirdropsTitle, setFeaturedAirdropsTitle] = useState('热门空投');
   const [viewMoreText, setViewMoreText] = useState('查看全部 >');
   const [searchPlaceholder, setSearchPlaceholder] = useState('搜索资讯...');
 
   // 数量配置状态
   const [featuredNewsCount, setFeaturedNewsCount] = useState(3);
   const [latestNewsCount, setLatestNewsCount] = useState(5);
-  const [featuredAirdropsCount, setFeaturedAirdropsCount] = useState(3);
   const [marketOverviewCount, setMarketOverviewCount] = useState(2);
 
-  // 数据卡片配置状态
-  const [dataCardsConfig, setDataCardsConfig] = useState('GreedyIndex,BTCDIndex,AltcoinIndex,ETFData');
+  // 数据卡片配置状态 - 仅显示美股相关指标
+  const [dataCardsConfig, setDataCardsConfig] = useState('GreedyIndex,ETFData,DXY,USBond10YR');
 
   // 加载配置
   const loadConfigs = async () => {
@@ -220,18 +184,16 @@ const HomeScreen = () => {
       const marketOverviewTitleConfig = await configService.getConfig('HOME_MARKET_OVERVIEW_TITLE', '股市行情');
       const latestNewsTitleConfig = await configService.getConfig('HOME_LATEST_NEWS_TITLE', '今日要闻');
       const featuredNewsTitleConfig = await configService.getConfig('HOME_FEATURED_NEWS_TITLE', '精选新闻');
-      const featuredAirdropsTitleConfig = await configService.getConfig('HOME_FEATURED_AIRDROPS_TITLE', '热门空投');
       const viewMoreTextConfig = await configService.getConfig('HOME_VIEW_MORE_TEXT', '查看全部 >');
       const searchPlaceholderConfig = await configService.getConfig('HOME_SEARCH_PLACEHOLDER', '搜索资讯...');
       
       // 获取数量配置
       const featuredNewsCountConfig = await configService.getConfig('HOME_FEATURED_NEWS_COUNT', 3);
       const latestNewsCountConfig = await configService.getConfig('HOME_LATEST_NEWS_COUNT', 5);
-      const featuredAirdropsCountConfig = await configService.getConfig('HOME_FEATURED_AIRDROPS_COUNT', 3);
       const marketOverviewCountConfig = await configService.getConfig('HOME_MARKET_OVERVIEW_COUNT', 2);
       
-      // 获取数据卡片配置
-      const dataCardsConfig = await configService.getConfig('HOME_DATA_CARDS_CONFIG', 'GreedyIndex,BTCDIndex,AltcoinIndex,ETFData');
+      // 获取数据卡片配置 - 默认为美股相关指标
+      const dataCardsConfig = await configService.getConfig('HOME_DATA_CARDS_CONFIG', 'GreedyIndex,ETFData,DXY,USBond10YR');
       
       // 获取启动广告配置
       const adEnableRaw = await configService.getConfig('HOME_MODAL_AD_ENABLE', false);
@@ -254,14 +216,12 @@ const HomeScreen = () => {
       setMarketOverviewTitle(marketOverviewTitleConfig);
       setLatestNewsTitle(latestNewsTitleConfig);
       setFeaturedNewsTitle(featuredNewsTitleConfig);
-      setFeaturedAirdropsTitle(featuredAirdropsTitleConfig);
       setViewMoreText(viewMoreTextConfig);
       setSearchPlaceholder(searchPlaceholderConfig);
       
       // 设置数量配置
       setFeaturedNewsCount(featuredNewsCountConfig);
       setLatestNewsCount(latestNewsCountConfig);
-      setFeaturedAirdropsCount(featuredAirdropsCountConfig);
       setMarketOverviewCount(marketOverviewCountConfig);
       
       // 设置数据卡片配置
@@ -299,16 +259,14 @@ const HomeScreen = () => {
       setMarketOverviewTitle('股市行情');
       setLatestNewsTitle('今日要闻');
       setFeaturedNewsTitle('精选新闻');
-      setFeaturedAirdropsTitle('热门空投');
       setViewMoreText('查看全部 >');
       setSearchPlaceholder('搜索资讯...');
       
       // 设置数量默认值
       setFeaturedNewsCount(3);
       setLatestNewsCount(5);
-      setFeaturedAirdropsCount(3);
       setMarketOverviewCount(2);
-      setDataCardsConfig('GreedyIndex,BTCDIndex,AltcoinIndex,ETFData');
+      setDataCardsConfig('GreedyIndex,ETFData,DXY,USBond10YR');
       setViewMoreText('查看全部 >');
       setSearchPlaceholder('搜索资讯...');
     }
@@ -357,7 +315,7 @@ const HomeScreen = () => {
       
     } catch (error) {
       console.error('❌ HomeScreen: Error rendering data cards:', error);
-      // 如果渲染失败，使用默认布局
+      // 如果渲染失败，使用美股相关的默认布局
       return (
         <>
           <View style={styles.indicatorRow}>
@@ -365,15 +323,15 @@ const HomeScreen = () => {
               <GreedyIndexWidget />
             </View>
             <View style={styles.indicatorCard}>
-              <BTCDIndexWidget />
+              <ETFDataWidget />
             </View>
           </View>
           <View style={styles.indicatorRow}>
             <View style={styles.indicatorCard}>
-              <AltcoinIndexWidget />
+              <DXYWidget />
             </View>
             <View style={styles.indicatorCard}>
-              <ETFDataWidget />
+              <USBond10YRWidget />
             </View>
           </View>
         </>
@@ -643,43 +601,6 @@ const HomeScreen = () => {
       setLatestNewsLoading(false);
     }
   };
-  
-  // 获取空投数据
-  const fetchAirdropData = async () => {
-    try {
-      setAirdropError(null);
-      setAirdropLoading(true);
-      
-      // 重新获取最新的配置值
-      const currentFeaturedAirdropsCount = await configService.getConfig('HOME_FEATURED_AIRDROPS_COUNT', 3);
-      
-      const airdrops = await airdropService.getFeaturedAirdrops(currentFeaturedAirdropsCount);
-      const formattedAirdrops = airdrops.map(airdrop => ({
-        ...airdrop,
-        date: airdropService.formatDate(airdrop.date),
-        deadline: airdropService.formatDeadline(airdrop.deadline)
-      }));
-      
-      setFeaturedAirdrops(formattedAirdrops);
-      
-      console.log(`✅ HomeScreen: 精选空投数据加载完成，数量: ${airdrops.length}, 配置值: ${currentFeaturedAirdropsCount}`);
-    } catch (error) {
-      console.error('Failed to load airdrops:', error);
-      setAirdropError(error.message);
-      
-      // 只有在网络错误或者没有缓存数据时才使用fallback
-      if (featuredAirdrops.length === 0) {
-        console.log('🔄 HomeScreen: 使用fallback空投数据');
-        const fallbackCount = await configService.getConfig('HOME_FEATURED_AIRDROPS_COUNT', 3);
-        setFeaturedAirdrops(FALLBACK_AIRDROPS.slice(0, fallbackCount));
-      } else {
-        console.log('🔄 HomeScreen: 保留现有空投数据');
-        // 保留现有数据，不使用fallback
-      }
-    } finally {
-      setAirdropLoading(false);
-    }
-  };
 
   // 自动刷新首页数据（仅在主页标签时执行）
   const autoRefreshHomeData = async () => {
@@ -693,24 +614,19 @@ const HomeScreen = () => {
       console.log('🔄 HomeScreen: 开始静默刷新首页数据...');
       
       // 获取最新的配置值
-      const [currentFeaturedNewsCount, currentLatestNewsCount, currentFeaturedAirdropsCount] = await Promise.all([
+      const [currentFeaturedNewsCount, currentLatestNewsCount] = await Promise.all([
         configService.getConfig('HOME_FEATURED_NEWS_COUNT', 3),
-        configService.getConfig('HOME_LATEST_NEWS_COUNT', 5),
-        configService.getConfig('HOME_FEATURED_AIRDROPS_COUNT', 3)
+        configService.getConfig('HOME_LATEST_NEWS_COUNT', 5)
       ]);
       
       // 静默获取新数据，不显示加载状态
-      const [newFeaturedNews, newLatestNews, newAirdrops] = await Promise.all([
+      const [newFeaturedNews, newLatestNews] = await Promise.all([
         newsService.getFeaturedNews(currentFeaturedNewsCount).catch((err) => {
           console.error('获取精选新闻失败:', err);
           return [];
         }),
         newsService.getFeaturedLatestNews(currentLatestNewsCount).catch((err) => {
           console.error('获取今日要闻失败:', err);
-          return [];
-        }),
-        airdropService.getFeaturedAirdrops(currentFeaturedAirdropsCount).catch((err) => {
-          console.error('获取空投数据失败:', err);
           return [];
         })
       ]);
@@ -722,8 +638,7 @@ const HomeScreen = () => {
 
       console.log('🔄 HomeScreen: 获取到的新数据:', {
         精选新闻: newFeaturedNews.length,
-        今日要闻: newLatestNews.length,
-        空投数据: newAirdrops.length
+        今日要闻: newLatestNews.length
       });
 
       // 总是更新数据，即使ID相同也要更新时间显示
@@ -752,25 +667,6 @@ const HomeScreen = () => {
           console.log('🔄 HomeScreen: 今日要闻内容相同，更新时间显示');
         }
         setLatestNews(newLatestNews.map(formatNewsDate));
-      }
-
-      // 更新空投数据
-      if (newAirdrops.length > 0) {
-        const currentIds = featuredAirdrops.map(item => item.id).join(',');
-        const newIds = newAirdrops.map(item => item.id).join(',');
-        
-        if (currentIds !== newIds) {
-          console.log('🔄 HomeScreen: 空投数据有新内容，更新数据');
-        } else {
-          console.log('🔄 HomeScreen: 空投数据内容相同，更新时间显示');
-        }
-        
-        const formattedAirdrops = newAirdrops.map(airdrop => ({
-          ...airdrop,
-          date: airdropService.formatDate(airdrop.date),
-          deadline: airdropService.formatDeadline(airdrop.deadline)
-        }));
-        setFeaturedAirdrops(formattedAirdrops);
       }
       
       console.log('✅ HomeScreen: 静默刷新完成，所有数据已更新');
@@ -815,10 +711,6 @@ const HomeScreen = () => {
     // 批量更新时间显示，避免多次重新渲染
     setFeaturedNews(prev => prev.map(formatNewsDate));
     setLatestNews(prev => prev.map(formatNewsDate));
-    setFeaturedAirdrops(prev => prev.map(airdrop => ({
-      ...airdrop,
-      date: airdropService.formatDate(airdrop.date)
-    })));
   };
 
   // 启动时间更新定时器
@@ -926,8 +818,7 @@ const HomeScreen = () => {
         // 然后并行加载数据
         await Promise.all([
           fetchNewsData(),
-          fetchLatestNewsData(),
-          fetchAirdropData()
+          fetchLatestNewsData()
         ]);
         
         console.log('✅ HomeScreen: All data loaded successfully');
@@ -946,8 +837,7 @@ const HomeScreen = () => {
         console.error('❌ HomeScreen: Initialization failed:', error);
         // 即使出错也要尝试加载数据
         fetchNewsData();
-        fetchLatestNewsData(); 
-        fetchAirdropData();
+        fetchLatestNewsData();
         
         // 即使出错也要显示更新检查
         setTimeout(() => {
@@ -1079,8 +969,7 @@ const HomeScreen = () => {
     try {
       await Promise.all([
         fetchNewsData(),
-        fetchLatestNewsData(),
-        fetchAirdropData()
+        fetchLatestNewsData()
       ]);
     } catch (error) {
       console.error('Refresh failed:', error);
@@ -1316,15 +1205,6 @@ const HomeScreen = () => {
         }}
         loading={loading}
         error={newsError}
-      />
-
-      {/* 热门空投 */}
-      <FeaturedAirdrops 
-        airdrops={featuredAirdrops} 
-        title={featuredAirdropsTitle}
-        viewMoreText={viewMoreText}
-        loading={airdropLoading}
-        error={airdropError}
       />
     </ScrollView>
   );

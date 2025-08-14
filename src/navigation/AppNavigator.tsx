@@ -9,8 +9,7 @@ import HomeScreen from '../screens/Home/HomeScreen';
 import MarketScreen from '../screens/Market/MarketScreen';
 import USStockDetailScreen from '../screens/Market/USStockDetailScreen';
 import ArticleDetailScreen from '../screens/Articles/ArticleDetailScreen';
-import AirdropsScreen from '../screens/Airdrops/AirdropsScreen';
-import AirdropDetailScreen from '../screens/Airdrops/AirdropDetailScreen';
+import ArticleScreen from '../screens/Articles/ArticleScreen';
 import DataScreen from '../screens/Data/DataScreen';
 import DataDetailScreen from '../screens/Data/DataDetailScreen';
 import GreedyIndexDetail from '../screens/Data/GreedyIndexDetail';
@@ -32,7 +31,7 @@ import AboutUsScreen from '../screens/Profile/AboutUsScreen';
 const Tab = createBottomTabNavigator();
 const HomeStack = createStackNavigator();
 const MarketStack = createStackNavigator();
-const AirdropsStack = createStackNavigator();
+const ArticlesStack = createStackNavigator();
 const DataStack = createStackNavigator();
 
 // Home stack navigator
@@ -44,14 +43,7 @@ const HomeStackNavigator = React.forwardRef((props, ref) => {
       initialRouteName="HomeMain"
     >
       <HomeStack.Screen name="HomeMain" component={HomeScreen} />
-      <HomeStack.Screen 
-        name="ArticlesList" 
-        component={HomeScreen}
-        initialParams={{ activeTab: 'articles' }}
-      />
       <HomeStack.Screen name="CoinDetail" component={USStockDetailScreen} />
-      <HomeStack.Screen name="ArticleDetail" component={ArticleDetailScreen} />
-      <HomeStack.Screen name="AirdropDetail" component={AirdropDetailScreen} />
       <HomeStack.Screen name="Data" component={DataScreen} />
       <HomeStack.Screen name="DataDetail" component={DataDetailScreen} />
       <HomeStack.Screen name="GreedyIndexDetail" component={GreedyIndexDetail} />
@@ -99,7 +91,6 @@ const MarketStackNavigator = () => {
           })
         }}
       />
-      <MarketStack.Screen name="ArticleDetail" component={ArticleDetailScreen} />
       <MarketStack.Screen name="UserStatus" component={UserStatusScreen} />
       <MarketStack.Screen name="UserProfile" component={UserProfileScreen} />
       <MarketStack.Screen name="TermsOfService" component={TermsOfServiceScreen} />
@@ -108,18 +99,17 @@ const MarketStackNavigator = () => {
   );
 };
 
-// Airdrops stack navigator
-const AirdropsStackNavigator = () => {
+// Articles stack navigator
+const ArticlesStackNavigator = () => {
   return (
-    <AirdropsStack.Navigator screenOptions={{ headerShown: false }}>
-      <AirdropsStack.Screen name="AirdropsMain" component={AirdropsScreen} />
-      <AirdropsStack.Screen name="AirdropDetail" component={AirdropDetailScreen} />
-      <AirdropsStack.Screen name="ArticleDetail" component={ArticleDetailScreen} />
-      <AirdropsStack.Screen name="UserStatus" component={UserStatusScreen} />
-      <AirdropsStack.Screen name="UserProfile" component={UserProfileScreen} />
-      <AirdropsStack.Screen name="TermsOfService" component={TermsOfServiceScreen} />
-      <AirdropsStack.Screen name="AboutUs" component={AboutUsScreen} />
-    </AirdropsStack.Navigator>
+    <ArticlesStack.Navigator screenOptions={{ headerShown: false }}>
+      <ArticlesStack.Screen name="ArticlesMain" component={ArticleScreen} />
+      <ArticlesStack.Screen name="ArticleDetail" component={ArticleDetailScreen} />
+      <ArticlesStack.Screen name="UserStatus" component={UserStatusScreen} />
+      <ArticlesStack.Screen name="UserProfile" component={UserProfileScreen} />
+      <ArticlesStack.Screen name="TermsOfService" component={TermsOfServiceScreen} />
+      <ArticlesStack.Screen name="AboutUs" component={AboutUsScreen} />
+    </ArticlesStack.Navigator>
   );
 };
 
@@ -139,7 +129,6 @@ const DataStackNavigator = () => {
       <DataStack.Screen name="DXYDetail" component={DXYDetail} />
       <DataStack.Screen name="USBond10YRDetail" component={USBond10YRDetail} />
       <DataStack.Screen name="USDJPYDetail" component={USDJPYDetail} />
-      <DataStack.Screen name="ArticleDetail" component={ArticleDetailScreen} />
       <DataStack.Screen name="UserStatus" component={UserStatusScreen} />
       <DataStack.Screen name="UserProfile" component={UserProfileScreen} />
       <DataStack.Screen name="TermsOfService" component={TermsOfServiceScreen} />
@@ -161,8 +150,8 @@ const AppNavigator = () => {
             iconName = focused ? 'home' : 'home-outline';
           } else if (route.name === 'Market') {
             iconName = focused ? 'stats-chart' : 'stats-chart-outline';
-          } else if (route.name === 'Airdrops') {
-            iconName = focused ? 'gift' : 'gift-outline';
+          } else if (route.name === 'Articles') {
+            iconName = focused ? 'newspaper' : 'newspaper-outline';
           } else if (route.name === 'Data') {
             iconName = focused ? 'analytics' : 'analytics-outline';
           }
@@ -213,14 +202,14 @@ const AppNavigator = () => {
         options={{ tabBarLabel: '行情' }}
       />
       <Tab.Screen 
+        name="Articles" 
+        component={ArticlesStackNavigator}
+        options={{ tabBarLabel: '快讯' }}
+      />
+      <Tab.Screen 
         name="Data" 
         component={DataStackNavigator}
         options={{ tabBarLabel: '数据' }}
-      />
-      <Tab.Screen 
-        name="Airdrops" 
-        component={AirdropsStackNavigator}
-        options={{ tabBarLabel: '空投' }}
       />
     </Tab.Navigator>
   );

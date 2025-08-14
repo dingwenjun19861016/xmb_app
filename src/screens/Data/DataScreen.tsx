@@ -36,7 +36,7 @@ const DataScreen = () => {
 
   // 配置状态
   const [screenTitle, setScreenTitle] = useState('数据');
-  const [sectionTitle, setSectionTitle] = useState('加密货币数据');
+  const [sectionTitle, setSectionTitle] = useState('金融数据');
   const [moreButtonText, setMoreButtonText] = useState('查看更多数据');
   const [moreDataUrl, setMoreDataUrl] = useState(getMainURL('data/'));
 
@@ -68,7 +68,7 @@ const DataScreen = () => {
       
       // 获取配置
       const screenTitleConfig = await configService.getConfig('DATA_SCREEN_TITLE', '数据');
-      const sectionTitleConfig = await configService.getConfig('DATA_SECTION_TITLE', '加密货币数据');
+      const sectionTitleConfig = await configService.getConfig('DATA_SECTION_TITLE', '金融数据');
       const moreButtonTextConfig = await configService.getConfig('DATA_MORE_BUTTON_TEXT', '查看更多数据');
       const moreDataUrlConfig = await configService.getConfig('DATA_MORE_URL', getMainURL('data/'));
       
@@ -91,7 +91,7 @@ const DataScreen = () => {
       console.error('❌ DataScreen: Failed to load configs:', error);
       // 如果加载配置失败，使用默认值
       setScreenTitle('数据');
-      setSectionTitle('加密货币数据');
+      setSectionTitle('金融数据');
       setMoreButtonText('查看更多数据');
       setMoreDataUrl(getMainURL('data/'));
     }
@@ -187,7 +187,7 @@ const DataScreen = () => {
         }
         showsVerticalScrollIndicator={false}
       >
-        {/* 加密货币数据 Section */}
+        {/* 金融数据 Section */}
         <View style={styles.sectionContainer}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>{sectionTitle}</Text>

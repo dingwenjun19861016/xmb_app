@@ -3,14 +3,9 @@ import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import configService from '../../services/ConfigService';
 
-// Import all available widgets
+// Import US stock relevant widgets only
 import GreedyIndexWidget from './GreedyIndexWidget';
 import ETFDataWidget from './ETFDataWidget';
-import BTCDIndexWidget from './BTCDIndexWidget';
-import ETHDIndexWidget from './ETHDIndexWidget';
-import AltcoinIndexWidget from './AltcoinIndexWidget';
-import MarketCapWidget from './MarketCapWidget';
-import StablecoinWidget from './StablecoinWidget';
 import DXYWidget from './DXYWidget';
 import USBond10YRWidget from './USBond10YRWidget';
 import USDJPYWidget from './USDJPYWidget';
@@ -27,49 +22,35 @@ interface ConfigurableDataGridProps {
 }
 
 // 可用的组件映射
+// US stock relevant widget components mapping
 const WIDGET_COMPONENTS = {
   GreedyIndex: GreedyIndexWidget,
-  MarketCap: MarketCapWidget,
-  AltcoinIndex: AltcoinIndexWidget,
   ETFData: ETFDataWidget,
-  BTCDIndex: BTCDIndexWidget,
-  ETHDIndex: ETHDIndexWidget,
-  Stablecoin: StablecoinWidget,
   DXY: DXYWidget,
   USBond10YR: USBond10YRWidget,
   USDJPY: USDJPYWidget,
 };
 
-// 组件详情页面映射
+// 组件详情页面映射 - 仅US股票相关
 const DETAIL_SCREENS = {
   GreedyIndex: 'GreedyIndexDetail',
-  MarketCap: 'MarketCapDetail',
-  AltcoinIndex: 'AltcoinIndexDetail',
   ETFData: 'ETFDataDetail',
-  BTCDIndex: 'BTCDIndexDetail',
-  ETHDIndex: 'ETHDIndexDetail',
-  Stablecoin: 'StablecoinDetail',
   DXY: 'DXYDetail',
   USBond10YR: 'USBond10YRDetail',
   USDJPY: 'USDJPYDetail',
 };
 
-// 组件标题映射 - 默认值
+// 组件标题映射 - 默认值（仅US股票相关）
 const DEFAULT_WIDGET_TITLES = {
   GreedyIndex: '恐惧与贪婪指数',
-  MarketCap: '总市值',
-  AltcoinIndex: '山寨币指数',
   ETFData: 'ETF数据',
-  BTCDIndex: 'BTC.D指数',
-  ETHDIndex: 'ETH.D指数',
-  Stablecoin: '稳定币市值',
   DXY: '美元指数',
   USBond10YR: '美债10年期',
   USDJPY: '美元日元',
 };
 
-// 默认配置字符串
-const DEFAULT_CARDS_CONFIG_STRING = 'GreedyIndex,MarketCap,AltcoinIndex,ETFData,BTCDIndex,ETHDIndex,Stablecoin,DXY,USBond10YR,USDJPY';
+// 默认配置字符串 - 仅US股票相关指标
+const DEFAULT_CARDS_CONFIG_STRING = 'GreedyIndex,ETFData,DXY,USBond10YR';
 
 const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
   columnsPerRow: 2,

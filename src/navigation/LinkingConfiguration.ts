@@ -19,7 +19,7 @@ export type RootStackParamList = {
     screen?: string;
     params?: any;
   };
-  Airdrops: {
+  Articles: {
     screen?: string;
     params?: any;
   };
@@ -49,7 +49,6 @@ const linking: LinkingOptions<RootStackParamList> = {
         path: '/',
         screens: {
           HomeMain: '',
-          ArticlesList: 'articles',
           CoinDetail: {
             path: 'coin/:name',
             parse: {
@@ -57,7 +56,6 @@ const linking: LinkingOptions<RootStackParamList> = {
               fullName: (fullName: string) => fullName ? decodeURIComponent(fullName) : undefined,
             },
           },
-          ArticleDetail: 'articles/:articleId',
           UserStatus: 'user',
           UserProfile: 'profile',
           TermsOfService: 'terms',
@@ -80,7 +78,6 @@ const linking: LinkingOptions<RootStackParamList> = {
               fullName: (fullName: string) => fullName ? decodeURIComponent(fullName) : undefined,
             },
           },
-          ArticleDetail: '/articles/:articleId',
           UserStatus: '/user',
           UserProfile: '/profile',
           TermsOfService: '/terms',
@@ -111,13 +108,12 @@ const linking: LinkingOptions<RootStackParamList> = {
         },
       },
       
-      // 空投页面路由
-      Airdrops: {
-        path: '/airdrops',
+      // 快讯页面路由
+      Articles: {
+        path: '/articles',
         screens: {
-          AirdropsMain: '',
-          AirdropDetail: '/:path',
-          ArticleDetail: '/articles/:articleId',
+          ArticlesMain: '',
+          ArticleDetail: '/:articleId',
           UserStatus: '/user',
           UserProfile: '/profile',
           TermsOfService: '/terms',
