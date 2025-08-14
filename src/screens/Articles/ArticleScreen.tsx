@@ -24,11 +24,11 @@ import { useUser } from '../../contexts/UserContext';
 import TodayHeader from '../../components/common/TodayHeader';
 import MessageModal from '../../components/common/MessageModal';
 import LoginModal from '../../components/auth/LoginModal';
-import NewsCard from '../../components/common/NewsCard';
+import TimelineNewsCard from '../../components/common/TimelineNewsCard';
 import SkeletonBox from '../../components/common/SkeletonBox';
 
-// 分类配置
-const ARTICLE_CATEGORIES = ['全部', '快讯', '头条', '研报'];
+// 分类配置 - 移除"全部"分类，只保留具体分类
+const ARTICLE_CATEGORIES = ['快讯', '头条', '研报'];
 const CATEGORY_MAP: Record<string, string> = {
   '头条': 'headline',
   '研报': 'market',
@@ -50,7 +50,7 @@ const ArticleScreen = () => {
 
   // 搜索和过滤状态
   const [searchText, setSearchText] = useState('');
-  const [activeCategory, setActiveCategory] = useState('全部');
+  const [activeCategory, setActiveCategory] = useState('快讯'); // 默认显示快讯
 
   // UI配置状态
   const [screenTitle, setScreenTitle] = useState('快讯');
@@ -117,56 +117,63 @@ const ArticleScreen = () => {
         setLoadingMore(true);
       }
 
-      const page = reset ? 1 : currentPage;
+      const skip = reset ? 0 : (currentPage - 1) * pageSize;
       let categoryFilter = '';
 
       // 设置分类过滤
-      if (activeCategory !== '全部') {
+      if (activeCategory && activeCategory !== '全部') {
         categoryFilter = CATEGORY_MAP[activeCategory] || '';
       }
 
       console.log('🔍 ArticleScreen: Loading articles with:', {
-        page,
+        skip,
         pageSize,
         category: categoryFilter,
         search: searchText.trim()
       });
 
-      // 获取文章数据
-      let result;
+      // 获取文章数据 - 使用与HomeScreen相同的API
+      let newArticles;
       if (searchText.trim()) {
-        result = await newsService.searchNews(
+        newArticles = await newsService.searchNews(
           searchText.trim(),
-          page,
-          pageSize
+          pageSize,
+          skip
         );
       } else if (categoryFilter) {
-        result = await newsService.getNewsByCategory(
+        newArticles = await newsService.getNewsByCategory(
           categoryFilter,
-          page,
+          skip,
           pageSize
         );
       } else {
-        result = await newsService.getLatestNews(page, pageSize);
+        // 使用与HomeScreen 今日要闻相同的API
+        newArticles = await newsService.getFeaturedLatestNews(pageSize);
       }
 
-      const newArticles = result.data || [];
+      // 格式化新闻日期
+      const formatNewsDate = (article: NewsArticle) => ({
+        ...article,
+        date: newsService.formatDate(article.date)
+      });
+
+      const formattedArticles = (Array.isArray(newArticles) ? newArticles : []).map(formatNewsDate);
       
       if (reset) {
-        setArticles(newArticles);
+        setArticles(formattedArticles);
       } else {
-        setArticles(prev => [...prev, ...newArticles]);
+        setArticles(prev => [...prev, ...formattedArticles]);
       }
 
       // 检查是否还有更多数据
-      setHasMoreData(newArticles.length === pageSize);
+      setHasMoreData(formattedArticles.length === pageSize);
       if (!reset) {
         setCurrentPage(prev => prev + 1);
       }
 
       console.log('✅ ArticleScreen: Articles loaded successfully:', {
-        count: newArticles.length,
-        total: reset ? newArticles.length : articles.length + newArticles.length
+        count: formattedArticles.length,
+        total: reset ? formattedArticles.length : articles.length + formattedArticles.length
       });
 
     } catch (error) {
@@ -319,24 +326,30 @@ const ArticleScreen = () => {
   );
 
   const renderArticleItem = ({ item, index }: { item: NewsArticle; index: number }) => (
-    <NewsCard
+    <TimelineNewsCard
       key={item._id || index}
       article={item}
       onPress={() => handleArticlePress(item)}
       style={styles.articleItem}
+      isLast={index === articles.length - 1}
     />
   );
 
   const renderLoadingItem = () => (
     <View style={styles.skeletonContainer}>
       <View style={styles.articleSkeleton}>
-        <SkeletonBox width={60} height={60} style={styles.articleImageSkeleton} />
+        {/* Timeline dot */}
+        <View style={styles.timelineSkeletonDot} />
+        
+        {/* Content */}
         <View style={styles.articleContentSkeleton}>
-          <SkeletonBox width="85%" height={16} style={{ marginBottom: 6 }} />
-          <SkeletonBox width="60%" height={14} style={{ marginBottom: 8 }} />
+          <SkeletonBox width="30%" height={12} style={{ marginBottom: 4 }} />
+          <SkeletonBox width="40%" height={10} style={{ marginBottom: 12 }} />
+          <SkeletonBox width="90%" height={16} style={{ marginBottom: 6 }} />
+          <SkeletonBox width="75%" height={14} style={{ marginBottom: 12 }} />
           <View style={styles.articleMetaSkeleton}>
-            <SkeletonBox width="30%" height={12} />
             <SkeletonBox width="25%" height={12} />
+            <SkeletonBox width="20%" height={12} />
           </View>
         </View>
       </View>
@@ -452,7 +465,7 @@ const ArticleScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: '#F2F2F7',
   },
 
   loadingContainer: {
@@ -465,6 +478,7 @@ const styles = StyleSheet.create({
 
   listContainer: {
     paddingBottom: 20,
+    paddingTop: 8,
   },
 
   headerContainer: {
@@ -473,6 +487,7 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#F0F0F0',
+    marginBottom: 0,
   },
 
   searchContainer: {
@@ -538,8 +553,7 @@ const styles = StyleSheet.create({
   },
 
   articleItem: {
-    marginHorizontal: 16,
-    marginBottom: 12,
+    marginBottom: 16,
   },
 
   loadingFooter: {
@@ -547,6 +561,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 20,
+    backgroundColor: 'transparent',
   },
 
   loadingText: {
@@ -557,58 +572,51 @@ const styles = StyleSheet.create({
 
   noMoreDataText: {
     fontSize: 14,
-    color: '#999',
+    color: '#8E8E93',
+    textAlign: 'center',
+    paddingVertical: 20,
   },
 
-  // Skeleton styles
+  // Timeline skeleton styles
   skeletonContainer: {
-    backgroundColor: 'white',
-    marginHorizontal: 16,
-    marginBottom: 12,
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 3,
-    borderWidth: 1,
-    borderColor: '#F0F0F0',
-  },
-
-  newsCardSkeleton: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-
-  newsCardImageSkeleton: {
-    borderRadius: 8,
-    marginRight: 12,
-  },
-
-  newsCardContent: {
-    flex: 1,
-    justifyContent: 'center',
+    backgroundColor: 'transparent',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 16,
   },
 
   articleSkeleton: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+  },
+
+  timelineSkeletonDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#E5E5E5',
+    marginTop: 8,
+    marginRight: 12,
   },
 
   articleImageSkeleton: {
     borderRadius: 6,
-    marginRight: 12,
+    marginBottom: 8,
   },
 
   articleContentSkeleton: {
     flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#F2F2F7',
   },
 
   articleMetaSkeleton: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginTop: 8,
   },
 });
 

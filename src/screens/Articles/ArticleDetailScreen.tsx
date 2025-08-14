@@ -101,35 +101,40 @@ const ArticleDetailScreen = () => {
 
   // Handle back button press with web support
   const handleBack = () => {
-    // Web环境下的修复方案
+    console.log('🔙 处理返回操作...');
+    
+    // Web环境下检查是否为直接URL访问
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
       const currentUrl = window.location.href;
-      // 如果是通过文章链接直接访问，或者明确指定返回首页
-      if (!returnTo) {
+      console.log('📍 当前URL:', currentUrl);
+      
+      // 检查是否是通过URL直接访问的（没有导航历史记录）
+      const isDirectAccess = window.history.length <= 1;
+      
+      if (isDirectAccess) {
+        // 只有直接URL访问才重定向到文章列表页
+        console.log('🌐 直接URL访问，重定向到文章列表页');
         try {
           const url = new URL(currentUrl);
-          const homeUrl = `${url.origin}/`;
-          console.log('🏠 返回到应用首页:', homeUrl);
-          window.location.href = homeUrl;
+          const articlesUrl = `${url.origin}/articles`;
+          window.location.href = articlesUrl;
           return;
         } catch (urlError) {
           console.error('❌ ArticleDetailScreen: URL解析失败:', urlError);
-          // 如果URL解析失败，使用相对路径返回首页
-          window.location.href = '/';
+          window.location.href = '/articles';
           return;
         }
       }
-      
-      // 如果是从应用内部导航来的，且有浏览器历史记录，尝试返回上一页
-      if (window.history.length > 1) {
-        console.log('📱 使用浏览器历史返回上一页');
-        window.history.back();
-        return;
-      }
     }
      
-    // 默认返回上一页
-    navigation.goBack();
+    // 所有其他情况都使用导航返回
+    console.log('📱 使用导航返回');
+    if (navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      // 如果没有可返回的页面，导航到文章列表
+      navigation.navigate('Articles');
+    }
   };
 
   // Handle exchange button press
@@ -240,7 +245,13 @@ const ArticleDetailScreen = () => {
         }
 
         // Fetch the specific article
-        const articleData = await newsService.getArticleById(articleId);
+        let articleData = null;
+        
+        try {
+          articleData = await newsService.getArticleById(articleId);
+        } catch (fetchError) {
+          console.warn('❌ ArticleDetailScreen: API获取文章失败:', fetchError);
+        }
         
         if (articleData) {
           setArticle(articleData);
@@ -265,9 +276,20 @@ const ArticleDetailScreen = () => {
             setRelatedArticles([]);
           }
         } else {
-          setError(notFoundText);
+          // 如果API获取失败，使用fallback数据
+          console.log('📰 ArticleDetailScreen: 使用fallback文章数据');
           setArticle(FALLBACK_ARTICLE);
-          setRelatedArticles([]);
+          
+          // 为fallback文章获取一些相关文章
+          try {
+            const relatedSizeStr = await configService.getConfig('ARTICLE_RELATED_SIZE', '8');
+            const relatedSize = parseInt(relatedSizeStr) || 8;
+            const related = await newsService.getFeaturedLatestNews(relatedSize);
+            setRelatedArticles(related);
+          } catch (relatedError) {
+            console.warn('❌ ArticleDetailScreen: fallback相关文章获取失败:', relatedError);
+            setRelatedArticles([]);
+          }
         }
 
       } catch (fetchError) {
@@ -313,35 +335,37 @@ const ArticleDetailScreen = () => {
   // 骨架加载组件
   const renderSkeleton = () => (
     <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-      {/* Cover Image Skeleton */}
-      <SkeletonBox width="100%" height={200} borderRadius={0} />
-      
-      {/* Article Header Skeleton */}
-      <View style={styles.articleHeader}>
-        <View style={styles.categoryRow}>
-          <SkeletonBox width={80} height={24} borderRadius={12} />
-          <SkeletonBox width={100} height={16} />
+      {/* Timeline Skeleton */}
+      <View style={styles.timelineContainer}>
+        {/* Timeline Left Skeleton */}
+        <View style={styles.timelineLeft}>
+          <SkeletonBox width={12} height={12} borderRadius={6} />
+          <View style={styles.timelineLine} />
         </View>
-        <SkeletonBox width="100%" height={28} style={{ marginTop: 12, marginBottom: 8 }} />
-        <SkeletonBox width="80%" height={24} />
-      </View>
-
-      {/* Article Content Skeleton */}
-      <View style={styles.contentContainer}>
-        <SkeletonBox width="100%" height={18} style={{ marginBottom: 12 }} />
-        <SkeletonBox width="95%" height={18} style={{ marginBottom: 12 }} />
-        <SkeletonBox width="90%" height={18} style={{ marginBottom: 12 }} />
-        <SkeletonBox width="100%" height={18} style={{ marginBottom: 12 }} />
-        <SkeletonBox width="85%" height={18} style={{ marginBottom: 16 }} />
         
-        <SkeletonBox width="100%" height={18} style={{ marginBottom: 12 }} />
-        <SkeletonBox width="92%" height={18} style={{ marginBottom: 12 }} />
-        <SkeletonBox width="88%" height={18} style={{ marginBottom: 12 }} />
-        <SkeletonBox width="94%" height={18} style={{ marginBottom: 16 }} />
-
-        <SkeletonBox width="100%" height={18} style={{ marginBottom: 12 }} />
-        <SkeletonBox width="87%" height={18} style={{ marginBottom: 12 }} />
-        <SkeletonBox width="91%" height={18} style={{ marginBottom: 12 }} />
+        {/* Timeline Content Skeleton */}
+        <View style={styles.timelineContent}>
+          {/* Time Header Skeleton */}
+          <View style={styles.timeHeader}>
+            <SkeletonBox width={80} height={16} />
+            <SkeletonBox width={60} height={24} borderRadius={16} />
+          </View>
+          
+          {/* Article Card Skeleton */}
+          <View style={styles.articleCard}>
+            <SkeletonBox width="100%" height={24} style={{ marginBottom: 16 }} />
+            <SkeletonBox width="90%" height={18} style={{ marginBottom: 12 }} />
+            <SkeletonBox width="95%" height={18} style={{ marginBottom: 12 }} />
+            <SkeletonBox width="85%" height={18} style={{ marginBottom: 16 }} />
+            
+            <SkeletonBox width="100%" height={18} style={{ marginBottom: 12 }} />
+            <SkeletonBox width="88%" height={18} style={{ marginBottom: 12 }} />
+            <SkeletonBox width="92%" height={18} style={{ marginBottom: 16 }} />
+            
+            <SkeletonBox width="94%" height={18} style={{ marginBottom: 12 }} />
+            <SkeletonBox width="87%" height={18} />
+          </View>
+        </View>
       </View>
 
       {/* Exchange Ad Skeleton */}
@@ -358,7 +382,6 @@ const ArticleDetailScreen = () => {
         <SkeletonBox width={100} height={22} style={{ marginBottom: 16 }} />
         {[1, 2, 3].map((index) => (
           <View key={index} style={styles.relatedSkeletonCard}>
-            <SkeletonBox width={80} height={60} borderRadius={8} style={styles.relatedImageSkeleton} />
             <View style={styles.relatedContentSkeleton}>
               <SkeletonBox width="100%" height={16} style={{ marginBottom: 8 }} />
               <SkeletonBox width="80%" height={14} style={{ marginBottom: 4 }} />
@@ -505,36 +528,32 @@ const ArticleDetailScreen = () => {
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Cover Image - Only show if article has a valid image URL and it loaded successfully */}
-        {article.image && 
-         article.image.trim() !== '' && 
-         !article.image.includes('placeholder') && 
-         article.image !== 'N/A' && 
-         !imageLoadFailed && (
-          <Image 
-            source={{ uri: article.image }} 
-            style={styles.coverImage}
-            onError={() => setImageLoadFailed(true)}
-          />
-        )}
-        
-        {/* Article Header */}
-        <View style={styles.articleHeader}>
-          <View style={styles.categoryRow}>
-            <View style={styles.categoryBadge}>
-              <Text style={styles.categoryText}>{article.category}</Text>
-            </View>
-            <Text style={styles.date}>{article.date}</Text>
+        {/* Timeline Article Layout */}
+        <View style={styles.timelineContainer}>
+          {/* Timeline Line and Dot */}
+          <View style={styles.timelineLeft}>
+            <View style={styles.timelineDot} />
+            <View style={styles.timelineLine} />
           </View>
-          <Text style={styles.title}>{article.title}</Text>
-          {/* 移除简介部分 */}
-        </View>
-
-        {/* Article Content */}
-        <View style={styles.contentContainer}>
-          <Markdown style={markdownStyles}>
-            {article.content}
-          </Markdown>
+          
+          {/* Article Content */}
+          <View style={styles.timelineContent}>
+            {/* Time and Category */}
+            <View style={styles.timeHeader}>
+              <Text style={styles.timeText}>{article.date}</Text>
+              <View style={styles.categoryBadge}>
+                <Text style={styles.categoryText}>{article.category}</Text>
+              </View>
+            </View>
+            
+            {/* Article Card */}
+            <View style={styles.articleCard}>
+              <Text style={styles.title}>{article.title}</Text>
+              <Markdown style={markdownStyles}>
+                {article.content}
+              </Markdown>
+            </View>
+          </View>
         </View>
 
         {/* Exchange Advertisement */}
@@ -689,6 +708,87 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
+  
+  // Timeline styles
+  timelineContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingVertical: 20,
+    backgroundColor: '#F2F2F7',
+  },
+  timelineLeft: {
+    width: 24,
+    alignItems: 'center',
+    marginRight: 16,
+    paddingTop: 8,
+  },
+  timelineDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#007AFF',
+    borderWidth: 3,
+    borderColor: '#fff',
+    shadowColor: '#007AFF',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  timelineLine: {
+    flex: 1,
+    width: 3,
+    backgroundColor: '#E8F4FD',
+    marginTop: 12,
+    minHeight: 200,
+  },
+  timelineContent: {
+    flex: 1,
+  },
+  timeHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  timeText: {
+    fontSize: 14,
+    color: '#007AFF',
+    fontWeight: '600',
+  },
+  categoryBadge: {
+    backgroundColor: '#F2F2F7',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E5E5EA',
+  },
+  categoryText: {
+    fontSize: 12,
+    color: '#8E8E93',
+    fontWeight: '500',
+  },
+  articleCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: '#F2F2F7',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1D1D1F',
+    lineHeight: 28,
+    marginBottom: 16,
+  },
+
   coverImage: {
     width: '100%',
     height: 220,
@@ -708,25 +808,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 10,
   },
-  categoryBadge: {
-    backgroundColor: '#E8F0FE',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 15,
-  },
-  categoryText: {
-    fontSize: 12,
-    color: '#007AFF',
-  },
   date: {
     fontSize: 14,
     color: '#999',
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    lineHeight: 30,
-    marginBottom: 12,
   },
   
   // Exchange advertisement styles
@@ -776,11 +860,6 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
 
-  contentContainer: {
-    backgroundColor: 'white',
-    padding: 20,
-    marginBottom: 10,
-  },
   // Loading states
   loadingContainer: {
     flex: 1,
