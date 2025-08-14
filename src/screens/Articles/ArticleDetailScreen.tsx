@@ -3,7 +3,7 @@ import {
   View, 
   Text, 
   StyleSheet, 
-  ScrollView,
+  ScrollView, 
   TouchableOpacity, 
   Image, 
   Share,
@@ -25,11 +25,12 @@ import { getWebAppURL } from '../../config/apiConfig';
 import { useUser } from '../../contexts/UserContext';
 
 // Import components
+import MessageModal from '../../components/common/MessageModal';
+import LoginModal from '../../components/auth/LoginModal';
 import PosterModal from '../../components/common/PosterModal';
 import WebPosterModal from '../../components/common/WebPosterModal';
-import LoginModal from '../../components/auth/LoginModal';
-import MessageModal from '../../components/common/MessageModal';
 import SkeletonBox from '../../components/common/SkeletonBox';
+import TimelineNewsCard from '../../components/news/TimelineNewsCard';
 
 // Fallback data for when API fails
 const FALLBACK_ARTICLE = {
@@ -98,24 +99,34 @@ const ArticleDetailScreen = () => {
   const [loadingText, setLoadingText] = useState<string>('加载文章中...');
   const [notFoundText, setNotFoundText] = useState<string>('文章未找到，可能已被删除或不存在');
 
-  // Handle back button press - 参考USStockDetailScreen的实现
+  // Handle back button press with web support - 参考AirdropDetailScreen的实现
   const handleBack = () => {
-    console.log('🔙 ArticleDetailScreen: 处理返回按钮点击', { fromArticleScreen, returnTo });
-    console.log('� 导航状态:', {
-      canGoBack: navigation.canGoBack(),
-      routeName: route.name,
-      params: route.params
-    });
+    console.log('🔙 ArticleDetailScreen: 处理返回操作...');
     
-    try {
-      // 简化逻辑：无论什么环境都优先使用navigation.goBack()
-      console.log('✅ 直接使用 navigation.goBack()，忽略环境差异');
+    // Web环境下的修复方案
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      const currentUrl = window.location.href;
+      console.log('📍 当前URL:', currentUrl);
+      
+      // 如果没有returnTo参数，直接导航到文章列表页面
+      if (!returnTo) {
+        try {
+          const url = new URL(currentUrl);
+          const targetUrl = `${url.origin}/articles`;
+          
+          // 直接导航到目标页面
+          window.location.href = targetUrl;
+          return;
+        } catch (urlError) {
+          console.error('❌ ArticleDetailScreen: URL解析失败:', urlError);
+        }
+      }
+      
       navigation.goBack();
-    } catch (error) {
-      console.error('❌ ArticleDetailScreen: goBack失败:', error);
-      // 只有在goBack失败时才使用其他方案
-      navigation.navigate('Articles' as never);
+      return;
     }
+    
+    navigation.goBack();
   };
 
   // 显示MessageModal的辅助函数

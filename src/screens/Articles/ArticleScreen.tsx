@@ -11,7 +11,7 @@ import {
   ScrollView,
   Platform
 } from 'react-native';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 
 // Import services
@@ -104,14 +104,12 @@ const ArticleScreen = () => {
     };
   }, []);
 
-  // 页面聚焦时重新加载数据
-  useFocusEffect(
-    React.useCallback(() => {
-      if (activeCategory) {
-        loadArticles(true);
-      }
-    }, [activeCategory])
-  );
+  // 初始加载 - 移除useFocusEffect以避免从详情页返回时重新加载
+  useEffect(() => {
+    if (activeCategory) {
+      loadArticles(true);
+    }
+  }, [activeCategory]);
 
   const loadConfigs = async () => {
     try {
@@ -404,7 +402,7 @@ const ArticleScreen = () => {
       articleId: article._id,
       article: article,
       fromArticleScreen: true,
-      returnTo: 'articles'
+      returnTo: 'ArticlesMain'
     });
   };
 
