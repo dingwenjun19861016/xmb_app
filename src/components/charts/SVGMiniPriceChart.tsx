@@ -25,13 +25,8 @@ const SVGMiniPriceChart: React.FC<SVGMiniPriceChartProps> = ({
   showFill = false
 }) => {
   const pathData = useMemo(() => {
-    console.log('📊 SVGMiniPriceChart: data =', data?.length || 'no data', 'items');
-    if (data && data.length > 0) {
-      console.log('📊 SVGMiniPriceChart: first item =', data[0]);
-    }
-    
     if (!data || data.length < 2) {
-      return { points: '', fillPath: '' };
+      return { points: '', fillPath: '', isFlat: false };
     }
 
     // 按时间排序
@@ -39,13 +34,27 @@ const SVGMiniPriceChart: React.FC<SVGMiniPriceChartProps> = ({
       new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
     );
 
-    // 找到价格的最小值和最大值
+    // 🎯 智能检测休市数据：检查是否所有价格都相同或变化极小
     const prices = sortedData.map(d => d.price);
     const minPrice = Math.min(...prices);
     const maxPrice = Math.max(...prices);
-    const priceRange = maxPrice - minPrice || 1; // 防止除零
+    const priceRange = maxPrice - minPrice;
+    
+    // 如果价格变化小于0.01%，认为是休市期间的平价数据
+    const isMarketClosed = priceRange / minPrice < 0.0001;
+    
+    if (isMarketClosed) {
+      // 休市期间显示灰色平线
+      const y = height / 2;
+      const points = sortedData.map((_, index) => {
+        const x = (index / (sortedData.length - 1)) * (width - 4) + 2;
+        return `${x},${y}`;
+      }).join(' ');
+      
+      return { points, fillPath: '', isFlat: true };
+    }
 
-    // 计算点的坐标
+    // 计算正常交易时段的价格图表
     const points = sortedData.map((point, index) => {
       const x = (index / (sortedData.length - 1)) * (width - 4) + 2; // 留出边距
       const y = height - 2 - ((point.price - minPrice) / priceRange) * (height - 4); // 翻转Y轴
@@ -76,7 +85,7 @@ const SVGMiniPriceChart: React.FC<SVGMiniPriceChartProps> = ({
       fillPath += `L ${lastX},${bottomY} Z`;
     }
 
-    return { points, fillPath };
+    return { points, fillPath, isFlat: false };
   }, [data, width, height, showFill]);
 
   // 如果没有足够的数据，返回空视图
@@ -84,8 +93,14 @@ const SVGMiniPriceChart: React.FC<SVGMiniPriceChartProps> = ({
     return <View style={[styles.container, { width, height }]} />;
   }
 
-  const chartColor = isPositive ? '#00C851' : '#FF4444';
-  const fillColor = isPositive ? 'rgba(0, 200, 81, 0.1)' : 'rgba(255, 68, 68, 0.1)';
+  // 根据是否休市选择颜色：休市时使用灰色，交易时段使用涨跌色
+  const chartColor = pathData.isFlat 
+    ? '#8E8E93' // 休市期间灰色
+    : (isPositive ? '#00C851' : '#FF4444'); // 交易时段涨跌色
+    
+  const fillColor = pathData.isFlat 
+    ? 'rgba(142, 142, 147, 0.1)' // 休市期间淡灰色
+    : (isPositive ? 'rgba(0, 200, 81, 0.1)' : 'rgba(255, 68, 68, 0.1)'); // 交易时段涨跌色
 
   return (
     <View style={[styles.container, { width, height }]}>
@@ -104,6 +119,7 @@ const SVGMiniPriceChart: React.FC<SVGMiniPriceChartProps> = ({
           strokeWidth={strokeWidth}
           strokeLinecap="round"
           strokeLinejoin="round"
+          opacity={pathData.isFlat ? 0.7 : 1} // 休市时略微透明
         />
       </Svg>
     </View>

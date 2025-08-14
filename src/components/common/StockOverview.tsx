@@ -85,7 +85,7 @@ const StockOverview: React.FC<StockOverviewProps> = ({
         exchange: stock.exchange,
         sector: stock.sector,
         // 24小时价格数据（如果有）
-        coin24h: stock.usstock24h?.map(item => ({
+        stock24h: stock.usstock24h?.map(item => ({
           price: parseFloat(item.price),
           createdAt: item.createdAt
         })) || [],

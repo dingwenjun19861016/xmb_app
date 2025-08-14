@@ -367,10 +367,6 @@ const StockCard: React.FC<StockCardProps> = ({
           {/* 24小时价格图表 */}
           {showChart && (
             <View style={styles.chartContainer}>
-              {/* 临时调试 */}
-              {console.log(`📈 StockCard ${data.name}: stock24h =`, data.stock24h?.length || 'undefined', 'items')}
-              {data.stock24h && data.stock24h.length > 0 && console.log('First item:', data.stock24h[0])}
-              
               <SVGMiniPriceChart
                 data={data.stock24h || []}
                 isPositive={data.isPositive}
