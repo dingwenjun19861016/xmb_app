@@ -28,7 +28,7 @@ import CoinInfoComponent from '../../components/common/CoinInfo';
 import InfoCard from '../../components/ui/InfoCard';
 import PriceCard from '../../components/ui/PriceCard';
 import ExchangeCard from '../../components/ui/ExchangeCard';
-import CoinPriceChart from '../../components/charts/CoinPriceChart';
+import StockPriceChart from '../../components/charts/StockPriceChart';
 import SmartStockChart from '../../components/charts/SmartStockChart';
 import MessageModal from '../../components/common/MessageModal';
 import LoginModal from '../../components/auth/LoginModal';

@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
-import CoinPriceChart from './CoinPriceChart';
+import StockPriceChart from './StockPriceChart';
 import StockDetailChart from './StockDetailChart';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -139,7 +139,7 @@ const SmartStockChart: React.FC<SmartStockChartProps> = ({
   // 其他时间周期使用原有的图表组件
   return (
     <View style={styles.container}>
-      <CoinPriceChart 
+      <StockPriceChart 
         historicalData={historicalData}
         selectedTimePeriod={selectedTimePeriod}
         onTimePeriodChange={onTimePeriodChange}

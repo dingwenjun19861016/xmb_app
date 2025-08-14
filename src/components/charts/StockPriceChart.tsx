@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Dimensions, TouchableOpacity, Platform } from 'react-native';
 import { LineChart as RNLineChart } from 'react-native-chart-kit';
-import { CoinInfo } from '../../services/StockInfoService';
+import { StockInfo } from '../../services/StockInfoService';
 import { DateUtils } from '../../utils/dateUtils';
 // 仅在Web环境中导入Chart.js相关库
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler } from 'chart.js';
@@ -28,23 +28,23 @@ if (Platform.OS === 'web') {
 // 时间周期选项
 const TIME_PERIODS = ['24h', '7d', '30d', '90d', '1y', 'ALL'];
 
-interface CoinPriceChartProps {
-  historicalData: CoinInfo[];
+interface StockPriceChartProps {
+  historicalData: StockInfo[];
   selectedTimePeriod: string;
   onTimePeriodChange: (period: string) => void;
   isPositive: boolean;
   showRankChart?: boolean; // 新增：是否显示排名曲线
 }
 
-const CoinPriceChart: React.FC<CoinPriceChartProps> = ({
+const StockPriceChart: React.FC<StockPriceChartProps> = ({
   historicalData,
   selectedTimePeriod,
   onTimePeriodChange,
   isPositive,
   showRankChart = false
 }) => {
-  // 获取当前币种名称
-  const currentCoinName = React.useMemo(() => {
+  // 获取当前股票名称
+  const currentStockName = React.useMemo(() => {
     return historicalData.length > 0 ? (historicalData[0].name || 'unknown') : 'unknown';
   }, [historicalData]);
   
@@ -52,30 +52,30 @@ const CoinPriceChart: React.FC<CoinPriceChartProps> = ({
   const { getChartType, setChartType } = useChartType();
   
   // 获取当前图表类型
-  const getChartTypeForCoin = () => getChartType(currentCoinName);
+  const getChartTypeForStock = () => getChartType(currentStockName);
   
   // 设置图表类型
-  const setChartTypeForCoin = (newType: 'price' | 'rank') => {
-    setChartType(currentCoinName, newType);
+  const setChartTypeForStock = (newType: 'price' | 'rank') => {
+    setChartType(currentStockName, newType);
   };
   
   // 获取屏幕宽度
   const screenWidth = Dimensions.get('window').width - 30;
   
-  // 当币种变化时，记录一下当前选择的图表类型
+  // 当股票变化时，记录一下当前选择的图表类型
   React.useEffect(() => {
-    console.log('🔄 CoinPriceChart: 币种切换，当前图表类型', {
-      coinName: currentCoinName,
-      chartType: getChartTypeForCoin()
+    console.log('🔄 StockPriceChart: 股票切换，当前图表类型', {
+      stockName: currentStockName,
+      chartType: getChartTypeForStock()
     });
-  }, [currentCoinName]);
+  }, [currentStockName]);
 
   // 处理时间周期变化
   const handleTimePeriodChange = (period: string) => {
-    console.log('📅 CoinPriceChart: 时间周期变化', {
+    console.log('📅 StockPriceChart: 时间周期变化', {
       from: selectedTimePeriod,
       to: period,
-      currentChartType: getChartTypeForCoin()
+      currentChartType: getChartTypeForStock()
     });
     
     // 调用父组件的时间周期变化处理函数
@@ -86,7 +86,7 @@ const CoinPriceChart: React.FC<CoinPriceChartProps> = ({
   const getAvailableTimePeriods = () => {
     // 排名图表不显示24h选项，因为排名的24h变化意义不大
     // 排名更关注中长期趋势（7d, 30d, 90d, 1y, ALL）
-    if (getChartTypeForCoin() === 'rank') {
+    if (getChartTypeForStock() === 'rank') {
       return TIME_PERIODS.filter(period => period !== '24h');
     }
     // 价格图表显示所有时间周期选项
@@ -97,14 +97,14 @@ const CoinPriceChart: React.FC<CoinPriceChartProps> = ({
   // 价格图表：默认24h，用户可自由调整
   // 排名图表：默认7d，用户可自由调整
   const handleChartTypeChange = (type: 'price' | 'rank') => {
-    console.log('📊 CoinPriceChart: 用户切换图表类型', {
-      from: getChartTypeForCoin(),
+    console.log('📊 StockPriceChart: 用户切换图表类型', {
+      from: getChartTypeForStock(),
       to: type,
-      coinName: currentCoinName
+      stockName: currentStockName
     });
     
     // 切换图表类型
-    setChartTypeForCoin(type);
+    setChartTypeForStock(type);
     
     // 根据图表类型设置默认时间周期
     if (type === 'price') {
@@ -162,7 +162,7 @@ const CoinPriceChart: React.FC<CoinPriceChartProps> = ({
     return isNaN(price) ? 0 : price;
   }); // Don't filter out 0 prices yet - keep all data points for proper chart rendering
   
-  console.log('🔍 CoinPriceChart: Processing price data:', {
+  console.log('🔍 StockPriceChart: Processing price data:', {
     historicalDataLength: historicalData.length,
     historicalDataSample: historicalData.slice(0, 3).map(item => ({
       currentPrice: item.currentPrice,
@@ -194,21 +194,21 @@ const CoinPriceChart: React.FC<CoinPriceChartProps> = ({
   const hasValidRankData = rankData.filter(rank => rank > 0).length > 0;
   
   // 添加详细的数据日志
-  console.log('📊 CoinPriceChart: 数据处理结果', {
+  console.log('📊 StockPriceChart: 数据处理结果', {
     totalDataLength: historicalData.length,
     priceDataLength: priceData.length,
     rankDataLength: rankData.length,
     hasValidPriceData,
     hasValidRankData,
-    chartType: getChartTypeForCoin(),
+    chartType: getChartTypeForStock(),
     selectedTimePeriod
   });
   
   // 当历史数据更新时，记录数据状态
   React.useEffect(() => {
-    console.log('📊 CoinPriceChart: 数据更新', {
+    console.log('📊 StockPriceChart: 数据更新', {
       dataLength: historicalData.length,
-      chartType: getChartTypeForCoin(),
+      chartType: getChartTypeForStock(),
       hasValidPriceData,
       hasValidRankData,
       selectedTimePeriod
@@ -229,23 +229,23 @@ const CoinPriceChart: React.FC<CoinPriceChartProps> = ({
   });
   
   // 根据当前图表类型决定显示的数据
-  let displayData = getChartTypeForCoin() === 'price' ? priceData : rankData;
+  let displayData = getChartTypeForStock() === 'price' ? priceData : rankData;
   
   // For price data, if we have mostly 0 values, replace them with the nearest valid value
-  if (getChartTypeForCoin() === 'price' && displayData.some(val => val === 0)) {
+  if (getChartTypeForStock() === 'price' && displayData.some(val => val === 0)) {
     let lastValidPrice = displayData.find(val => val > 0) || 1; // Use first valid price as fallback
     displayData = displayData.map(price => price > 0 ? price : lastValidPrice);
   }
   
-  console.log('🔍 CoinPriceChart: Final display data:', {
-    chartType: getChartTypeForCoin(),
+  console.log('🔍 StockPriceChart: Final display data:', {
+    chartType: getChartTypeForStock(),
     displayDataLength: displayData.length,
     displayDataSample: displayData.slice(0, 10),
     dateLabelsLength: dateLabels.length,
     dateLabelsample: dateLabels.slice(0, 10)
   });
   
-  const dataColor = getChartTypeForCoin() === 'price' ? 
+  const dataColor = getChartTypeForStock() === 'price' ? 
     (isPositive ? '#00C853' : '#FF5252') : 
     '#FF9800'; // 排名使用橙色
   
@@ -280,7 +280,7 @@ const CoinPriceChart: React.FC<CoinPriceChartProps> = ({
   }
   
   // 如果当前图表类型没有有效数据，显示切换提示
-  if ((getChartTypeForCoin() === 'price' && !hasValidPriceData) || (getChartTypeForCoin() === 'rank' && !hasValidRankData)) {
+  if ((getChartTypeForStock() === 'price' && !hasValidPriceData) || (getChartTypeForStock() === 'rank' && !hasValidRankData)) {
     return (
       <View style={styles.container}>
         {/* 图表类型切换按钮 */}
@@ -289,14 +289,14 @@ const CoinPriceChart: React.FC<CoinPriceChartProps> = ({
             <TouchableOpacity
               style={[
                 styles.chartTypeButton,
-                getChartTypeForCoin() === 'price' && styles.selectedChartTypeButton
+                getChartTypeForStock() === 'price' && styles.selectedChartTypeButton
               ]}
               onPress={() => hasValidPriceData && handleChartTypeChange('price')}
               disabled={!hasValidPriceData}
             >
               <Text style={[
                 styles.chartTypeText,
-                getChartTypeForCoin() === 'price' && styles.selectedChartTypeText,
+                getChartTypeForStock() === 'price' && styles.selectedChartTypeText,
                 !hasValidPriceData && styles.disabledChartTypeText
               ]}>
                 价格
@@ -305,14 +305,14 @@ const CoinPriceChart: React.FC<CoinPriceChartProps> = ({
             <TouchableOpacity
               style={[
                 styles.chartTypeButton,
-                getChartTypeForCoin() === 'rank' && styles.selectedChartTypeButton
+                getChartTypeForStock() === 'rank' && styles.selectedChartTypeButton
               ]}
               onPress={() => hasValidRankData && handleChartTypeChange('rank')}
               disabled={!hasValidRankData}
             >
               <Text style={[
                 styles.chartTypeText,
-                getChartTypeForCoin() === 'rank' && styles.selectedChartTypeText,
+                getChartTypeForStock() === 'rank' && styles.selectedChartTypeText,
                 !hasValidRankData && styles.disabledChartTypeText
               ]}>
                 排名
@@ -343,7 +343,7 @@ const CoinPriceChart: React.FC<CoinPriceChartProps> = ({
         
         <View style={styles.noDataContainer}>
           <Text style={styles.noDataText}>
-            {getChartTypeForCoin() === 'price' ? '价格数据不可用' : '排名数据不可用'}
+            {getChartTypeForStock() === 'price' ? '价格数据不可用' : '排名数据不可用'}
           </Text>
         </View>
       </View>
@@ -372,13 +372,13 @@ const CoinPriceChart: React.FC<CoinPriceChartProps> = ({
         strokeWidth: selectedTimePeriod === '24h' ? 1.5 : 2, // 24h图表使用更细的线条
       }
     ],
-    legend: [getChartTypeForCoin() === 'price' ? 'Price' : 'Rank']
+    legend: [getChartTypeForStock() === 'price' ? 'Price' : 'Rank']
   };
   
   // 添加详细的图表数据调试信息
-  console.log('📊 CoinPriceChart: Final chart data:', {
+  console.log('📊 StockPriceChart: Final chart data:', {
     selectedTimePeriod,
-    chartType: getChartTypeForCoin(),
+    chartType: getChartTypeForStock(),
     labelsLength: displayLabels.length,
     dataLength: displayData.length,
     labels: displayLabels,
@@ -395,14 +395,14 @@ const CoinPriceChart: React.FC<CoinPriceChartProps> = ({
   };
 
   // 格式化函数选择
-  const formatValue = getChartTypeForCoin() === 'price' ? formatPrice : formatRank;
+  const formatValue = getChartTypeForStock() === 'price' ? formatPrice : formatRank;
 
   // 图表配置
   const chartConfig = {
     backgroundGradientFrom: '#ffffff',
     backgroundGradientTo: '#ffffff',
     // 根据图表类型和时间周期调整小数位数
-    decimalPlaces: getChartTypeForCoin() === 'price' ? 
+    decimalPlaces: getChartTypeForStock() === 'price' ? 
       (selectedTimePeriod === '24h' ? 2 : // 24小时模式简化为2位小数
         (priceData.some(price => price < 0.0001) ? 8 : 
          priceData.some(price => price < 0.01) ? 6 : 
@@ -445,14 +445,14 @@ const CoinPriceChart: React.FC<CoinPriceChartProps> = ({
           <TouchableOpacity
             style={[
               styles.chartTypeButton,
-              getChartTypeForCoin() === 'price' && styles.selectedChartTypeButton
+              getChartTypeForStock() === 'price' && styles.selectedChartTypeButton
             ]}
             onPress={() => hasValidPriceData && handleChartTypeChange('price')}
             disabled={!hasValidPriceData}
           >
             <Text style={[
               styles.chartTypeText,
-              getChartTypeForCoin() === 'price' && styles.selectedChartTypeText,
+              getChartTypeForStock() === 'price' && styles.selectedChartTypeText,
               !hasValidPriceData && styles.disabledChartTypeText
             ]}>
               价格
@@ -461,14 +461,14 @@ const CoinPriceChart: React.FC<CoinPriceChartProps> = ({
           <TouchableOpacity
             style={[
               styles.chartTypeButton,
-              getChartTypeForCoin() === 'rank' && styles.selectedChartTypeButton
+              getChartTypeForStock() === 'rank' && styles.selectedChartTypeButton
             ]}
             onPress={() => hasValidRankData && handleChartTypeChange('rank')}
             disabled={!hasValidRankData}
           >
             <Text style={[
               styles.chartTypeText,
-              getChartTypeForCoin() === 'rank' && styles.selectedChartTypeText,
+              getChartTypeForStock() === 'rank' && styles.selectedChartTypeText,
               !hasValidRankData && styles.disabledChartTypeText
             ]}>
               排名
@@ -501,9 +501,9 @@ const CoinPriceChart: React.FC<CoinPriceChartProps> = ({
         // Web环境使用react-chartjs-2
         <View style={{height: 220, width: screenWidth}}>
           {/* Add debugging info for web charts */}
-          {console.log('🌐 CoinPriceChart Web: Chart.js data', {
+          {console.log('🌐 StockPriceChart Web: Chart.js data', {
             selectedTimePeriod,
-            chartType: getChartTypeForCoin(),
+            chartType: getChartTypeForStock(),
             labelsCount: displayLabels.length,
             dataCount: displayData.length,
             labelsPreview: displayLabels.slice(0, 5),
@@ -516,14 +516,14 @@ const CoinPriceChart: React.FC<CoinPriceChartProps> = ({
               labels: displayLabels,
               datasets: [
                 {
-                  label: getChartTypeForCoin() === 'price' ? 'Price' : 'Rank',
+                  label: getChartTypeForStock() === 'price' ? 'Price' : 'Rank',
                   data: displayData,
                   borderColor: chartColor,
                   backgroundColor: `${chartColor}33`, // 添加透明度
                   borderWidth: selectedTimePeriod === '24h' ? 1.5 : 2, // 24h使用更细的线
                   pointRadius: 0, // 隐藏所有数据点，让图表更平滑
                   pointBackgroundColor: chartColor,
-                  fill: getChartTypeForCoin() === 'rank' ? 'start' : 'origin', // 排名图表填充到顶部，价格图表填充到底部
+                  fill: getChartTypeForStock() === 'rank' ? 'start' : 'origin', // 排名图表填充到顶部，价格图表填充到底部
                   tension: 0.4 // 控制曲线平滑程度
                 }
               ]
@@ -538,7 +538,7 @@ const CoinPriceChart: React.FC<CoinPriceChartProps> = ({
               scales: {
                 y: {
                   // 排名图表需要反转Y轴（排名越小越好，显示在上方）
-                  reverse: getChartTypeForCoin() === 'rank',
+                  reverse: getChartTypeForStock() === 'rank',
                   ticks: {
                     // 使用格式化函数
                     callback: (value) => formatValue(Number(value)),
@@ -581,7 +581,7 @@ const CoinPriceChart: React.FC<CoinPriceChartProps> = ({
               },
               elements: {
                 line: {
-                  fill: getChartTypeForCoin() === 'rank' ? 'start' : 'origin'
+                  fill: getChartTypeForStock() === 'rank' ? 'start' : 'origin'
                 }
               }
             }}
@@ -603,7 +603,7 @@ const CoinPriceChart: React.FC<CoinPriceChartProps> = ({
           withInnerLines={false}
           withOuterLines={true}
           fromZero={false} // 不从0开始，而是根据数据的最小值自动设置
-          yAxisLabel={getChartTypeForCoin() === 'price' ? "$" : "#"}
+          yAxisLabel={getChartTypeForStock() === 'price' ? "$" : "#"}
           yAxisInterval={1}
         />
       )}
@@ -692,4 +692,4 @@ const styles = StyleSheet.create({
   }
 });
 
-export default CoinPriceChart;
+export default StockPriceChart;
