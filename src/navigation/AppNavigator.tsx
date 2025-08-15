@@ -44,6 +44,8 @@ const HomeStackNavigator = React.forwardRef((props, ref) => {
     >
       <HomeStack.Screen name="HomeMain" component={HomeScreen} />
       <HomeStack.Screen name="CoinDetail" component={USStockDetailScreen} />
+      {/* 允许从首页内栈直接打开文章详情，返回可回到股票详情 */}
+      <HomeStack.Screen name="ArticleDetail" component={ArticleDetailScreen} />
       <HomeStack.Screen name="Data" component={DataScreen} />
       <HomeStack.Screen name="DataDetail" component={DataDetailScreen} />
       <HomeStack.Screen name="GreedyIndexDetail" component={GreedyIndexDetail} />
@@ -91,6 +93,8 @@ const MarketStackNavigator = () => {
           })
         }}
       />
+      {/* 允许在行情内栈直接打开文章详情，返回可回到股票详情 */}
+      <MarketStack.Screen name="ArticleDetail" component={ArticleDetailScreen} />
       <MarketStack.Screen name="UserStatus" component={UserStatusScreen} />
       <MarketStack.Screen name="UserProfile" component={UserProfileScreen} />
       <MarketStack.Screen name="TermsOfService" component={TermsOfServiceScreen} />

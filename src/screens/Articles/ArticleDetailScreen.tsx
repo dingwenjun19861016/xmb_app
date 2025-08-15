@@ -105,28 +105,46 @@ const ArticleDetailScreen = () => {
     
     // Web环境下的修复方案
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      const currentUrl = window.location.href;
-      console.log('📍 当前URL:', currentUrl);
-      
-      // 如果没有returnTo参数，直接导航到文章列表页面
-      if (!returnTo) {
+      // 如果是通过 window.open 打开的新标签页，直接关闭以回到原页面的原位置
+      if (window.opener) {
         try {
-          const url = new URL(currentUrl);
-          const targetUrl = `${url.origin}/articles`;
-          
-          // 直接导航到目标页面
-          window.location.href = targetUrl;
+          window.close();
           return;
-        } catch (urlError) {
-          console.error('❌ ArticleDetailScreen: URL解析失败:', urlError);
+        } catch (e) {
+          console.warn('⚠️ 无法直接关闭窗口，尝试历史返回', e);
         }
       }
-      
-      navigation.goBack();
+
+      // 其余情况：按导航栈/浏览器历史返回
+      if ((navigation as any).canGoBack && navigation.canGoBack()) {
+        navigation.goBack();
+        return;
+      }
+      if (window.history.length > 1) {
+        window.history.back();
+        return;
+      }
+
+      // 最后回退：如果带有股票代码参数，则回到对应股票详情；否则回到文章列表
+      const stockCodeFromParams = (route as any)?.params?.stockCode || (route as any)?.params?.symbol || null;
+      const fallbackUrl = stockCodeFromParams
+        ? getWebAppURL(`market/${stockCodeFromParams}`)
+        : getWebAppURL('articles');
+      window.location.href = fallbackUrl;
       return;
     }
     
-    navigation.goBack();
+    // 原生环境
+    if ((navigation as any).canGoBack && navigation.canGoBack()) {
+      navigation.goBack();
+    } else {
+      const stockCodeFromParams = (route as any)?.params?.stockCode || (route as any)?.params?.symbol || null;
+      if (stockCodeFromParams) {
+        navigation.navigate('USStockDetail' as never, { name: stockCodeFromParams } as never);
+      } else {
+        navigation.navigate('Home' as never);
+      }
+    }
   };
 
   // 显示MessageModal的辅助函数

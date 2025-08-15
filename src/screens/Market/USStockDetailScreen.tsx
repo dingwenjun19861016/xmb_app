@@ -629,31 +629,20 @@ const USStockDetailScreen = () => {
     return getWebAppURL(`market/${stockCode}`);
   };
 
-  // 打开文章详情或外部网页（Web/原生兼容）
-  const openArticleOrExternal = (articleId: string) => {
+  // 打开文章详情或外部网页（在当前栈内导航，保证返回到USStockDetail）
+  const openArticleOrExternal = (articleId: string, article?: NewsArticle) => {
     try {
       const cleanId = articleId ? articleId.replace(/^articles\//, '') : articleId;
-      const webUrl = getWebAppURL(`articles/${cleanId}`);
 
-      // Web 端：新开标签页
-      if (Platform.OS === 'web' && typeof window !== 'undefined') {
-        try {
-          window.open(webUrl, '_blank');
-        } catch (e) {
-          // 回退到同页跳转
-          window.location.href = webUrl;
-        }
-        return;
-      }
-
-      // 原生端：优先走应用内详情页
+      // 直接在当前栈内跳转，保证 goBack() 回到股票详情
       navigation.navigate('ArticleDetail' as never, {
         articleId: cleanId,
+        article,
         returnTo: 'stockDetail',
-        stockCode
+        stockCode,
       } as never);
     } catch (e) {
-      // 最后兜底：尝试外链打开
+      // 兜底：尝试外链打开（极端情况下使用）
       const fallbackUrl = getWebAppURL(`articles/${articleId}`);
       Linking.openURL(fallbackUrl).catch(err => {
         console.error('无法打开链接', err);
