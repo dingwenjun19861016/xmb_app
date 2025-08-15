@@ -25,7 +25,7 @@ import { generateStockSearchTerms, generateStockSearchTermsSync } from '../Marke
 import { getWebAppURL } from '../../config/apiConfig';
 import { DateUtils } from '../../utils/dateUtils';
 // Import components
-import CoinInfoComponent from '../../components/common/CoinInfo';
+import StockInfo from '../../components/common/StockInfo';
 import InfoCard from '../../components/ui/InfoCard';
 import PriceCard from '../../components/ui/PriceCard';
 import ExchangeCard from '../../components/ui/ExchangeCard';
@@ -898,9 +898,9 @@ const USStockDetailScreen = () => {
           {stockDataLoading ? (
             <StockInfoSkeleton />
           ) : stockData && isValidStockData(stockData) ? (
-            <CoinInfoComponent
-              coinName={stockData.name || stockCode}
-              coinSymbol={stockCode}
+            <StockInfo
+              stockName={stockData.name || stockCode}
+              stockSymbol={stockCode}
               currentPrice={(() => {
                 // 优先使用实时价格，如果没有则使用API返回的价格
                 const realTimePrice = getPrice(stockCode);

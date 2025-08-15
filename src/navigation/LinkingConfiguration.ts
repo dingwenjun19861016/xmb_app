@@ -91,7 +91,6 @@ const linking: LinkingOptions<RootStackParamList> = {
         screens: {
           DataMain: '',
           DataDetail: '/:dataType',
-          GreedyIndexDetail: '/greedy',
           DXYDetail: '/dxy',
           USBond10YRDetail: '/usbond',
           USDJPYDetail: '/usdjpy',
