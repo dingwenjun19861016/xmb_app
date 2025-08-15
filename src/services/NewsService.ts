@@ -122,6 +122,29 @@ class NewsService {
   }
 
   /**
+   * 直接调用API方法 - 供外部批量加载使用
+   * @param params API参数数组 [param1, param2, category, skip, limit, searchTerm]
+   * @returns Promise<NewsArticle[]>
+   */
+  public async callAPIDirectly(params: string[]): Promise<NewsArticle[]> {
+    try {
+      console.log('🔄 NewsService: Direct API call with params:', params);
+      
+      const response = await apiService.call('listChainalertContent', params);
+      const rawData = this.parseAPIResponse(response);
+      
+      // 转换为标准NewsArticle格式
+      const transformedArticles = this.transformAndDeduplicate(rawData, false, '');
+      
+      console.log('✅ NewsService: Direct API call successful, returned:', transformedArticles.length, 'articles');
+      return transformedArticles;
+    } catch (error) {
+      console.error('❌ NewsService: Direct API call failed:', error);
+      throw new Error(`Direct API call failed: ${error.message}`);
+    }
+  }
+
+  /**
    * 解析API响应
    * @param response API响应
    * @returns RawNewsData[]

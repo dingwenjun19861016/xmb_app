@@ -9,7 +9,8 @@ import {
   RefreshControl,
   ActivityIndicator,
   ScrollView,
-  Platform
+  Platform,
+  Keyboard
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -27,6 +28,8 @@ import MessageModal from '../../components/common/MessageModal';
 import LoginModal from '../../components/auth/LoginModal';
 import SkeletonBox from '../../components/common/SkeletonBox';
 import TimelineNewsCard from '../../components/common/TimelineNewsCard';
+import CommonSearchBar from '../../components/common/CommonSearchBar';
+import { useDebounce } from '../../hooks/useDebounce';
 
 // Import types
 interface NewsArticle {
@@ -54,10 +57,17 @@ const CATEGORY_MAP: Record<string, string> = {
 };
 
 const ArticleScreen = () => {
+  // 渲染次数计数器
+  const renderCountRef = useRef(0);
+  renderCountRef.current += 1;
+  
+  console.log('🔥🔥🔥 ArticleScreen: Component render started - Render count:', renderCountRef.current);
   const navigation = useNavigation();
   const { currentUser } = useUser();
   const searchInputRef = useRef<TextInput>(null);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  console.log('🔥 ArticleScreen: Component refs and navigation initialized');
 
   // 数据状态
   const [articles, setArticles] = useState<NewsArticle[]>([]);
@@ -66,15 +76,65 @@ const ArticleScreen = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMoreData, setHasMoreData] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
+  const [error, setError] = useState<string | null>(null);
+  
+  console.log('🔥 ArticleScreen: Data states initialized', {
+    articlesLength: articles.length,
+    loading,
+    refreshing,
+    loadingMore,
+    hasMoreData,
+    currentPage,
+    error
+  });
 
   // 搜索和过滤状态
   const [searchText, setSearchText] = useState('');
+  const [submittedSearchText, setSubmittedSearchText] = useState(''); // 用户提交的搜索文本
+  const debouncedSearchText = useDebounce(submittedSearchText, 500); // 只对提交的搜索文本防抖
   const [activeCategory, setActiveCategory] = useState('快讯'); // 默认显示快讯
+  
+  console.log('🔥 ArticleScreen: Search states initialized', {
+    searchText,
+    submittedSearchText,
+    debouncedSearchText,
+    activeCategory,
+    searchTextLength: searchText.length,
+    submittedSearchTextLength: submittedSearchText.length,
+    debouncedSearchTextLength: debouncedSearchText.length
+  });
 
   // UI配置状态
   const [screenTitle, setScreenTitle] = useState('快讯');
   const [searchPlaceholder, setSearchPlaceholder] = useState('搜索资讯...');
   const [pageSize, setPageSize] = useState(20);
+  
+  console.log('🔥 ArticleScreen: UI config states initialized', {
+    screenTitle,
+    searchPlaceholder,
+    pageSize
+  });
+
+  // 批量加载相关状态 - 类似于MarketScreen的实现
+  const [initialBatchSize] = useState(15); // 首次快速加载的数量
+  const [progressiveBatchSize] = useState(10); // 渐进式每批加载的数量
+  const [totalInitialBatches] = useState(4); // 初始总批次数 (15+10+10+10=45条)
+  const [isProgressiveLoading, setIsProgressiveLoading] = useState(false); // 渐进式加载状态
+  const [currentLoadingBatch, setCurrentLoadingBatch] = useState(0); // 当前加载到第几批
+  const [progressiveLoadCompleted, setProgressiveLoadCompleted] = useState(false); // 渐进式加载完成标志
+  const [activeBatchLoaders, setActiveBatchLoaders] = useState(new Set<number>()); // 活跃的批次加载器
+  const [displayedItemCount, setDisplayedItemCount] = useState(15); // 当前显示的文章数量
+  
+  console.log('🔥 ArticleScreen: Batch loading states initialized', {
+    initialBatchSize,
+    progressiveBatchSize,
+    totalInitialBatches,
+    isProgressiveLoading,
+    currentLoadingBatch,
+    progressiveLoadCompleted,
+    activeBatchLoadersSize: activeBatchLoaders.size,
+    displayedItemCount
+  });
 
   // Modal状态
   const [modalVisible, setModalVisible] = useState(false);
@@ -87,17 +147,31 @@ const ArticleScreen = () => {
     onPress: () => void;
   }>>([]);
   const [loginModalVisible, setLoginModalVisible] = useState(false);
+  
+  console.log('🔥 ArticleScreen: Modal states initialized', {
+    modalVisible,
+    modalType,
+    modalTitle,
+    modalMessage,
+    modalButtonsLength: modalButtons.length,
+    loginModalVisible
+  });
 
   // 初始加载
   useEffect(() => {
+    console.log('🔥 ArticleScreen: Initial useEffect triggered');
     const initialize = async () => {
+      console.log('🔥 ArticleScreen: Starting initialization');
       await loadConfigs();
+      console.log('🔥 ArticleScreen: Config loaded, starting loadArticles');
       loadArticles(true);
+      console.log('🔥 ArticleScreen: Initialization completed');
     };
     initialize();
 
     // 清理函数
     return () => {
+      console.log('🔥 ArticleScreen: Initial useEffect cleanup');
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current);
       }
@@ -106,12 +180,42 @@ const ArticleScreen = () => {
 
   // 初始加载 - 移除useFocusEffect以避免从详情页返回时重新加载
   useEffect(() => {
+    console.log('🔥 ArticleScreen: Category useEffect triggered', { activeCategory });
     if (activeCategory) {
+      console.log('🔥 ArticleScreen: Category changed, loading articles for:', activeCategory);
       loadArticles(true);
     }
+    return () => {
+      console.log('🔥 ArticleScreen: Category useEffect cleanup');
+    };
   }, [activeCategory]);
 
+  // 搜索提交效果 - 只在用户按回车或明确提交搜索时触发
+  useEffect(() => {
+    console.log('🔍 ArticleScreen: Search submit effect triggered:', {
+      debouncedSearchText,
+      submittedSearchText,
+      trimmed: debouncedSearchText.trim(),
+      activeCategory
+    });
+    
+    if (debouncedSearchText.trim()) {
+      console.log('🔍 ArticleScreen: Executing search for:', debouncedSearchText);
+      // 搜索模式：使用单次API调用，不使用progressive loading
+      loadSearchResults();
+    } else {
+      console.log('🔍 ArticleScreen: Clearing search, loading default articles');
+      setDisplayedItemCount(initialBatchSize);
+      loadArticles(true);
+    }
+    
+    return () => {
+      console.log('🔍 ArticleScreen: Search useEffect cleanup');
+    };
+  }, [debouncedSearchText, activeCategory]);
+
   const loadConfigs = async () => {
+    console.log('🔥⚙️ ArticleScreen: loadConfigs started');
     try {
       await configService.init();
       
@@ -125,6 +229,12 @@ const ArticleScreen = () => {
         configService.getConfig('ARTICLES_PAGE_SIZE', 20)
       ]);
 
+      console.log('🔥⚙️ ArticleScreen: Setting config states', {
+        screenTitleConfig,
+        searchPlaceholderConfig,
+        pageSizeConfig
+      });
+
       setScreenTitle(screenTitleConfig);
       setSearchPlaceholder(searchPlaceholderConfig);
       setPageSize(pageSizeConfig);
@@ -136,51 +246,157 @@ const ArticleScreen = () => {
   };
 
   const loadArticles = async (reset: boolean = false) => {
-    if (loading && !reset) return;
+    console.log('🔥📚 ArticleScreen: loadArticles called', { reset, loading });
+    if (loading && !reset) {
+      console.log('🔥📚 ArticleScreen: loadArticles skipped - already loading');
+      return;
+    }
 
     try {
       if (reset) {
+        console.log('🔥📚 ArticleScreen: Reset mode - setting loading states');
         setLoading(true);
         setCurrentPage(1);
         setHasMoreData(true);
+        setArticles([]);
+        setDisplayedItemCount(initialBatchSize);
+        // 重置渐进式加载状态
+        setProgressiveLoadCompleted(false);
+        setIsProgressiveLoading(false);
+        setCurrentLoadingBatch(0);
+        setActiveBatchLoaders(new Set());
+        
+        console.log('🔥📚 ArticleScreen: Starting progressive loading');
+        // 开始渐进式加载
+        await startArticleProgressiveLoading();
       } else {
+        console.log('🔥📚 ArticleScreen: Load more mode');
         setLoadingMore(true);
       }
 
-      const skip = reset ? 0 : (currentPage - 1) * pageSize;
-      let categoryFilter = '';
+    } catch (error) {
+      console.error('❌ ArticleScreen: Failed to load articles:', error);
+      showMessageModal(
+        'error',
+        '加载失败',
+        '无法加载文章列表，请检查网络连接后重试',
+        [{ text: '确定', onPress: () => setModalVisible(false) }]
+      );
+    } finally {
+      console.log('🔥📚 ArticleScreen: loadArticles finished, resetting loading states');
+      setLoading(false);
+      setLoadingMore(false);
+      setRefreshing(false);
+    }
+  };
 
+  // 文章渐进式加载主函数
+  const startArticleProgressiveLoading = async (startBatch: number = 0) => {
+    setIsProgressiveLoading(true);
+    setProgressiveLoadCompleted(false);
+    
+    if (startBatch === 0) {
+      setHasMoreData(true);
+    }
+    
+    const maxBatches = startBatch + totalInitialBatches;
+    
+    try {
+      // 第一步：立即加载第一批数据
+      if (startBatch === 0) {
+        const firstResult = await loadArticleBatchData(0, true);
+        if (!firstResult.success) {
+          throw new Error('Failed to load first batch');
+        }
+      }
+      
+      // 第二步：并行加载剩余批次
+      const batchPromises: Promise<any>[] = [];
+      const startIndex = startBatch === 0 ? 1 : startBatch;
+      
+      for (let batchIndex = startIndex; batchIndex < maxBatches; batchIndex++) {
+        batchPromises.push(loadArticleBatchData(batchIndex, false));
+      }
+      
+      console.log(`📦 ArticleScreen: Starting parallel loading of ${batchPromises.length} article batches`);
+      
+      const results = await Promise.all(batchPromises);
+      
+      const successfulResults = results.filter((result: any) => result.success);
+      const lastResult = successfulResults[successfulResults.length - 1] as any;
+      
+      const expectedLimit = progressiveBatchSize;
+      const actualLastBatchSize = lastResult ? (lastResult.total - (maxBatches - 1) * progressiveBatchSize) : 0;
+      const hasMoreData = lastResult?.hasMore && actualLastBatchSize >= expectedLimit;
+      
+      setHasMoreData(hasMoreData);
+      setProgressiveLoadCompleted(true);
+      
+      console.log(`✅ ArticleScreen: Article progressive loading completed`, {
+        totalBatches: results.length,
+        successfulBatches: successfulResults.length,
+        hasMore: hasMoreData
+      });
+      
+    } catch (error) {
+      console.error('❌ Article progressive loading failed:', error);
+      setHasMoreData(false);
+    } finally {
+      setIsProgressiveLoading(false);
+    }
+  };
+
+  // 文章渐进式加载单个批次的数据
+  const loadArticleBatchData = async (batchIndex: number, isNewSession: boolean = false) => {
+    try {
+      const isFirstBatch = batchIndex === 0;
+      const currentBatchSize = isFirstBatch ? initialBatchSize : progressiveBatchSize;
+      const skip = isFirstBatch ? 0 : initialBatchSize + (batchIndex - 1) * progressiveBatchSize;
+      
+      console.log(`🔄 ArticleScreen: Loading article batch ${batchIndex}, skip: ${skip}, limit: ${currentBatchSize}`);
+      
+      let categoryFilter = '';
+      
       // 设置分类过滤
       if (activeCategory && activeCategory !== '全部') {
         categoryFilter = CATEGORY_MAP[activeCategory] || '';
       }
 
-      console.log('🔍 ArticleScreen: Loading articles with:', {
-        skip,
-        pageSize,
-        category: categoryFilter,
-        search: searchText.trim()
-      });
-
-      // 获取文章数据 - 使用与HomeScreen相同的API
+      // 使用 listChainalertContent API 调用格式
       let newArticles;
-      if (searchText.trim()) {
-        newArticles = await newsService.searchNews(
-          searchText.trim(),
-          pageSize,
-          skip
-        );
+      if (debouncedSearchText.trim()) {
+        console.log('🔍 ArticleScreen: Searching with keyword:', debouncedSearchText.trim());
+        // 搜索模式：使用第6个参数传递搜索关键词，前3个参数都为空字符串
+        newArticles = await newsService.callAPIDirectly([
+          "",
+          "",
+          "", // 搜索时分类参数为空，搜索所有分类
+          skip.toString(),
+          currentBatchSize.toString(),
+          debouncedSearchText.trim()
+        ]);
       } else if (categoryFilter) {
-        newArticles = await newsService.getNewsByCategory(
+        // 分类模式：使用分类过滤
+        newArticles = await newsService.callAPIDirectly([
+          "",
+          "",
           categoryFilter,
-          skip,
-          pageSize
-        );
+          skip.toString(),
+          currentBatchSize.toString(),
+          ""
+        ]);
       } else {
-        // 使用与HomeScreen 今日要闻相同的API
-        newArticles = await newsService.getFeaturedLatestNews(pageSize);
+        // 默认模式：获取所有快讯
+        newArticles = await newsService.callAPIDirectly([
+          "",
+          "",
+          "stockquicknews",
+          skip.toString(),
+          currentBatchSize.toString(),
+          ""
+        ]);
       }
-
+      
       // 格式化新闻日期 - 确保日期格式统一
       const formatNewsDate = (article: NewsArticle) => {
         try {
@@ -215,69 +431,243 @@ const ArticleScreen = () => {
 
       const formattedArticles = (Array.isArray(newArticles) ? newArticles : []).map(formatNewsDate);
       
-      if (reset) {
-        setArticles(formattedArticles);
-      } else {
-        setArticles(prev => [...prev, ...formattedArticles]);
+      if (formattedArticles.length > 0) {
+        // 更新文章列表
+        if (isNewSession && batchIndex === 0) {
+          setArticles(formattedArticles);
+        } else {
+          setArticles(prev => [...prev, ...formattedArticles]);
+        }
+        
+        console.log(`✅ ArticleScreen: Article batch ${batchIndex} loaded successfully, ${formattedArticles.length} articles`);
       }
+      
+      return { 
+        success: true, 
+        hasMore: formattedArticles.length === currentBatchSize,
+        total: skip + formattedArticles.length,
+        batchSize: currentBatchSize
+      };
+      
+    } catch (error) {
+      console.error(`❌ Failed to load article batch ${batchIndex}:`, error);
+      return { success: false, hasMore: false, total: 0 };
+    }
+  };
 
-      // 检查是否还有更多数据
-      setHasMoreData(formattedArticles.length === pageSize);
-      if (!reset) {
-        setCurrentPage(prev => prev + 1);
-      }
+  // 单独的搜索函数，不使用progressive loading，避免focus loss
+  const loadSearchResults = async () => {
+    console.log('🔍 ArticleScreen: loadSearchResults called for:', debouncedSearchText);
+    
+    if (!debouncedSearchText.trim()) {
+      console.log('🔍 ArticleScreen: Empty search text, skipping');
+      return;
+    }
 
-      console.log('✅ ArticleScreen: Articles loaded successfully:', {
-        count: formattedArticles.length,
-        total: reset ? formattedArticles.length : articles.length + formattedArticles.length
+    try {
+      // 不设置loading状态，避免重新渲染导致焦点丢失
+      setError(null);
+
+      console.log('🔍 ArticleScreen: Making single search API call');
+      
+      // 使用单次API调用获取所有搜索结果，不使用progressive loading
+      const searchResults = await newsService.callAPIDirectly([
+        "",
+        "",
+        "", // 搜索时分类参数为空，搜索所有分类
+        "0", // skip从0开始
+        "1000", // 获取更多结果，但不是progressive loading
+        debouncedSearchText.trim()
+      ]);
+
+      console.log('🔍 ArticleScreen: Search API response:', {
+        resultsCount: searchResults?.length || 0,
+        keyword: debouncedSearchText.trim()
       });
 
+      if (searchResults && Array.isArray(searchResults)) {
+        // 格式化搜索结果
+        const formattedResults = searchResults.map((article: any) => ({
+          ...article,
+          formattedDate: formatNewsDate(article)
+        }));
+
+        console.log('🔍 ArticleScreen: Setting search results:', formattedResults.length);
+        
+        // 直接设置搜索结果，不使用progressive loading逻辑
+        setArticles(formattedResults);
+        setHasMoreData(false); // 搜索结果不需要加载更多
+        
+        console.log('✅ ArticleScreen: Search completed successfully');
+      } else {
+        console.log('🔍 ArticleScreen: No search results found');
+        setArticles([]);
+        setHasMoreData(false);
+      }
+
     } catch (error) {
-      console.error('❌ ArticleScreen: Failed to load articles:', error);
-      showMessageModal(
-        'error',
-        '加载失败',
-        '无法加载文章列表，请检查网络连接后重试',
-        [{ text: '确定', onPress: () => setModalVisible(false) }]
-      );
+      console.error('❌ ArticleScreen: Search failed:', error);
+      setError(error instanceof Error ? error.message : 'Search failed');
+      setArticles([]);
     } finally {
-      setLoading(false);
-      setLoadingMore(false);
-      setRefreshing(false);
+      // 不重置loading状态，因为搜索时没有设置loading
+      console.log('🔍 ArticleScreen: Search loading completed');
     }
   };
 
-  const handleSearch = (text: string) => {
-    setSearchText(text);
-    // 防抖处理，延迟搜索
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
+  // 格式化新闻日期的辅助函数
+  const formatNewsDate = (article: any) => {
+    try {
+      let formattedDate: string;
+      
+      // 如果已经有相对时间格式（如 "8分钟前"），保持原样
+      if (article.date && (article.date.includes('分钟前') || article.date.includes('小时前') || article.date.includes('天前'))) {
+        formattedDate = article.date;
+      } else {
+        // 尝试解析和格式化日期
+        const dateStr = article.publishedAt || article.createdAt || article.date;
+        if (dateStr) {
+          const date = new Date(dateStr);
+          if (!isNaN(date.getTime())) {
+            const now = new Date();
+            const diffMs = now.getTime() - date.getTime();
+            const diffMins = Math.floor(diffMs / (1000 * 60));
+            const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            
+            if (diffMins < 60) {
+              formattedDate = `${diffMins}分钟前`;
+            } else if (diffHours < 24) {
+              formattedDate = `${diffHours}小时前`;
+            } else if (diffDays < 7) {
+              formattedDate = `${diffDays}天前`;
+            } else {
+              formattedDate = date.toLocaleDateString('zh-CN', { 
+                month: 'numeric', 
+                day: 'numeric' 
+              });
+            }
+          } else {
+            formattedDate = '刚刚';
+          }
+        } else {
+          formattedDate = '刚刚';
+        }
+      }
+      
+      return formattedDate;
+    } catch (error) {
+      console.error('Date formatting error:', error);
+      return '刚刚';
     }
+  };
+
+  // 分类切换处理函数 - 使用useCallback避免重新渲染
+  const handleCategoryPress = React.useCallback((category: string) => {
+    console.log('🔥🏷️ ArticleScreen: handleCategoryPress called', { 
+      currentCategory: activeCategory, 
+      newCategory: category,
+      isSame: category === activeCategory
+    });
     
-    searchTimeoutRef.current = setTimeout(() => {
+    if (category !== activeCategory) {
+      console.log('🔥🏷️ ArticleScreen: Category changed, updating states');
+      setActiveCategory(category);
+      setCurrentPage(1);
+      setDisplayedItemCount(initialBatchSize); // 重置显示数量
       loadArticles(true);
-    }, 300);
-  };
-
-  // 分类切换处理函数
-  const handleCategoryPress = (category: string) => {
-    setActiveCategory(category);
-    setCurrentPage(1);
-    loadArticles(true);
-  };
+      console.log('🔥🏷️ ArticleScreen: Category change completed');
+    } else {
+      console.log('🔥🏷️ ArticleScreen: Same category clicked, no change needed');
+    }
+  }, [activeCategory, initialBatchSize]);
 
   // 下拉刷新
   const handleRefresh = () => {
     setRefreshing(true);
+    setDisplayedItemCount(initialBatchSize); // 重置显示数量
     loadArticles(true);
   };
 
-  // 加载更多数据
+  // 加载更多数据 - 支持渐进式加载
   const loadMoreData = React.useCallback(() => {
-    if (!loadingMore && hasMoreData) {
-      loadArticles(false);
+    console.log('📊 ArticleScreen: loadMoreData called', { 
+      loadingMore, 
+      hasMoreData, 
+      searchText: debouncedSearchText.trim(),
+      displayedItemCount,
+      articlesLength: articles.length 
+    });
+    
+    // 如果正在加载或没有更多数据，则不执行加载
+    if (loadingMore || !hasMoreData) {
+      console.log('📊 ArticleScreen: loadMoreData skipped', { 
+        loadingMore, 
+        hasMoreData
+      });
+      return;
     }
-  }, [loadingMore, hasMoreData]);
+    
+    // 搜索状态下的加载更多处理
+    if (debouncedSearchText.trim()) {
+      console.log('📊 ArticleScreen: Loading more search results');
+      setLoadingMore(true);
+      
+      // 计算搜索结果的下一个批次
+      let nextBatchIndex = Math.floor(articles.length / progressiveBatchSize);
+      
+      startArticleProgressiveLoading(nextBatchIndex)
+        .catch(error => {
+          console.error('❌ ArticleScreen: Failed to load more search results:', error);
+          showMessageModal(
+            'error',
+            '加载失败',
+            '加载更多搜索结果失败',
+            [{ text: '确定', onPress: () => setModalVisible(false) }]
+          );
+        })
+        .finally(() => {
+          setLoadingMore(false);
+        });
+      return;
+    }
+    
+    // 普通状态下的加载更多处理
+    // 如果还有未显示的数据，先显示已加载的数据
+    if (displayedItemCount < articles.length) {
+      const nextCount = Math.min(displayedItemCount + 10, articles.length); // 每次显示更多10条
+      console.log('📊 ArticleScreen: Showing more loaded data', { from: displayedItemCount, to: nextCount });
+      setDisplayedItemCount(nextCount);
+      return;
+    }
+    
+    // 如果所有已加载数据都显示了，继续加载更多数据
+    console.log('📊 ArticleScreen: Loading next batch of data');
+    setLoadingMore(true);
+    
+    // 继续渐进式加载更多文章数据
+    // 计算下一个批次索引：第一批initialBatchSize条，后续每批progressiveBatchSize条
+    let nextBatchIndex;
+    if (articles.length <= initialBatchSize) {
+      nextBatchIndex = 1; // 下一批是第二批
+    } else {
+      nextBatchIndex = Math.floor((articles.length - initialBatchSize) / progressiveBatchSize) + 1;
+    }
+    
+    startArticleProgressiveLoading(nextBatchIndex)
+      .catch(error => {
+        console.error('❌ ArticleScreen: Failed to load more articles:', error);
+        showMessageModal(
+          'error',
+          '加载失败',
+          '加载更多数据失败',
+          [{ text: '确定', onPress: () => setModalVisible(false) }]
+        );
+      })
+      .finally(() => {
+        setLoadingMore(false);
+      });
+  }, [loadingMore, hasMoreData, debouncedSearchText, articles.length, displayedItemCount]);
 
   // FlatList 的 onEndReached 处理函数
   const handleLoadMore = () => {
@@ -286,19 +676,51 @@ const ArticleScreen = () => {
     }
   };
 
-  // 过滤文章
+  // 过滤文章 - 支持显示数量限制  
   const filteredArticles = React.useMemo(() => {
-    return articles.filter(article => {
-      const matchesSearch = searchText.trim() === '' || 
-        article.title.toLowerCase().includes(searchText.toLowerCase()) ||
-        (article.summary && article.summary.toLowerCase().includes(searchText.toLowerCase()));
+    console.log('🔥🔍 ArticleScreen: filteredArticles useMemo triggered', {
+      articlesLength: articles.length,
+      debouncedSearchText,
+      displayedItemCount,
+      searchTrimmed: debouncedSearchText.trim()
+    });
+    
+    const filtered = articles.filter(article => {
+      const matchesSearch = debouncedSearchText.trim() === '' || 
+        article.title.toLowerCase().includes(debouncedSearchText.toLowerCase()) ||
+        (article.summary && article.summary.toLowerCase().includes(debouncedSearchText.toLowerCase()));
       
       return matchesSearch;
     });
-  }, [articles, searchText]);
+    
+    console.log('🔥🔍 ArticleScreen: Articles filtered', {
+      originalCount: articles.length,
+      filteredCount: filtered.length,
+      isSearching: debouncedSearchText.trim() !== ''
+    });
+    
+    // 如果是搜索状态，显示所有搜索结果
+    if (debouncedSearchText.trim()) {
+      console.log('🔥🔍 ArticleScreen: Search mode - returning all filtered results');
+      return filtered;
+    }
+    
+    // 如果不是搜索状态，限制显示数量
+    const result = filtered.slice(0, displayedItemCount);
+    console.log('🔥🔍 ArticleScreen: Normal mode - limiting to displayedItemCount', {
+      slicedCount: result.length,
+      displayedItemCount
+    });
+    
+    return result;
+  }, [articles, debouncedSearchText, displayedItemCount]);
 
   // 按日期分组文章
   const groupedArticles = React.useMemo(() => {
+    console.log('🔥📅 ArticleScreen: groupedArticles useMemo triggered', {
+      filteredArticlesLength: filteredArticles.length
+    });
+    
     const groups: { [key: string]: NewsArticle[] } = {};
     
     filteredArticles.forEach(article => {
@@ -446,66 +868,77 @@ const ArticleScreen = () => {
     );
   };
 
-  const renderHeader = () => (
-    <View style={styles.headerContainer}>
-      {/* 搜索框 */}
-      <View style={styles.searchContainer}>
-        <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
-        <TextInput
-          ref={searchInputRef}
-          style={styles.searchInput}
+  const renderHeader = React.useCallback(() => {
+    console.log('🔥🎨 ArticleScreen: renderHeader called', {
+      searchText,
+      searchPlaceholder,
+      activeCategory,
+      searchTextLength: searchText.length
+    });
+    
+    return (
+      <View style={styles.headerContainer}>
+        {/* 搜索框 */}
+        <CommonSearchBar
           placeholder={searchPlaceholder}
-          placeholderTextColor="#999"
           value={searchText}
-          onChangeText={handleSearch}
-          returnKeyType="search"
-          autoCorrect={false}
-          autoCapitalize="none"
+          onValueChange={(text) => {
+            console.log('🔥🔍 ArticleScreen: CommonSearchBar onValueChange', { 
+              oldValue: searchText, 
+              newValue: text,
+              oldLength: searchText.length,
+              newLength: text.length
+            });
+            setSearchText(text);
+            // 如果用户清空了搜索框，立即重置提交的搜索文本
+            if (text.trim() === '') {
+              console.log('🔥🔍 ArticleScreen: Search cleared, resetting submitted search');
+              setSubmittedSearchText('');
+            }
+          }}
+          onSubmitEditing={() => {
+            console.log('🔥🔍 ArticleScreen: Search submitted via Enter key:', searchText);
+            setSubmittedSearchText(searchText);
+          }}
+          showClearButton={true}
+          style={{ marginHorizontal: 0, marginTop: 0, marginBottom: 12 }}
         />
-        {searchText ? (
-          <TouchableOpacity
-            onPress={() => {
-              setSearchText('');
-              if (searchInputRef.current) {
-                searchInputRef.current.clear();
-              }
-              loadArticles(true);
-            }}
-            style={styles.clearButton}
-          >
-            <Ionicons name="close-circle" size={20} color="#999" />
-          </TouchableOpacity>
-        ) : null}
-      </View>
 
-      {/* 分类标签 */}
-      <ScrollView 
-        horizontal 
-        showsHorizontalScrollIndicator={false}
-        style={styles.categoriesContainer}
-        contentContainerStyle={styles.categoriesContent}
-      >
-        {ARTICLE_CATEGORIES.map((category) => (
-          <TouchableOpacity
-            key={category}
-            style={[
-              styles.categoryButton,
-              activeCategory === category && styles.activeCategoryButton
-            ]}
-            onPress={() => handleCategoryPress(category)}
-            activeOpacity={0.7}
-          >
-            <Text style={[
-              styles.categoryText,
-              activeCategory === category && styles.activeCategoryText
-            ]}>
-              {category}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-    </View>
-  );
+        {/* 分类标签 */}
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          style={styles.categoriesContainer}
+          contentContainerStyle={styles.categoriesContent}
+        >
+          {ARTICLE_CATEGORIES.map((category) => (
+            <TouchableOpacity
+              key={category}
+              style={[
+                styles.categoryButton,
+                activeCategory === category && styles.activeCategoryButton
+              ]}
+              onPress={() => {
+                console.log('🔥🏷️ ArticleScreen: Category pressed', { 
+                  oldCategory: activeCategory, 
+                  newCategory: category 
+                });
+                handleCategoryPress(category);
+              }}
+              activeOpacity={0.7}
+            >
+              <Text style={[
+                styles.categoryText,
+                activeCategory === category && styles.activeCategoryText
+              ]}>
+                {category}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+    );
+  }, [searchText, searchPlaceholder, activeCategory, handleCategoryPress]);
 
   // 日期分组头部组件
   const DateHeader = ({ date, displayText }: { date: string; displayText?: string }) => {
@@ -684,11 +1117,28 @@ const ArticleScreen = () => {
   );
 
   const renderFooter = () => {
+    // 显示滚动加载更多的状态
     if (loadingMore) {
       return (
         <View style={styles.loadingFooter}>
           <ActivityIndicator size="small" color="#007AFF" />
           <Text style={styles.loadingText}>加载更多...</Text>
+        </View>
+      );
+    }
+    
+    // 显示渐进式加载状态
+    if (isProgressiveLoading && !loading && articles.length > 0) {
+      const activeBatchCount = activeBatchLoaders.size;
+      const totalBatches = totalInitialBatches;
+      const loadedBatches = currentLoadingBatch;
+      
+      return (
+        <View style={styles.loadingFooter}>
+          <ActivityIndicator size="small" color="#007AFF" style={{ opacity: 0.8 }} />
+          <Text style={[styles.loadingText, { opacity: 0.8 }]}>
+            智能加载中... {loadedBatches}/{totalBatches} ({activeBatchCount} 个并行)
+          </Text>
         </View>
       );
     }
@@ -734,8 +1184,21 @@ const ArticleScreen = () => {
   );
 
   if (loading) {
+    console.log('🔥🎨 ArticleScreen: Rendering loading screen');
     return renderLoadingScreen();
   }
+
+  console.log('🔥🎨 ArticleScreen: Rendering main component', {
+    articlesLength: articles.length,
+    filteredArticlesLength: filteredArticles.length,
+    groupedArticlesLength: groupedArticles.length,
+    searchText,
+    debouncedSearchText,
+    activeCategory,
+    loading,
+    refreshing,
+    loadingMore
+  });
 
   return (
     <View style={styles.container}>
@@ -748,11 +1211,12 @@ const ArticleScreen = () => {
       />
 
       <View style={styles.content}>
+        {renderHeader()}
         <FlatList
           data={groupedArticles}
           renderItem={renderArticleItem}
           keyExtractor={(item) => item.date}
-          ListHeaderComponent={renderHeader}
+          // ListHeaderComponent removed to avoid remounting TextInput
           ListFooterComponent={renderFooter}
           refreshControl={
             <RefreshControl
@@ -771,11 +1235,12 @@ const ArticleScreen = () => {
               <View style={styles.emptyContainer}>
                 <Ionicons name="newspaper-outline" size={50} color="#CCC" />
                 <Text style={styles.emptyText}>
-                  {searchText ? '未找到相关快讯' : '暂无快讯'}
+                  {debouncedSearchText.trim() ? '未找到相关快讯' : '暂无快讯'}
                 </Text>
               </View>
             )
           }
+          keyboardShouldPersistTaps="handled"
         />
       </View>
 
@@ -838,7 +1303,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8F9FA',
     borderRadius: 10,
     paddingHorizontal: 12,
-    height: 40,
+    height: 44,
     borderWidth: 1,
     borderColor: '#E5E7EB',
   },
@@ -851,7 +1316,10 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     color: '#1A1A1A',
-    paddingVertical: 0,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    minHeight: 24,
+    textAlignVertical: 'center',
   },
 
   clearButton: {

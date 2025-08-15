@@ -16,6 +16,8 @@ import {
 import { useNavigation, useFocusEffect, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import StockCard, { StockCardData } from '../../components/ui/StockCard';
+import CommonSearchBar from '../../components/common/CommonSearchBar';
+import { useDebounce } from '../../hooks/useDebounce';
 
 // 骨架屏组件 - 带动画效果
 const SkeletonCard = () => {
@@ -450,28 +452,6 @@ const styles = StyleSheet.create({
     borderRadius: 7,
   },
 });
-
-// 防抖Hook
-const useDebounce = (value: string, delay: number) => {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-  
-  useEffect(() => {
-    console.log('🔍 useDebounce: Effect triggered:', { value, delay, currentDebouncedValue: debouncedValue });
-    
-    const handler = setTimeout(() => {
-      console.log('🔍 useDebounce: Timeout fired, setting debouncedValue to:', value);
-      setDebouncedValue(value);
-    }, delay);
-    
-    return () => {
-      console.log('🔍 useDebounce: Cleanup timeout');
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-  
-  console.log('🔍 useDebounce: Returning debouncedValue:', debouncedValue);
-  return debouncedValue;
-};
 
 const MarketScreen = () => {
   const navigation = useNavigation();
@@ -2112,21 +2092,12 @@ const MarketScreen = () => {
       />
 
       {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
-        <TextInput
-          style={styles.searchInput}
-          placeholder={searchPlaceholder}
-          value={searchText}
-          onChangeText={setSearchText}
-          placeholderTextColor="#999"
-        />
-        {searchText !== '' && (
-          <TouchableOpacity onPress={() => setSearchText('')} style={styles.clearButton}>
-            <Ionicons name="close-circle" size={18} color="#999" />
-          </TouchableOpacity>
-        )}
-      </View>
+      <CommonSearchBar
+        placeholder={searchPlaceholder}
+        value={searchText}
+        onValueChange={setSearchText}
+        showClearButton={true}
+      />
 
       {/* Filter Options - 只在非搜索状态显示 */}
       {!searchText && (
