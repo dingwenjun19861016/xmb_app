@@ -20,6 +20,8 @@ import USBond10YRWidget from '../../components/common/USBond10YRWidget';
 import SP500Widget from '../../components/common/SP500Widget';
 import NasdaqWidget from '../../components/common/NasdaqWidget';
 import DJIWidget from '../../components/common/DJIWidget'; // imported
+import XAUUSDWidget from '../../components/common/XAUUSDWidget'; // added
+import USCLWidget from '../../components/common/USCLWidget'; // added
 import SkeletonBox from '../../components/common/SkeletonBox';
 // Import services
 import { newsService, NewsArticle } from '../../services/NewsService';
@@ -45,6 +47,8 @@ const DATA_WIDGET_COMPONENTS = {
   SP500: SP500Widget,
   Nasdaq: NasdaqWidget,
   DJI: DJIWidget, // added
+  XAUUSD: XAUUSDWidget, // added
+  USCL: USCLWidget, // added
 };
 
 // 简化的备用数据
@@ -128,7 +132,7 @@ const HomeScreen = () => {
   const [marketOverviewCount, setMarketOverviewCount] = useState(2);
 
   // 数据卡片配置状态 - 仅显示美股相关指标
-  const [dataCardsConfig, setDataCardsConfig] = useState('DXY,USBond10YR,SP500,Nasdaq,DJI');
+  const [dataCardsConfig, setDataCardsConfig] = useState('DXY,USBond10YR,SP500,Nasdaq,DJI,XAUUSD,USCL');
 
   // 加载配置
   const loadConfigs = async () => {
@@ -151,7 +155,7 @@ const HomeScreen = () => {
       const marketOverviewCountConfig = await configService.getConfig('HOME_MARKET_OVERVIEW_COUNT', 2);
       
       // 获取数据卡片配置 - 默认为美股相关指标
-      const dataCardsConfig = await configService.getConfig('HOME_DATA_CARDS_CONFIG', 'DXY,USBond10YR,SP500,Nasdaq,DJI');
+      const dataCardsConfig = await configService.getConfig('HOME_DATA_CARDS_CONFIG', 'DXY,USBond10YR,SP500,Nasdaq,DJI,XAUUSD,USCL');
       
       // 获取启动广告配置
       const adEnableRaw = await configService.getConfig('HOME_MODAL_AD_ENABLE', false);
@@ -224,7 +228,7 @@ const HomeScreen = () => {
       setFeaturedNewsCount(3);
       setLatestNewsCount(5);
       setMarketOverviewCount(2);
-      setDataCardsConfig('DXY,USBond10YR,SP500,Nasdaq,DJI');
+      setDataCardsConfig('DXY,USBond10YR,SP500,Nasdaq,DJI,XAUUSD,USCL');
       setViewMoreText('查看全部 >');
       setSearchPlaceholder('搜索资讯...');
     }
@@ -241,7 +245,7 @@ const HomeScreen = () => {
       
       // 如果解析失败，使用默认配置
       if (widgetNames.length === 0) {
-        widgetNames = ['DXY', 'USBond10YR', 'SP500', 'Nasdaq', 'DJI'];
+        widgetNames = ['DXY', 'USBond10YR', 'SP500', 'Nasdaq', 'DJI', 'XAUUSD', 'USCL'];
         console.warn('⚠️ HomeScreen: Failed to parse data cards config, using default');
       }
       
@@ -295,6 +299,14 @@ const HomeScreen = () => {
           <View style={styles.indicatorRow}>
             <View style={styles.indicatorCard}>
               <DJIWidget style={styles.widgetEmbedded} />
+            </View>
+            <View style={styles.indicatorCard}>
+              <XAUUSDWidget style={styles.widgetEmbedded} />
+            </View>
+          </View>
+          <View style={styles.indicatorRow}>
+            <View style={styles.indicatorCard}>
+              <USCLWidget style={styles.widgetEmbedded} />
             </View>
           </View>
         </>

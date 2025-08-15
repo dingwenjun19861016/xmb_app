@@ -6,6 +6,8 @@ export { default as USDJPYService, usdJpyService } from './USDJPYService';
 export { default as SP500Service, sp500Service } from './SP500Service';
 export { default as NasdaqService, nasdaqService } from './NasdaqService';
 export { default as DJIService, djiService } from './DJIService';
+export { default as XAUUSDService, xauusdService } from './XAUUSDService';
+export { default as USCLService, usclService } from './USCLService';
 
 // Type exports - US stock relevant only
 export type { DXYData } from './DXYService';
@@ -14,3 +16,5 @@ export type { USDJPYData } from './USDJPYService';
 export type { SP500Data } from './SP500Service';
 export type { NasdaqData } from './NasdaqService';
 export type { DJIData } from './DJIService';
+export type { XAUUSDData } from './XAUUSDService';
+export type { USCLData } from './USCLService';
