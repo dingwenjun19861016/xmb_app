@@ -224,7 +224,7 @@ const HomeScreen = () => {
       setFeaturedNewsCount(3);
       setLatestNewsCount(5);
       setMarketOverviewCount(2);
-      setDataCardsConfig('SP500,ETFData,DXY,USBond10YR');
+      setDataCardsConfig('GreedyIndex,DXY,USBond10YR,SP500,Nasdaq');
       setViewMoreText('查看全部 >');
       setSearchPlaceholder('搜索资讯...');
     }

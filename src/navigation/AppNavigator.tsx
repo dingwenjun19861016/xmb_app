@@ -13,12 +13,6 @@ import ArticleScreen from '../screens/Articles/ArticleScreen';
 import DataScreen from '../screens/Data/DataScreen';
 import DataDetailScreen from '../screens/Data/DataDetailScreen';
 import GreedyIndexDetail from '../screens/Data/GreedyIndexDetail';
-import BTCDIndexDetail from '../screens/Data/BTCDIndexDetail';
-import ETHDIndexDetail from '../screens/Data/ETHDIndexDetail';
-import AltcoinIndexDetail from '../screens/Data/AltcoinIndexDetail';
-import ETFDataDetail from '../screens/Data/ETFDataDetail';
-import MarketCapDetail from '../screens/Data/MarketCapDetail';
-import StablecoinDetail from '../screens/Data/StablecoinDetail';
 import DXYDetail from '../screens/Data/DXYDetail';
 import USBond10YRDetail from '../screens/Data/USBond10YRDetail';
 import USDJPYDetail from '../screens/Data/USDJPYDetail';
@@ -51,12 +45,6 @@ const HomeStackNavigator = React.forwardRef((props, ref) => {
       <HomeStack.Screen name="Data" component={DataScreen} />
       <HomeStack.Screen name="DataDetail" component={DataDetailScreen} />
       <HomeStack.Screen name="GreedyIndexDetail" component={GreedyIndexDetail} />
-      <HomeStack.Screen name="BTCDIndexDetail" component={BTCDIndexDetail} />
-      <HomeStack.Screen name="ETHDIndexDetail" component={ETHDIndexDetail} />
-      <HomeStack.Screen name="AltcoinIndexDetail" component={AltcoinIndexDetail} />
-      <HomeStack.Screen name="ETFDataDetail" component={ETFDataDetail} />
-      <HomeStack.Screen name="MarketCapDetail" component={MarketCapDetail} />
-      <HomeStack.Screen name="StablecoinDetail" component={StablecoinDetail} />
       <HomeStack.Screen name="DXYDetail" component={DXYDetail} />
       <HomeStack.Screen name="USBond10YRDetail" component={USBond10YRDetail} />
       <HomeStack.Screen name="USDJPYDetail" component={USDJPYDetail} />
@@ -128,12 +116,6 @@ const DataStackNavigator = () => {
       <DataStack.Screen name="DataMain" component={DataScreen} />
       <DataStack.Screen name="DataDetail" component={DataDetailScreen} />
       <DataStack.Screen name="GreedyIndexDetail" component={GreedyIndexDetail} />
-      <DataStack.Screen name="BTCDIndexDetail" component={BTCDIndexDetail} />
-      <DataStack.Screen name="ETHDIndexDetail" component={ETHDIndexDetail} />
-      <DataStack.Screen name="AltcoinIndexDetail" component={AltcoinIndexDetail} />
-      <DataStack.Screen name="ETFDataDetail" component={ETFDataDetail} />
-      <DataStack.Screen name="MarketCapDetail" component={MarketCapDetail} />
-      <DataStack.Screen name="StablecoinDetail" component={StablecoinDetail} />
       <DataStack.Screen name="DXYDetail" component={DXYDetail} />
       <DataStack.Screen name="USBond10YRDetail" component={USBond10YRDetail} />
       <DataStack.Screen name="USDJPYDetail" component={USDJPYDetail} />
