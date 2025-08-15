@@ -10,7 +10,8 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
-  Animated
+  Animated,
+  Linking
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
@@ -628,6 +629,39 @@ const USStockDetailScreen = () => {
     return getWebAppURL(`market/${stockCode}`);
   };
 
+  // 打开文章详情或外部网页（Web/原生兼容）
+  const openArticleOrExternal = (articleId: string) => {
+    try {
+      const cleanId = articleId ? articleId.replace(/^articles\//, '') : articleId;
+      const webUrl = getWebAppURL(`articles/${cleanId}`);
+
+      // Web 端：新开标签页
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        try {
+          window.open(webUrl, '_blank');
+        } catch (e) {
+          // 回退到同页跳转
+          window.location.href = webUrl;
+        }
+        return;
+      }
+
+      // 原生端：优先走应用内详情页
+      navigation.navigate('ArticleDetail' as never, {
+        articleId: cleanId,
+        returnTo: 'stockDetail',
+        stockCode
+      } as never);
+    } catch (e) {
+      // 最后兜底：尝试外链打开
+      const fallbackUrl = getWebAppURL(`articles/${articleId}`);
+      Linking.openURL(fallbackUrl).catch(err => {
+        console.error('无法打开链接', err);
+        Alert.alert('无法打开文章', '请检查网络或链接是否有效');
+      });
+    }
+  };
+
   // 骨架屏组件
   const SkeletonBox = ({ width, height, marginBottom = 0, borderRadius = 4 }) => {
     const opacity = useRef(new Animated.Value(0.3)).current;
@@ -1009,11 +1043,7 @@ const USStockDetailScreen = () => {
                 <TouchableOpacity 
                   key={article.id} 
                   style={styles.newsItem}
-                  onPress={() => navigation.navigate('ArticleDetail', { 
-                    articleId: article.id,
-                    returnTo: 'stockDetail',
-                    stockCode: stockCode
-                  })}
+                  onPress={() => openArticleOrExternal(article.id)}
                 >
                   <View style={styles.newsContent}>
                     <Text style={styles.newsTitle} numberOfLines={2}>
