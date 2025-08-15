@@ -26,6 +26,7 @@ import UserStatusScreen from '../screens/Profile/UserStatusScreen';
 import UserProfileScreen from '../screens/Profile/UserProfileScreen';
 import TermsOfServiceScreen from '../screens/Profile/TermsOfServiceScreen';
 import AboutUsScreen from '../screens/Profile/AboutUsScreen';
+import SP500Detail from '../screens/Data/SP500Detail';
 
 // Create navigators
 const Tab = createBottomTabNavigator();
@@ -58,6 +59,7 @@ const HomeStackNavigator = React.forwardRef((props, ref) => {
       <HomeStack.Screen name="DXYDetail" component={DXYDetail} />
       <HomeStack.Screen name="USBond10YRDetail" component={USBond10YRDetail} />
       <HomeStack.Screen name="USDJPYDetail" component={USDJPYDetail} />
+      <HomeStack.Screen name="SP500Detail" component={SP500Detail} />
       <HomeStack.Screen name="UserStatus" component={UserStatusScreen} />
       <HomeStack.Screen name="UserProfile" component={UserProfileScreen} />
       <HomeStack.Screen name="TermsOfService" component={TermsOfServiceScreen} />
@@ -133,6 +135,7 @@ const DataStackNavigator = () => {
       <DataStack.Screen name="DXYDetail" component={DXYDetail} />
       <DataStack.Screen name="USBond10YRDetail" component={USBond10YRDetail} />
       <DataStack.Screen name="USDJPYDetail" component={USDJPYDetail} />
+      <DataStack.Screen name="SP500Detail" component={SP500Detail} />
       <DataStack.Screen name="UserStatus" component={UserStatusScreen} />
       <DataStack.Screen name="UserProfile" component={UserProfileScreen} />
       <DataStack.Screen name="TermsOfService" component={TermsOfServiceScreen} />

@@ -68,31 +68,13 @@ const DXYWidget: React.FC<DXYWidgetProps> = ({ style, onPress, title = '美元�
     }
 
     const dxyValue = DXYService.parseDXYValue(dxyData.dxy);
-    const dxyColor = DXYService.getDXYColor(dxyValue);
-    const description = DXYService.getDXYDescription(dxyValue);
+    const formattedValue = DXYService.formatDXYValue(dxyValue);
 
     return (
       <View style={styles.contentContainer}>
-        <View style={styles.indexContainer}>
-          <View style={[styles.indexCircle, { borderColor: dxyColor }]}>
-            <Text style={[styles.indexValue, { color: dxyColor }]}>
-              {DXYService.formatDXYValue(dxyValue)}
-            </Text>
-          </View>
-          <View style={styles.indexInfo}>
-            <Text style={[styles.indexLevel, { color: dxyColor }]}>{description}</Text>
-            <View style={styles.progressBar}>
-              <View 
-                style={[
-                  styles.progressFill, 
-                  { 
-                    width: `${Math.min((dxyValue - 80) / 40 * 100, 100)}%`, 
-                    backgroundColor: dxyColor 
-                  }
-                ]} 
-              />
-            </View>
-          </View>
+        <View style={styles.dataDisplay}>
+          <Text style={styles.mainValue}>{formattedValue}</Text>
+          <Text style={styles.valueLabel}>指数</Text>
         </View>
       </View>
     );
@@ -135,40 +117,19 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
   },
-  indexContainer: {
-    flexDirection: 'row',
+  dataDisplay: {
     alignItems: 'center',
   },
-  indexCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    borderWidth: 3,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  indexValue: {
-    fontSize: 14,
+  mainValue: {
+    fontSize: 24,
     fontWeight: '700',
+    color: '#1A1A1A',
+    marginBottom: 4,
   },
-  indexInfo: {
-    flex: 1,
-  },
-  indexLevel: {
-    fontSize: 13,
-    fontWeight: '600',
-    marginBottom: 6,
-  },
-  progressBar: {
-    height: 6,
-    backgroundColor: '#F8F9FA',
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 3,
+  valueLabel: {
+    fontSize: 12,
+    color: '#8E8E93',
+    fontWeight: '500',
   },
   // Loading states
   loadingContainer: {

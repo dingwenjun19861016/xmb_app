@@ -20,6 +20,7 @@ import ETFDataWidget from '../../components/common/ETFDataWidget';
 import DXYWidget from '../../components/common/DXYWidget';
 import USBond10YRWidget from '../../components/common/USBond10YRWidget';
 import USDJPYWidget from '../../components/common/USDJPYWidget';
+import SP500Widget from '../../components/common/SP500Widget';
 import SkeletonBox from '../../components/common/SkeletonBox';
 // Import services
 import { newsService, NewsArticle } from '../../services/NewsService';
@@ -45,6 +46,7 @@ const DATA_WIDGET_COMPONENTS = {
   DXY: DXYWidget,
   USBond10YR: USBond10YRWidget,
   USDJPY: USDJPYWidget,
+  SP500: SP500Widget,
 };
 
 // 简化的备用数据
@@ -128,7 +130,7 @@ const HomeScreen = () => {
   const [marketOverviewCount, setMarketOverviewCount] = useState(2);
 
   // 数据卡片配置状态 - 仅显示美股相关指标
-  const [dataCardsConfig, setDataCardsConfig] = useState('GreedyIndex,ETFData,DXY,USBond10YR');
+  const [dataCardsConfig, setDataCardsConfig] = useState('SP500,ETFData,DXY,USBond10YR');
 
   // 加载配置
   const loadConfigs = async () => {
@@ -151,7 +153,7 @@ const HomeScreen = () => {
       const marketOverviewCountConfig = await configService.getConfig('HOME_MARKET_OVERVIEW_COUNT', 2);
       
       // 获取数据卡片配置 - 默认为美股相关指标
-      const dataCardsConfig = await configService.getConfig('HOME_DATA_CARDS_CONFIG', 'GreedyIndex,ETFData,DXY,USBond10YR');
+      const dataCardsConfig = await configService.getConfig('HOME_DATA_CARDS_CONFIG', 'SP500,ETFData,DXY,USBond10YR');
       
       // 获取启动广告配置
       const adEnableRaw = await configService.getConfig('HOME_MODAL_AD_ENABLE', false);
@@ -224,7 +226,7 @@ const HomeScreen = () => {
       setFeaturedNewsCount(3);
       setLatestNewsCount(5);
       setMarketOverviewCount(2);
-      setDataCardsConfig('GreedyIndex,ETFData,DXY,USBond10YR');
+      setDataCardsConfig('SP500,ETFData,DXY,USBond10YR');
       setViewMoreText('查看全部 >');
       setSearchPlaceholder('搜索资讯...');
     }
@@ -241,7 +243,7 @@ const HomeScreen = () => {
       
       // 如果解析失败，使用默认配置
       if (widgetNames.length === 0) {
-        widgetNames = ['GreedyIndex', 'BTCDIndex', 'AltcoinIndex', 'ETFData'];
+        widgetNames = ['SP500', 'ETFData', 'DXY', 'USBond10YR'];
         console.warn('⚠️ HomeScreen: Failed to parse data cards config, using default');
       }
       
@@ -264,7 +266,7 @@ const HomeScreen = () => {
             
             return (
               <View key={`${widgetName}-${rowIndex}-${cardIndex}`} style={styles.indicatorCard}>
-                <WidgetComponent />
+                <WidgetComponent style={styles.widgetEmbedded} />
               </View>
             );
           })}
@@ -278,18 +280,18 @@ const HomeScreen = () => {
         <>
           <View style={styles.indicatorRow}>
             <View style={styles.indicatorCard}>
-              <GreedyIndexWidget />
+              <SP500Widget style={styles.widgetEmbedded} />
             </View>
             <View style={styles.indicatorCard}>
-              <ETFDataWidget />
+              <ETFDataWidget style={styles.widgetEmbedded} />
             </View>
           </View>
           <View style={styles.indicatorRow}>
             <View style={styles.indicatorCard}>
-              <DXYWidget />
+              <DXYWidget style={styles.widgetEmbedded} />
             </View>
             <View style={styles.indicatorCard}>
-              <USBond10YRWidget />
+              <USBond10YRWidget style={styles.widgetEmbedded} />
             </View>
           </View>
         </>
@@ -903,17 +905,25 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
-    height: 120,
+    height: 116,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 3,
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
     borderWidth: 1,
-    borderColor: '#F0F0F0',
+    borderColor: '#EFEFEF',
     overflow: 'hidden',
   },
-
+  // 嵌入式小部件样式，去除内部卡片视觉元素，避免双重边框/阴影
+  widgetEmbedded: {
+    backgroundColor: 'transparent',
+    borderWidth: 0,
+    shadowOpacity: 0,
+    elevation: 0,
+    minHeight: 0,
+    paddingVertical: 10,
+  },
   // 状态样式
   newsCardsContainer: {
     gap: 6, // 减少卡片之间的间距

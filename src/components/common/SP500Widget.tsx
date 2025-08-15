@@ -1,38 +1,34 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { USBond10YRData, USBond10YRService } from '../../services/data';
+import { SP500Service, SP500Data } from '../../services/data';
 
-interface USBond10YRWidgetProps {
+interface SP500WidgetProps {
   style?: any;
   onPress?: () => void;
   title?: string;
 }
 
-const USBond10YRWidget: React.FC<USBond10YRWidgetProps> = ({ style, onPress, title = '美债10年期' }) => {
-  const [bondData, setBondData] = useState<USBond10YRData | null>(null);
+const SP500Widget: React.FC<SP500WidgetProps> = ({ style, onPress, title = '标普500' }) => {
+  const navigation = useNavigation();
+  const [data, setData] = useState<SP500Data | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const navigation = useNavigation();
 
   useEffect(() => {
-    fetchBondData();
+    fetchData();
   }, []);
 
-  const fetchBondData = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await USBond10YRService.getCurrentUSBond10YR();
-      console.log('🏦 USBond10YRWidget: Fetched bond data:', data);
-      setBondData(data);
-      
-      if (!data) {
-        setError('暂无数据');
-      }
-    } catch (err) {
-      console.error('🏦 USBond10YRWidget: Error fetching bond data:', err);
+      const current = await SP500Service.getCurrentSP500();
+      setData(current);
+      if (!current) setError('暂无数据');
+    } catch (e) {
+      console.error('📈 SP500Widget: fetch error', e);
       setError('加载失败');
     } finally {
       setLoading(false);
@@ -40,12 +36,9 @@ const USBond10YRWidget: React.FC<USBond10YRWidgetProps> = ({ style, onPress, tit
   };
 
   const handlePress = () => {
-    if (onPress) {
-      onPress();
-    } else {
-      // @ts-ignore
-      navigation.navigate('USBond10YRDetail');
-    }
+    if (onPress) return onPress();
+    // @ts-ignore
+    navigation.navigate('SP500Detail');
   };
 
   const renderContent = () => {
@@ -58,7 +51,7 @@ const USBond10YRWidget: React.FC<USBond10YRWidgetProps> = ({ style, onPress, tit
       );
     }
 
-    if (error || !bondData) {
+    if (error || !data) {
       return (
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle-outline" size={20} color="#FF3B30" />
@@ -67,25 +60,21 @@ const USBond10YRWidget: React.FC<USBond10YRWidgetProps> = ({ style, onPress, tit
       );
     }
 
-    const bondValue = USBond10YRService.parseUSBond10YRValue(bondData.us10yrbond);
-    const formattedValue = `${bondValue.toFixed(2)}%`;
+    const valueNum = SP500Service.parseValue(data.inx);
+    const formattedValue = SP500Service.formatValue(valueNum);
 
     return (
       <View style={styles.contentContainer}>
         <View style={styles.dataDisplay}>
           <Text style={styles.mainValue}>{formattedValue}</Text>
-          <Text style={styles.valueLabel}>收益率</Text>
+          <Text style={styles.valueLabel}>指数</Text>
         </View>
       </View>
     );
   };
 
   return (
-    <TouchableOpacity 
-      style={[styles.container, style]} 
-      onPress={handlePress}
-      activeOpacity={0.7}
-    >
+    <TouchableOpacity style={[styles.container, style]} onPress={handlePress} activeOpacity={0.7}>
       <Text style={styles.title}>{title}</Text>
       {renderContent()}
     </TouchableOpacity>
@@ -131,7 +120,6 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
     fontWeight: '500',
   },
-  // Loading states
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -142,7 +130,6 @@ const styles = StyleSheet.create({
     color: '#6C757D',
     marginTop: 8,
   },
-  // Error states
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -156,4 +143,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default USBond10YRWidget;
+export default SP500Widget;

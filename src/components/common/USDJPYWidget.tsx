@@ -68,34 +68,13 @@ const USDJPYWidget: React.FC<USDJPYWidgetProps> = ({ style, onPress, title = '�
     }
 
     const usdJpyValue = USDJPYService.parseUSDJPYValue(usdJpyData.usdjpy);
-    const usdJpyColor = USDJPYService.getUSDJPYColor(usdJpyValue);
-    const description = USDJPYService.getUSDJPYDescription(usdJpyValue);
-
-    // 计算进度条百分比 (假设 USDJPY 范围 100-180)
-    const progressPercentage = Math.min(Math.max((usdJpyValue - 100) / 80 * 100, 0), 100);
+    const formattedValue = USDJPYService.formatUSDJPYValue(usdJpyValue);
 
     return (
       <View style={styles.contentContainer}>
-        <View style={styles.indexContainer}>
-          <View style={[styles.indexCircle, { borderColor: usdJpyColor }]}>
-            <Text style={[styles.indexValue, { color: usdJpyColor }]}>
-              {USDJPYService.formatUSDJPYValue(usdJpyValue)}
-            </Text>
-          </View>
-          <View style={styles.indexInfo}>
-            <Text style={[styles.indexLevel, { color: usdJpyColor }]}>{description}</Text>
-            <View style={styles.progressBar}>
-              <View 
-                style={[
-                  styles.progressFill, 
-                  { 
-                    width: `${progressPercentage}%`, 
-                    backgroundColor: usdJpyColor 
-                  }
-                ]} 
-              />
-            </View>
-          </View>
+        <View style={styles.dataDisplay}>
+          <Text style={styles.mainValue}>{formattedValue}</Text>
+          <Text style={styles.valueLabel}>汇率</Text>
         </View>
       </View>
     );
@@ -138,40 +117,19 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
   },
-  indexContainer: {
-    flexDirection: 'row',
+  dataDisplay: {
     alignItems: 'center',
   },
-  indexCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    borderWidth: 3,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  indexValue: {
-    fontSize: 12,
+  mainValue: {
+    fontSize: 24,
     fontWeight: '700',
+    color: '#1A1A1A',
+    marginBottom: 4,
   },
-  indexInfo: {
-    flex: 1,
-  },
-  indexLevel: {
-    fontSize: 13,
-    fontWeight: '600',
-    marginBottom: 6,
-  },
-  progressBar: {
-    height: 6,
-    backgroundColor: '#F8F9FA',
-    borderRadius: 3,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 3,
+  valueLabel: {
+    fontSize: 12,
+    color: '#8E8E93',
+    fontWeight: '500',
   },
   // Loading states
   loadingContainer: {

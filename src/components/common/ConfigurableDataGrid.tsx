@@ -9,6 +9,7 @@ import ETFDataWidget from './ETFDataWidget';
 import DXYWidget from './DXYWidget';
 import USBond10YRWidget from './USBond10YRWidget';
 import USDJPYWidget from './USDJPYWidget';
+import SP500Widget from './SP500Widget';
 
 // 布局配置接口
 interface LayoutConfig {
@@ -29,6 +30,7 @@ const WIDGET_COMPONENTS = {
   DXY: DXYWidget,
   USBond10YR: USBond10YRWidget,
   USDJPY: USDJPYWidget,
+  SP500: SP500Widget,
 };
 
 // 组件详情页面映射 - 仅US股票相关
@@ -38,6 +40,7 @@ const DETAIL_SCREENS = {
   DXY: 'DXYDetail',
   USBond10YR: 'USBond10YRDetail',
   USDJPY: 'USDJPYDetail',
+  SP500: 'SP500Detail',
 };
 
 // 组件标题映射 - 默认值（仅US股票相关）
@@ -47,10 +50,11 @@ const DEFAULT_WIDGET_TITLES = {
   DXY: '美元指数',
   USBond10YR: '美债10年期',
   USDJPY: '美元日元',
+  SP500: '标普500',
 };
 
 // 默认配置字符串 - 仅US股票相关指标
-const DEFAULT_CARDS_CONFIG_STRING = 'GreedyIndex,ETFData,DXY,USBond10YR';
+const DEFAULT_CARDS_CONFIG_STRING = 'SP500,USDJPY,DXY,USBond10YR';
 
 const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
   columnsPerRow: 2,
@@ -95,6 +99,7 @@ const ConfigurableDataGrid: React.FC<ConfigurableDataGridProps> = ({ onCardPress
         DXY: await configService.getConfig('DATA_TITLE_DXY', DEFAULT_WIDGET_TITLES.DXY),
         USBond10YR: await configService.getConfig('DATA_TITLE_US_BOND_10YR', DEFAULT_WIDGET_TITLES.USBond10YR),
         USDJPY: await configService.getConfig('DATA_TITLE_USDJPY', DEFAULT_WIDGET_TITLES.USDJPY),
+        SP500: await configService.getConfig('DATA_TITLE_SP500', DEFAULT_WIDGET_TITLES.SP500),
       };
       
       console.log('🔍 ConfigurableDataGrid: Raw config values:', {
