@@ -1179,46 +1179,28 @@ const MarketScreen = () => {
     }
   };
 
-  // 搜索美股（使用本地数据进行过滤搜索）
+  // 搜索美股（使用API搜索 getUsstockInfo）
   const searchCoins = async (query: string) => {
     console.log('🔍 MarketScreen: searchCoins called with:', { query, queryTrim: query.trim() });
-    
     if (!query.trim()) {
-      console.log('🔍 MarketScreen: Query is empty, clearing results');
       setSearchResults([]);
       setSearchError(null);
       return;
     }
-    
+
     try {
-      console.log('🔍 MarketScreen: Starting search process...');
       setIsSearching(true);
       setSearchError(null);
-      console.log('🔄 MarketScreen: Searching stocks with query:', query);
-      
-      // 改为搜索美股数据而不是加密货币
-      const allStocks = await stockService.getUSStocksList(0, 1000); // 获取大量股票数据用于搜索
-      const searchedStocks = allStocks.filter(stock => 
-        stock.code.toLowerCase().includes(query.toLowerCase()) ||
-        stock.name.toLowerCase().includes(query.toLowerCase())
-      ).slice(0, 50); // 限制搜索结果数量
-      
-      console.log('🔍 MarketScreen: Raw search results:', searchedStocks.length, searchedStocks);
-      
-      const transformedResults = await transformStockData(searchedStocks);
-      console.log('🔄 MarketScreen: Transformed results:', transformedResults.length, transformedResults);
-      
-      console.log('🔍 MarketScreen: About to setSearchResults with:', transformedResults);
+      console.log('🔄 MarketScreen: Searching US stocks via API with query:', query);
+
+      // 使用服务端API进行搜索并返回标准化结果
+      const apiResults = await stockService.searchUSStocks(query, 50);
+
+      // 将结果映射为 StockCardData 以适配UI
+      const transformedResults = await transformStockData(apiResults as any, false);
       setSearchResults(transformedResults);
-      
+
       console.log(`✅ MarketScreen: Search completed, found ${transformedResults.length} results`);
-      console.log('🔍 MarketScreen: Search results state should be updated');
-      
-      // 添加延迟检查状态是否正确更新
-      setTimeout(() => {
-        console.log('🔍 MarketScreen: Delayed check - searchResults length:', searchResults.length);
-      }, 100);
-      
     } catch (err) {
       console.error('❌ MarketScreen: Search failed:', err);
       setSearchError('搜索失败，请稍后再试');
@@ -1236,12 +1218,9 @@ const MarketScreen = () => {
       trimmed: debouncedSearchText.trim(),
       searchResultsLength: searchResults.length
     });
-    
     if (debouncedSearchText.trim()) {
-      console.log('🔍 MarketScreen: Calling searchCoins with:', debouncedSearchText);
       searchCoins(debouncedSearchText);
     } else {
-      console.log('🔍 MarketScreen: Clearing search results (empty search)');
       setSearchResults([]);
       setSearchError(null);
     }

@@ -369,6 +369,68 @@ class StockService {
   }
 
   /**
+   * 基于API的美股搜索（getUsstockInfo），并兼容回退到本地过滤
+   * @param query 股票代码或名称关键词
+   * @param limit 返回的最大条数
+   */
+  async searchUSStocks(query: string, limit: number = 20): Promise<TransformedStockData[]> {
+    try {
+      const q = (query || '').trim();
+      if (!q) return [];
+      console.log('🔎 StockService: searchUSStocks via getUsstockInfo', { query: q, limit });
+
+      // 首选调用后端搜索API
+      const apiList = await this.getUsstockInfo(q, 1);
+      if (Array.isArray(apiList) && apiList.length > 0) {
+        return apiList.slice(0, limit);
+      }
+
+      console.warn('⚠️ StockService: API search returned empty, fallback to local list filter');
+    } catch (e) {
+      console.error('❌ StockService: searchUSStocks API call failed, fallback to local filter:', e);
+    }
+
+    // 回退方案：从列表中本地过滤
+    try {
+      const all = await this.getUSStocksList(0, 1000, 'rank', 'asc');
+      const filtered = all.filter(s =>
+        s.code?.toLowerCase().includes(query.toLowerCase()) ||
+        s.name?.toLowerCase().includes(query.toLowerCase())
+      ).slice(0, limit);
+
+      return filtered.map((stock): TransformedStockData => ({
+        _id: stock._id,
+        rank: stock.rank,
+        name: stock.code,
+        code: stock.code,
+        fullName: stock.name,
+        currentPrice: stock.currentPrice,
+        priceChange24h: stock.priceChangePercent,
+        priceChangePercent: stock.priceChangePercent,
+        marketcap: stock.baseinfo?.marketCap || stock.marketCap || '',
+        volume: stock.baseinfo?.volume || stock.volume || '',
+        exchange: stock.exchange,
+        sector: stock.sector,
+        logoUrl: stockLogoService.getLogoUrlSync(stock.code),
+        fdv: stock.baseinfo?.marketCap || stock.marketCap || '',
+        totalSupply: stock.baseinfo?.sharesOutstanding || '',
+        circulatingSupply: stock.baseinfo?.sharesOutstanding || '',
+        description: `${stock.name} (${stock.code}) - ${stock.sector}`,
+        cexInfos: [],
+        valid: true,
+        created_at: stock.created_at,
+        date: stock.date,
+        updated_at: stock.updated_at,
+        coin_id: stock._id,
+        usstock24h: stock.usstock24h
+      }));
+    } catch (fallbackError) {
+      console.error('❌ StockService: Local fallback search failed:', fallbackError);
+      return [];
+    }
+  }
+
+  /**
    * 获取股票24小时价格走势数据 - 使用新的getUsstock24hByCode API
    * @param stockCode 股票代码，如 "NVDA", "AAPL"
    * @param count 数据点数量，通常为 "1000"
