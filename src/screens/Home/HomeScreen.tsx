@@ -16,11 +16,10 @@ import StockOverview from '../../components/common/StockOverview';
 import LatestNews from '../../components/common/LatestNews';
 import NewsCard from '../../components/common/NewsCard';
 import GreedyIndexWidget from '../../components/common/GreedyIndexWidget';
-import ETFDataWidget from '../../components/common/ETFDataWidget';
 import DXYWidget from '../../components/common/DXYWidget';
 import USBond10YRWidget from '../../components/common/USBond10YRWidget';
-import USDJPYWidget from '../../components/common/USDJPYWidget';
 import SP500Widget from '../../components/common/SP500Widget';
+import NasdaqWidget from '../../components/common/NasdaqWidget';
 import SkeletonBox from '../../components/common/SkeletonBox';
 // Import services
 import { newsService, NewsArticle } from '../../services/NewsService';
@@ -42,11 +41,10 @@ import { useUSStockRealTimePrice } from '../../contexts/USStockRealTimePriceCont
 // 首页数据卡片组件映射 - 仅保留美股相关指标
 const DATA_WIDGET_COMPONENTS = {
   GreedyIndex: GreedyIndexWidget,
-  ETFData: ETFDataWidget,
   DXY: DXYWidget,
   USBond10YR: USBond10YRWidget,
-  USDJPY: USDJPYWidget,
   SP500: SP500Widget,
+  Nasdaq: NasdaqWidget,
 };
 
 // 简化的备用数据
@@ -130,7 +128,7 @@ const HomeScreen = () => {
   const [marketOverviewCount, setMarketOverviewCount] = useState(2);
 
   // 数据卡片配置状态 - 仅显示美股相关指标
-  const [dataCardsConfig, setDataCardsConfig] = useState('SP500,ETFData,DXY,USBond10YR');
+  const [dataCardsConfig, setDataCardsConfig] = useState('DXY,USBond10YR,SP500,Nasdaq');
 
   // 加载配置
   const loadConfigs = async () => {
@@ -153,7 +151,7 @@ const HomeScreen = () => {
       const marketOverviewCountConfig = await configService.getConfig('HOME_MARKET_OVERVIEW_COUNT', 2);
       
       // 获取数据卡片配置 - 默认为美股相关指标
-      const dataCardsConfig = await configService.getConfig('HOME_DATA_CARDS_CONFIG', 'SP500,ETFData,DXY,USBond10YR');
+      const dataCardsConfig = await configService.getConfig('HOME_DATA_CARDS_CONFIG', 'GreedyIndex,DXY,USBond10YR,SP500,Nasdaq');
       
       // 获取启动广告配置
       const adEnableRaw = await configService.getConfig('HOME_MODAL_AD_ENABLE', false);
@@ -243,7 +241,7 @@ const HomeScreen = () => {
       
       // 如果解析失败，使用默认配置
       if (widgetNames.length === 0) {
-        widgetNames = ['SP500', 'ETFData', 'DXY', 'USBond10YR'];
+        widgetNames = ['GreedyIndex', 'DXY', 'USBond10YR', 'SP500', 'Nasdaq'];
         console.warn('⚠️ HomeScreen: Failed to parse data cards config, using default');
       }
       
@@ -280,18 +278,23 @@ const HomeScreen = () => {
         <>
           <View style={styles.indicatorRow}>
             <View style={styles.indicatorCard}>
-              <SP500Widget style={styles.widgetEmbedded} />
+              <GreedyIndexWidget style={styles.widgetEmbedded} />
             </View>
             <View style={styles.indicatorCard}>
-              <ETFDataWidget style={styles.widgetEmbedded} />
+              <DXYWidget style={styles.widgetEmbedded} />
             </View>
           </View>
           <View style={styles.indicatorRow}>
             <View style={styles.indicatorCard}>
-              <DXYWidget style={styles.widgetEmbedded} />
+              <USBond10YRWidget style={styles.widgetEmbedded} />
             </View>
             <View style={styles.indicatorCard}>
-              <USBond10YRWidget style={styles.widgetEmbedded} />
+              <SP500Widget style={styles.widgetEmbedded} />
+            </View>
+          </View>
+          <View style={styles.indicatorRow}>
+            <View style={styles.indicatorCard}>
+              <NasdaqWidget style={styles.widgetEmbedded} />
             </View>
           </View>
         </>

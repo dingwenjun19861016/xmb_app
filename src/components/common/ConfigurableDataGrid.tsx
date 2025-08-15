@@ -5,11 +5,10 @@ import configService from '../../services/ConfigService';
 
 // Import US stock relevant widgets only
 import GreedyIndexWidget from './GreedyIndexWidget';
-import ETFDataWidget from './ETFDataWidget';
 import DXYWidget from './DXYWidget';
 import USBond10YRWidget from './USBond10YRWidget';
-import USDJPYWidget from './USDJPYWidget';
 import SP500Widget from './SP500Widget';
+import NasdaqWidget from './NasdaqWidget';
 
 // 布局配置接口
 interface LayoutConfig {
@@ -26,35 +25,32 @@ interface ConfigurableDataGridProps {
 // US stock relevant widget components mapping
 const WIDGET_COMPONENTS = {
   GreedyIndex: GreedyIndexWidget,
-  ETFData: ETFDataWidget,
   DXY: DXYWidget,
   USBond10YR: USBond10YRWidget,
-  USDJPY: USDJPYWidget,
   SP500: SP500Widget,
+  Nasdaq: NasdaqWidget,
 };
 
 // 组件详情页面映射 - 仅US股票相关
 const DETAIL_SCREENS = {
   GreedyIndex: 'GreedyIndexDetail',
-  ETFData: 'ETFDataDetail',
   DXY: 'DXYDetail',
   USBond10YR: 'USBond10YRDetail',
-  USDJPY: 'USDJPYDetail',
   SP500: 'SP500Detail',
+  Nasdaq: 'NasdaqDetail',
 };
 
 // 组件标题映射 - 默认值（仅US股票相关）
 const DEFAULT_WIDGET_TITLES = {
   GreedyIndex: '恐惧与贪婪指数',
-  ETFData: 'ETF数据',
   DXY: '美元指数',
   USBond10YR: '美债10年期',
-  USDJPY: '美元日元',
   SP500: '标普500',
+  Nasdaq: '纳斯达克',
 };
 
 // 默认配置字符串 - 仅US股票相关指标
-const DEFAULT_CARDS_CONFIG_STRING = 'SP500,USDJPY,DXY,USBond10YR';
+const DEFAULT_CARDS_CONFIG_STRING = 'GreedyIndex,DXY,USBond10YR,SP500,Nasdaq';
 
 const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
   columnsPerRow: 2,
@@ -90,16 +86,10 @@ const ConfigurableDataGrid: React.FC<ConfigurableDataGridProps> = ({ onCardPress
       // 获取标题配置
       const titleConfigs = {
         GreedyIndex: await configService.getConfig('DATA_TITLE_GREEDY_INDEX', DEFAULT_WIDGET_TITLES.GreedyIndex),
-        MarketCap: await configService.getConfig('DATA_TITLE_MARKET_CAP', DEFAULT_WIDGET_TITLES.MarketCap),
-        AltcoinIndex: await configService.getConfig('DATA_TITLE_ALTCOIN_INDEX', DEFAULT_WIDGET_TITLES.AltcoinIndex),
-        ETFData: await configService.getConfig('DATA_TITLE_ETF_DATA', DEFAULT_WIDGET_TITLES.ETFData),
-        BTCDIndex: await configService.getConfig('DATA_TITLE_BTCD_INDEX', DEFAULT_WIDGET_TITLES.BTCDIndex),
-        ETHDIndex: await configService.getConfig('DATA_TITLE_ETHD_INDEX', DEFAULT_WIDGET_TITLES.ETHDIndex),
-        Stablecoin: await configService.getConfig('DATA_TITLE_STABLECOIN', DEFAULT_WIDGET_TITLES.Stablecoin),
         DXY: await configService.getConfig('DATA_TITLE_DXY', DEFAULT_WIDGET_TITLES.DXY),
         USBond10YR: await configService.getConfig('DATA_TITLE_US_BOND_10YR', DEFAULT_WIDGET_TITLES.USBond10YR),
-        USDJPY: await configService.getConfig('DATA_TITLE_USDJPY', DEFAULT_WIDGET_TITLES.USDJPY),
         SP500: await configService.getConfig('DATA_TITLE_SP500', DEFAULT_WIDGET_TITLES.SP500),
+        Nasdaq: await configService.getConfig('DATA_TITLE_NASDAQ', DEFAULT_WIDGET_TITLES.Nasdaq),
       };
       
       console.log('🔍 ConfigurableDataGrid: Raw config values:', {

@@ -102,6 +102,7 @@ const linking: LinkingOptions<RootStackParamList> = {
           USBond10YRDetail: '/usbond',
           USDJPYDetail: '/usdjpy',
           SP500Detail: '/sp500',
+          NasdaqDetail: '/nasdaq',
           UserStatus: '/user',
           UserProfile: '/profile',
           TermsOfService: '/terms',
