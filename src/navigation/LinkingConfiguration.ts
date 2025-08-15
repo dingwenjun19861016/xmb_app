@@ -96,6 +96,7 @@ const linking: LinkingOptions<RootStackParamList> = {
           USDJPYDetail: '/usdjpy',
           SP500Detail: '/sp500',
           NasdaqDetail: '/nasdaq',
+          DJIDetail: '/dji',
           UserStatus: '/user',
           UserProfile: '/profile',
           TermsOfService: '/terms',

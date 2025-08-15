@@ -5,6 +5,7 @@ export { default as USBond10YRService, usBond10YRService } from './USBond10YRSer
 export { default as USDJPYService, usdJpyService } from './USDJPYService';
 export { default as SP500Service, sp500Service } from './SP500Service';
 export { default as NasdaqService, nasdaqService } from './NasdaqService';
+export { default as DJIService, djiService } from './DJIService';
 
 // Type exports - US stock relevant only
 export type { DXYData } from './DXYService';
@@ -12,3 +13,4 @@ export type { USBond10YRData } from './USBond10YRService';
 export type { USDJPYData } from './USDJPYService';
 export type { SP500Data } from './SP500Service';
 export type { NasdaqData } from './NasdaqService';
+export type { DJIData } from './DJIService';

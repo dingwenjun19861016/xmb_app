@@ -8,6 +8,7 @@ import DXYWidget from './DXYWidget';
 import USBond10YRWidget from './USBond10YRWidget';
 import SP500Widget from './SP500Widget';
 import NasdaqWidget from './NasdaqWidget';
+import DJIWidget from './DJIWidget'; // added
 
 // 布局配置接口
 interface LayoutConfig {
@@ -26,6 +27,7 @@ const WIDGET_COMPONENTS = {
   USBond10YR: USBond10YRWidget,
   SP500: SP500Widget,
   Nasdaq: NasdaqWidget,
+  DJI: DJIWidget, // added
 };
 
 // 组件详情页面映射 (removed GreedyIndexDetail)
@@ -34,6 +36,7 @@ const DETAIL_SCREENS = {
   USBond10YR: 'USBond10YRDetail',
   SP500: 'SP500Detail',
   Nasdaq: 'NasdaqDetail',
+  DJI: 'DJIDetail', // added
 };
 
 // 组件标题映射 - 默认值 (removed GreedyIndex)
@@ -42,10 +45,11 @@ const DEFAULT_WIDGET_TITLES = {
   USBond10YR: '美债10年期',
   SP500: '标普500',
   Nasdaq: '纳斯达克',
+  DJI: '道琼斯', // added
 };
 
 // 默认配置字符串 (removed GreedyIndex)
-const DEFAULT_CARDS_CONFIG_STRING = 'DXY,USBond10YR,SP500,Nasdaq';
+const DEFAULT_CARDS_CONFIG_STRING = 'DXY,USBond10YR,SP500,Nasdaq,DJI';
 
 const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
   columnsPerRow: 2,
@@ -76,6 +80,7 @@ const ConfigurableDataGrid: React.FC<ConfigurableDataGridProps> = ({ onCardPress
         USBond10YR: await configService.getConfig('DATA_TITLE_US_BOND_10YR', DEFAULT_WIDGET_TITLES.USBond10YR),
         SP500: await configService.getConfig('DATA_TITLE_SP500', DEFAULT_WIDGET_TITLES.SP500),
         Nasdaq: await configService.getConfig('DATA_TITLE_NASDAQ', DEFAULT_WIDGET_TITLES.Nasdaq),
+        DJI: await configService.getConfig('DATA_TITLE_DJI', DEFAULT_WIDGET_TITLES.DJI), // added
       };
       console.log('🔍 ConfigurableDataGrid: Raw config values:', { DATA_CARDS_CONFIG: cardsConfigString, DATA_LAYOUT_CONFIG: layoutConfigData, titleConfigs });
       let widgetNames: string[] = [];
