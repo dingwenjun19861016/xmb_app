@@ -53,9 +53,10 @@ interface APIParams {
   searchTerm?: string;
 }
 
-// 分类映射
-const CATEGORY_MAP: { [key: string]: string } = {
+// 分类映射 - 默认值，后续会被配置覆盖
+const DEFAULT_CATEGORY_MAP: { [key: string]: string } = {
   'stockquicknews': '快讯',
+  'stocknews': '最新消息',
   'headline': '头条',
   'market': '研报',
   'eth': '以太坊',
@@ -66,18 +67,10 @@ const CATEGORY_MAP: { [key: string]: string } = {
   'defi': 'DeFi',
 };
 
-// 反向分类映射：从显示名称到API参数
-const REVERSE_CATEGORY_MAP: { [key: string]: string } = {
-  '快讯': 'stockquicknews',
-  '头条': 'headline', 
-  '研报': 'market',
-  '以太坊': 'eth',
-  '以太坊L2': 'ethl2',
-  '以太坊LRT': 'ethlrt',
-  '比特币LRT': 'btclrt',
-  '比特币L2': 'btcl2',
-  'DeFi': 'defi',
-};
+// 反向分类映射默认 - 从显示名称到API参数
+const DEFAULT_REVERSE_CATEGORY_MAP: { [key: string]: string } = Object.fromEntries(
+  Object.entries(DEFAULT_CATEGORY_MAP).map(([api, label]) => [label, api])
+);
 
 // 缓存项接口
 interface CacheItem {
@@ -95,6 +88,54 @@ class NewsService {
   // 缓存配置
   private readonly CACHE_DURATION = 5 * 60 * 1000; // 5分钟缓存
   private readonly articleCache: Map<string, CacheItem> = new Map();
+
+  // 动态分类映射（来自配置）
+  private categoryMapConfig: Record<string, string> | null = null; // api -> label
+  private reverseCategoryMapConfig: Record<string, string> | null = null; // label -> api
+
+  private async ensureCategoryMapsLoaded(): Promise<void> {
+    if (this.categoryMapConfig && this.reverseCategoryMapConfig) return;
+    try {
+      const { default: configService } = await import('./ConfigService');
+      const raw = await configService.getConfig('ARTICLE_MENU', DEFAULT_CATEGORY_MAP as any);
+
+      const parseMenu = (val: any): Record<string, string> | null => {
+        if (!val) return null;
+        if (typeof val === 'object') return val as Record<string, string>;
+        if (typeof val === 'string') {
+          let s = val.trim();
+          if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+            s = s.slice(1, -1);
+          }
+          try {
+            return JSON.parse(s);
+          } catch {
+            try {
+              const sanitized = s
+                .replace(/(['"])\s*:\s*/g, '$1:')
+                .replace(/([{,\s])([A-Za-z0-9_]+)\s*:/g, '$1"$2":')
+                .replace(/'/g, '"');
+              return JSON.parse(sanitized);
+            } catch (e) {
+              console.warn('⚠️ NewsService: Failed to parse ARTICLE_MENU:', e, s);
+              return null;
+            }
+          }
+        }
+        return null;
+      };
+
+      const parsed = parseMenu(raw) || DEFAULT_CATEGORY_MAP;
+      this.categoryMapConfig = { ...DEFAULT_CATEGORY_MAP, ...parsed };
+      this.reverseCategoryMapConfig = Object.fromEntries(
+        Object.entries(this.categoryMapConfig).map(([api, label]) => [label, api])
+      );
+    } catch (e) {
+      console.warn('⚠️ NewsService: Load ARTICLE_MENU failed, using defaults:', e);
+      this.categoryMapConfig = { ...DEFAULT_CATEGORY_MAP };
+      this.reverseCategoryMapConfig = { ...DEFAULT_REVERSE_CATEGORY_MAP };
+    }
+  }
 
   /**
    * 统一的API调用方法
@@ -115,7 +156,7 @@ class NewsService {
       ]);
 
       return this.parseAPIResponse(response);
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ NewsService: API call failed:', error);
       throw new Error(`API call failed: ${error.message}`);
     }
@@ -129,6 +170,7 @@ class NewsService {
   public async callAPIDirectly(params: string[]): Promise<NewsArticle[]> {
     try {
       console.log('🔄 NewsService: Direct API call with params:', params);
+      await this.ensureCategoryMapsLoaded();
       
       const response = await apiService.call('listChainalertContent', params);
       const rawData = this.parseAPIResponse(response);
@@ -138,7 +180,7 @@ class NewsService {
       
       console.log('✅ NewsService: Direct API call successful, returned:', transformedArticles.length, 'articles');
       return transformedArticles;
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ NewsService: Direct API call failed:', error);
       throw new Error(`Direct API call failed: ${error.message}`);
     }
@@ -194,7 +236,7 @@ class NewsService {
     // 使用path作为ID
     const articleId = rawData.path || 'unknown';
     
-    // 处理分类
+    // 处理分类（优先使用动态配置）
     const category = this.getCategoryName(rawData.menu || rawData.nav);
     
     const transformedArticle = {
@@ -255,6 +297,7 @@ class NewsService {
     categories: string = this.DEFAULT_CATEGORIES
   ): Promise<NewsArticle[]> {
     try {
+      await this.ensureCategoryMapsLoaded();
       const rawData = await this.callAPI({ categories, skip, limit });
       return this.transformAndDeduplicate(rawData);
     } catch (error) {
@@ -271,6 +314,7 @@ class NewsService {
    */
   async getLatestNews(skip: number = 0, limit: number = 10): Promise<NewsArticle[]> {
     try {
+      await this.ensureCategoryMapsLoaded();
       const rawData = await this.callAPI({ 
         categories: this.NEWS_CATEGORY, 
         skip, 
@@ -291,6 +335,7 @@ class NewsService {
    */
   async searchNews(searchTerm: string, limit: number = 100, skip: number = 0): Promise<NewsArticle[]> {
     try {
+      await this.ensureCategoryMapsLoaded();
       const rawData = await this.callAPI({ 
         categories: "", 
         skip, 
@@ -314,6 +359,7 @@ class NewsService {
   async smartSearchNews(searchTerm: string, limit: number = 100, skip: number = 0): Promise<NewsArticle[]> {
     try {
       console.log('🧠 NewsService: 开始智能搜索:', searchTerm, `limit: ${limit}, skip: ${skip}`);
+      await this.ensureCategoryMapsLoaded();
       
       // 检查是否为识别度不高的股票代码（1-2个字母）
       const isLowRecognitionSymbol = searchTerm.length <= 2 && /^[A-Z]+$/i.test(searchTerm.trim());
@@ -478,6 +524,7 @@ class NewsService {
    */
   async getArticleById(articlePath: string): Promise<NewsArticle | null> {
     try {
+      await this.ensureCategoryMapsLoaded();
       // 直接使用新API获取文章数据
       const directResult = await this.getArticleByPath(articlePath);
       
@@ -500,6 +547,7 @@ class NewsService {
    */
   async searchNewsByPath(path: string): Promise<NewsArticle[]> {
     try {
+      await this.ensureCategoryMapsLoaded();
       const rawData = await this.callAPI({ 
         categories: "", 
         skip: 0, 
@@ -522,6 +570,7 @@ class NewsService {
    */
   async getArticleByPath(path: string): Promise<NewsArticle | null> {
     try {
+      await this.ensureCategoryMapsLoaded();
       // 直接调用新的API获取最新数据
       const response = await apiService.call('getChainalertContent', [path]);
       
@@ -570,9 +619,10 @@ class NewsService {
 
   async getNewsByCategory(category: string, skip: number = 0, limit: number = 10): Promise<NewsArticle[]> {
     this.cleanupExpiredCache();
+    await this.ensureCategoryMapsLoaded();
     
-    // 将显示分类转换为API参数
-    const apiCategory = REVERSE_CATEGORY_MAP[category] || category;
+    // 将显示分类转换为API参数（优先使用动态配置）
+    const apiCategory = this.reverseCategoryMapConfig?.[category] || DEFAULT_REVERSE_CATEGORY_MAP[category] || category;
     
     return this.getNewsList(skip, limit, apiCategory);
   }
@@ -645,7 +695,9 @@ class NewsService {
   }
 
   private getCategoryName(menu: string): string {
-    return CATEGORY_MAP[menu] || '其他';
+    // 优先使用动态映射，如果尚未加载则使用默认映射
+    const map = this.categoryMapConfig || DEFAULT_CATEGORY_MAP;
+    return map[menu] || '其他';
   }
 
   formatDate(dateString: string): string {

@@ -18,6 +18,8 @@ import { Ionicons } from '@expo/vector-icons';
 // Import services
 import newsService from '../../services/NewsService';
 import configService from '../../services/ConfigService';
+// Use the shared NewsArticle type which has `id` (path) instead of local `_id`
+import type { NewsArticle as ServiceNewsArticle } from '../../services/NewsService';
 
 // Import contexts  
 import { useUser } from '../../contexts/UserContext';
@@ -31,30 +33,15 @@ import TimelineNewsCard from '../../components/common/TimelineNewsCard';
 import CommonSearchBar from '../../components/common/CommonSearchBar';
 import { useDebounce } from '../../hooks/useDebounce';
 
-// Import types
-interface NewsArticle {
-  _id: string;
-  title: string;
-  summary?: string;
-  content?: string;
-  date: string;
-  originalDate?: string; // 保存原始日期用于分组
+// Import types - extend the service type with local UI-only fields
+type NewsArticle = ServiceNewsArticle & {
+  originalDate?: string | number | Date; // 保存原始日期用于分组
   groupDate?: string; // 保存分组使用的日期
-  author?: string;
-  category?: string;
-  tags?: string[];
-  image?: string;
-  link?: string;
   source?: string;
-}
-
-// 分类配置 - 移除"全部"分类，只保留具体分类
-const ARTICLE_CATEGORIES = ['快讯', '头条', '研报'];
-const CATEGORY_MAP: Record<string, string> = {
-  '头条': 'headline',
-  '研报': 'market',
-  '快讯': 'stockquicknews',
+  readCount?: number;
 };
+
+// 分类配置将从配置系统动态获取
 
 const ArticleScreen = () => {
   // 渲染次数计数器
@@ -92,7 +79,12 @@ const ArticleScreen = () => {
   const [searchText, setSearchText] = useState('');
   const [submittedSearchText, setSubmittedSearchText] = useState(''); // 用户提交的搜索文本
   const debouncedSearchText = useDebounce(submittedSearchText, 500); // 只对提交的搜索文本防抖
-  const [activeCategory, setActiveCategory] = useState('快讯'); // 默认显示快讯
+  const [activeCategory, setActiveCategory] = useState(''); // 默认为空，从配置加载后设置
+  
+  // 分类配置状态
+  const [articleCategories, setArticleCategories] = useState<string[]>([]);
+  const [categoryMap, setCategoryMap] = useState<Record<string, string>>({});
+  const [reverseCategoryMap, setReverseCategoryMap] = useState<Record<string, string>>({});
   
   console.log('🔥 ArticleScreen: Search states initialized', {
     searchText,
@@ -101,11 +93,14 @@ const ArticleScreen = () => {
     activeCategory,
     searchTextLength: searchText.length,
     submittedSearchTextLength: submittedSearchText.length,
-    debouncedSearchTextLength: debouncedSearchText.length
+    debouncedSearchTextLength: debouncedSearchText.length,
+    articleCategoriesLength: articleCategories.length,
+    categoryMapKeys: Object.keys(categoryMap),
+    reverseCategoryMapKeys: Object.keys(reverseCategoryMap)
   });
 
   // UI配置状态
-  const [screenTitle, setScreenTitle] = useState('快讯');
+  const [screenTitle, setScreenTitle] = useState('资讯');
   const [searchPlaceholder, setSearchPlaceholder] = useState('搜索资讯...');
   const [pageSize, setPageSize] = useState(20);
   
@@ -222,26 +217,123 @@ const ArticleScreen = () => {
       const [
         screenTitleConfig,
         searchPlaceholderConfig,
-        pageSizeConfig
+        pageSizeConfig,
+        articleMenuConfig
       ] = await Promise.all([
-        configService.getConfig('ARTICLES_SCREEN_TITLE', '快讯'),
+        configService.getConfig('ARTICLES_SCREEN_TITLE', '资讯'),
         configService.getConfig('ARTICLES_SEARCH_PLACEHOLDER', '搜索资讯...'),
-        configService.getConfig('ARTICLES_PAGE_SIZE', 20)
+        configService.getConfig('ARTICLES_PAGE_SIZE', 20 as any),
+        configService.getConfig('ARTICLE_MENU', { stockquicknews: "快讯", stocknews: "最新消息" } as any)
       ]);
 
       console.log('🔥⚙️ ArticleScreen: Setting config states', {
         screenTitleConfig,
         searchPlaceholderConfig,
-        pageSizeConfig
+        pageSizeConfig,
+        articleMenuConfig
       });
 
-      setScreenTitle(screenTitleConfig);
-      setSearchPlaceholder(searchPlaceholderConfig);
-      setPageSize(pageSizeConfig);
+      setScreenTitle(screenTitleConfig as any);
+      setSearchPlaceholder(searchPlaceholderConfig as any);
+
+      // 确保 pageSize 为数字
+      const pageSizeNumber = typeof pageSizeConfig === 'number' ? pageSizeConfig : Number(pageSizeConfig);
+      setPageSize(Number.isFinite(pageSizeNumber) && pageSizeNumber > 0 ? pageSizeNumber : 20);
+
+      // 解析文章菜单配置（后端以字符串形式返回，且可能不是严格JSON）
+      const parseArticleMenu = (raw: any): Record<string, string> | null => {
+        if (!raw) return null;
+        if (typeof raw === 'object') return raw as Record<string, string>;
+        if (typeof raw === 'string') {
+          let s = raw.trim();
+          // 去掉可能多余的首尾引号
+          if ((s.startsWith('"') && s.endsWith('"')) || (s.startsWith("'") && s.endsWith("'"))) {
+            s = s.slice(1, -1);
+          }
+          // 先尝试严格 JSON
+          try {
+            return JSON.parse(s);
+          } catch {
+            // 宽松处理：给未加引号的key补全双引号，并将单引号替换为双引号
+            try {
+              const sanitized = s
+                .replace(/(['"])\s*:\s*/g, '$1:') // 规范冒号附近空格
+                .replace(/([{,\s])([A-Za-z0-9_]+)\s*:/g, '$1"$2":') // key 加引号
+                .replace(/'/g, '"'); // 单引号转双引号
+              return JSON.parse(sanitized);
+            } catch (e) {
+              console.warn('⚠️ ArticleScreen: Failed to parse ARTICLE_MENU:', e, s);
+              return null;
+            }
+          }
+        }
+        return null;
+      };
+
+      // 处理文章菜单配置
+      const parsedMenu = parseArticleMenu(articleMenuConfig);
+      if (parsedMenu && typeof parsedMenu === 'object') {
+        console.log('🔥⚙️ ArticleScreen: Processing article menu config:', parsedMenu);
+        
+        const categoryLabels = Object.values(parsedMenu) as string[];
+        const categoryToApiMap = Object.fromEntries(
+          Object.entries(parsedMenu).map(([api, label]) => [label, api])
+        );
+        const apiToCategoryMap = parsedMenu as Record<string, string>;
+
+        console.log('🔥⚙️ ArticleScreen: About to set article categories:', {
+          categoryLabels,
+          categoryToApiMap,
+          apiToCategoryMap
+        });
+
+        setArticleCategories(categoryLabels);
+        setCategoryMap(categoryToApiMap);
+        setReverseCategoryMap(apiToCategoryMap);
+
+        // 设置默认激活分类为第一个分类
+        if (categoryLabels.length > 0) {
+          setActiveCategory(categoryLabels[0]);
+          console.log('🔥⚙️ ArticleScreen: Set default active category:', categoryLabels[0]);
+        }
+
+        console.log('🔥⚙️ ArticleScreen: Article menu config processed', {
+          categoryLabels,
+          categoryToApiMap,
+          apiToCategoryMap,
+          defaultCategory: categoryLabels[0]
+        });
+      } else {
+        console.warn('🔥⚙️ ArticleScreen: Invalid articleMenuConfig, using default');
+        const defaultMenuConfig = { stockquicknews: "快讯", stocknews: "最新消息" };
+        const categoryLabels = Object.values(defaultMenuConfig);
+        const categoryToApiMap = Object.fromEntries(
+          Object.entries(defaultMenuConfig).map(([api, label]) => [label, api])
+        );
+
+        setArticleCategories(categoryLabels);
+        setCategoryMap(categoryToApiMap);
+        setReverseCategoryMap(defaultMenuConfig);
+        setActiveCategory(categoryLabels[0]);
+      }
 
       console.log('✅ ArticleScreen: Config loaded successfully');
     } catch (error) {
       console.error('❌ ArticleScreen: Failed to load configs:', error);
+      
+      // 如果配置加载失败，使用默认配置
+      const defaultMenuConfig = { stockquicknews: "快讯", stocknews: "最新消息" };
+      const categoryLabels = Object.values(defaultMenuConfig);
+      const categoryToApiMap = Object.fromEntries(
+        Object.entries(defaultMenuConfig).map(([api, label]) => [label, api])
+      );
+      
+      setArticleCategories(categoryLabels);
+      setCategoryMap(categoryToApiMap);
+      setReverseCategoryMap(defaultMenuConfig);
+      setActiveCategory(categoryLabels[0]);
+      
+      console.log('🔥⚙️ ArticleScreen: Using default menu config due to error');
     }
   };
 
@@ -358,8 +450,8 @@ const ArticleScreen = () => {
       let categoryFilter = '';
       
       // 设置分类过滤
-      if (activeCategory && activeCategory !== '全部') {
-        categoryFilter = CATEGORY_MAP[activeCategory] || '';
+      if (activeCategory && categoryMap[activeCategory]) {
+        categoryFilter = categoryMap[activeCategory];
       }
 
       // 使用 listChainalertContent API 调用格式
@@ -386,11 +478,12 @@ const ArticleScreen = () => {
           ""
         ]);
       } else {
-        // 默认模式：获取所有快讯
+        // 默认模式：使用第一个配置的分类
+        const firstCategoryApi = articleCategories.length > 0 ? categoryMap[articleCategories[0]] : 'stockquicknews';
         newArticles = await newsService.callAPIDirectly([
           "",
           "",
-          "stockquicknews",
+          firstCategoryApi,
           skip.toString(),
           currentBatchSize.toString(),
           ""
@@ -567,7 +660,8 @@ const ArticleScreen = () => {
     console.log('🔥🏷️ ArticleScreen: handleCategoryPress called', { 
       currentCategory: activeCategory, 
       newCategory: category,
-      isSame: category === activeCategory
+      isSame: category === activeCategory,
+      categoryApi: categoryMap[category]
     });
     
     if (category !== activeCategory) {
@@ -580,7 +674,7 @@ const ArticleScreen = () => {
     } else {
       console.log('🔥🏷️ ArticleScreen: Same category clicked, no change needed');
     }
-  }, [activeCategory, initialBatchSize]);
+  }, [activeCategory, initialBatchSize, categoryMap]);
 
   // 下拉刷新
   const handleRefresh = () => {
@@ -667,7 +761,7 @@ const ArticleScreen = () => {
       .finally(() => {
         setLoadingMore(false);
       });
-  }, [loadingMore, hasMoreData, debouncedSearchText, articles.length, displayedItemCount]);
+  }, [loadingMore, hasMoreData, debouncedSearchText, articles.length, displayedItemCount, articleCategories, categoryMap]);
 
   // FlatList 的 onEndReached 处理函数
   const handleLoadMore = () => {
@@ -821,7 +915,7 @@ const ArticleScreen = () => {
     
     // 使用navigate而不是push，与MarketScreen保持一致
     navigation.navigate('ArticleDetail', { 
-      articleId: article._id,
+      articleId: article.id,
       article: article,
       fromArticleScreen: true,
       returnTo: 'ArticlesMain'
@@ -873,7 +967,9 @@ const ArticleScreen = () => {
       searchText,
       searchPlaceholder,
       activeCategory,
-      searchTextLength: searchText.length
+      searchTextLength: searchText.length,
+      articleCategoriesLength: articleCategories.length,
+      articleCategories: articleCategories
     });
     
     return (
@@ -911,34 +1007,41 @@ const ArticleScreen = () => {
           style={styles.categoriesContainer}
           contentContainerStyle={styles.categoriesContent}
         >
-          {ARTICLE_CATEGORIES.map((category) => (
-            <TouchableOpacity
-              key={category}
-              style={[
-                styles.categoryButton,
-                activeCategory === category && styles.activeCategoryButton
-              ]}
-              onPress={() => {
-                console.log('🔥🏷️ ArticleScreen: Category pressed', { 
-                  oldCategory: activeCategory, 
-                  newCategory: category 
-                });
-                handleCategoryPress(category);
-              }}
-              activeOpacity={0.7}
-            >
-              <Text style={[
-                styles.categoryText,
-                activeCategory === category && styles.activeCategoryText
-              ]}>
-                {category}
-              </Text>
-            </TouchableOpacity>
-          ))}
+          {console.log('🔥🏷️ ArticleScreen: Rendering categories:', { 
+            articleCategories, 
+            length: articleCategories.length 
+          })}
+          {articleCategories.map((category) => {
+            console.log('🔥🏷️ ArticleScreen: Rendering category:', category);
+            return (
+              <TouchableOpacity
+                key={category}
+                style={[
+                  styles.categoryButton,
+                  activeCategory === category && styles.activeCategoryButton
+                ]}
+                onPress={() => {
+                  console.log('🔥🏷️ ArticleScreen: Category pressed', { 
+                    oldCategory: activeCategory, 
+                    newCategory: category 
+                  });
+                  handleCategoryPress(category);
+                }}
+                activeOpacity={0.7}
+              >
+                <Text style={[
+                  styles.categoryText,
+                  activeCategory === category && styles.activeCategoryText
+                ]}>
+                  {category}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </ScrollView>
       </View>
     );
-  }, [searchText, searchPlaceholder, activeCategory, handleCategoryPress]);
+  }, [searchText, searchPlaceholder, activeCategory, articleCategories, handleCategoryPress]);
 
   // 日期分组头部组件
   const DateHeader = ({ date, displayText }: { date: string; displayText?: string }) => {
@@ -1085,10 +1188,28 @@ const ArticleScreen = () => {
         {/* 该日期下的文章列表 */}
         {item.articles.map((article, index) => (
           <TimelineNewsCard
-            key={article._id || index}
+            key={article.id || index}
             article={article}
             onPress={() => handleArticlePress(article)}
             isLast={index === item.articles.length - 1}
+            // 根据文章类别与配置映射，传入显示标签
+            categoryLabel={((): string => {
+              try {
+                // article.category 可能是 API 的 menu 值（如 stockquicknews），也可能是中文显示名
+                const raw = (article as any).category as string | undefined;
+                if (!raw) return '';
+                // 优先使用 reverseCategoryMap[api] -> 显示名
+                if (reverseCategoryMap && reverseCategoryMap[raw]) return reverseCategoryMap[raw];
+                // 如果 raw 已经是显示名，但也存在映射表，尝试通过 categoryMap 反推出 api，并再映射一次
+                if (categoryMap && categoryMap[raw]) {
+                  const apiKey = categoryMap[raw];
+                  return reverseCategoryMap[apiKey] || raw;
+                }
+                return raw;
+              } catch (e) {
+                return (article as any).category || '';
+              }
+            })()}
           />
         ))}
       </View>

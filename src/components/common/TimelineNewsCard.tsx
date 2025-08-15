@@ -14,13 +14,16 @@ interface TimelineNewsCardProps {
   onPress: (article: NewsArticle) => void;
   style?: ViewStyle;
   isLast?: boolean;
+  // 新增：从外部传入的配置化分类显示标签
+  categoryLabel?: string;
 }
 
 const TimelineNewsCard: React.FC<TimelineNewsCardProps> = ({ 
   article, 
   onPress, 
   style,
-  isLast = false 
+  isLast = false,
+  categoryLabel,
 }) => {
   const formatTime = () => {
     if (!article.date) return '';
@@ -49,6 +52,9 @@ const TimelineNewsCard: React.FC<TimelineNewsCardProps> = ({
       return article.date; // 出错时返回原字符串
     }
   };
+
+  // 统一的分类显示标签，优先使用外部传入的配置化标签
+  const displayCategoryLabel = categoryLabel ?? article.category ?? '';
 
   return (
     <TouchableOpacity
@@ -81,7 +87,7 @@ const TimelineNewsCard: React.FC<TimelineNewsCardProps> = ({
           </Text>
           
           {/* 快讯通常不显示摘要，但如果有可以显示 */}
-          {article.summary && article.category !== '快讯' && (
+          {article.summary && displayCategoryLabel !== '快讯' && (
             <Text style={styles.summary} numberOfLines={2}>
               {article.summary}
             </Text>
@@ -89,13 +95,7 @@ const TimelineNewsCard: React.FC<TimelineNewsCardProps> = ({
 
           {/* 底部信息 */}
           <View style={styles.metaInfo}>
-            <View style={styles.tagContainer}>
-              <Ionicons name="pricetag-outline" size={12} color="#007AFF" />
-              <Text style={styles.category}>
-                {article.category || '快讯'}
-              </Text>
-            </View>
-            
+            {/* 移除分类标签以让样式更紧凑 */}
             <View style={styles.rightMeta}>
               {article.readCount && (
                 <View style={styles.readContainer}>
@@ -191,27 +191,12 @@ const styles = StyleSheet.create({
 
   metaInfo: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     alignItems: 'center',
-    paddingTop: 8,
-    borderTopWidth: 1,
-    borderTopColor: '#F2F2F7',
-  },
-  tagContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F0F8FF',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#007AFF20',
-  },
-  category: {
-    fontSize: 12,
-    color: '#007AFF',
-    marginLeft: 4,
-    fontWeight: '500',
+    paddingTop: 6,
+    // 移除顶部边框以去掉文字下方的水平线
+    // borderTopWidth: 1,
+    // borderTopColor: '#F2F2F7',
   },
   rightMeta: {
     flexDirection: 'row',
