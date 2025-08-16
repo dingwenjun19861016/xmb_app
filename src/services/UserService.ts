@@ -281,7 +281,7 @@ class UserService {
       console.log('🚀 开始注册流程...');
       const result = await this.postPublic({ 
         method: 'register', 
-        params: [email, password, repeatPassword, "chainalert"],
+        params: [email, password, repeatPassword, "XMB"],
         captcha 
       });
 

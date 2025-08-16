@@ -479,7 +479,7 @@ class GoogleService {
   /**
    * 调用后端Google登录API
    */
-  async authenticateWithBackend(googleToken: string, role: string = 'chainalert'): Promise<{
+  async authenticateWithBackend(googleToken: string, role: string = 'XMB'): Promise<{
     success: boolean;
     data?: {
       email: string;
@@ -549,7 +549,7 @@ class GoogleService {
 
       const backendResult = await this.authenticateWithBackend(
         signInResult.data.idToken,
-        'chainalert'
+        'XMB'
       );
 
       if (!backendResult.success) {
