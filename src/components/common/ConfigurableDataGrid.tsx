@@ -11,6 +11,7 @@ import NasdaqWidget from './NasdaqWidget';
 import DJIWidget from './DJIWidget'; // added
 import XAUUSDWidget from './XAUUSDWidget'; // added gold
 import USCLWidget from './USCLWidget'; // added crude oil
+import USDCNHWidget from './USDCNHWidget'; // added
 
 // 布局配置接口
 interface LayoutConfig {
@@ -32,6 +33,7 @@ const WIDGET_COMPONENTS = {
   DJI: DJIWidget, // added
   XAUUSD: XAUUSDWidget, // added
   USCL: USCLWidget, // added
+  USDCNH: USDCNHWidget, // added
 };
 
 // 组件详情页面映射 (removed GreedyIndexDetail)
@@ -43,6 +45,7 @@ const DETAIL_SCREENS = {
   DJI: 'DJIDetail', // added
   XAUUSD: 'XAUUSDDetail', // added
   USCL: 'USCLDetail', // added
+  USDCNH: 'USDCNHDetail', // added
 };
 
 // 组件标题映射 - 默认值 (removed GreedyIndex)
@@ -54,10 +57,11 @@ const DEFAULT_WIDGET_TITLES = {
   DJI: '道琼斯', // added
   XAUUSD: '黄金', // added
   USCL: '原油', // added
+  USDCNH: '离岸人民币', // added
 };
 
 // 默认配置字符串 (removed GreedyIndex)
-const DEFAULT_CARDS_CONFIG_STRING = 'DXY,USBond10YR,SP500,Nasdaq,DJI,XAUUSD,USCL';
+const DEFAULT_CARDS_CONFIG_STRING = 'DXY,USBond10YR,SP500,Nasdaq,DJI,XAUUSD,USCL,USDCNH';
 
 const DEFAULT_LAYOUT_CONFIG: LayoutConfig = {
   columnsPerRow: 2,
@@ -91,6 +95,7 @@ const ConfigurableDataGrid: React.FC<ConfigurableDataGridProps> = ({ onCardPress
         DJI: await configService.getConfig('DATA_TITLE_DJI', DEFAULT_WIDGET_TITLES.DJI), // added
         XAUUSD: await configService.getConfig('DATA_TITLE_XAUUSD', DEFAULT_WIDGET_TITLES.XAUUSD), // added
         USCL: await configService.getConfig('DATA_TITLE_USCL', DEFAULT_WIDGET_TITLES.USCL), // added
+        USDCNH: await configService.getConfig('DATA_TITLE_USDCNH', DEFAULT_WIDGET_TITLES.USDCNH), // added
       };
       console.log('🔍 ConfigurableDataGrid: Raw config values:', { DATA_CARDS_CONFIG: cardsConfigString, DATA_LAYOUT_CONFIG: layoutConfigData, titleConfigs });
       let widgetNames: string[] = [];

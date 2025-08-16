@@ -8,6 +8,7 @@ export { default as NasdaqService, nasdaqService } from './NasdaqService';
 export { default as DJIService, djiService } from './DJIService';
 export { default as XAUUSDService, xauusdService } from './XAUUSDService';
 export { default as USCLService, usclService } from './USCLService';
+export { default as USDCNHService, usdcnhService } from './USDCNHService'; // added
 
 // Type exports - US stock relevant only
 export type { DXYData } from './DXYService';
@@ -18,3 +19,4 @@ export type { NasdaqData } from './NasdaqService';
 export type { DJIData } from './DJIService';
 export type { XAUUSDData } from './XAUUSDService';
 export type { USCLData } from './USCLService';
+export type { USDCNHData } from './USDCNHService'; // added

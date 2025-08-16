@@ -99,6 +99,7 @@ const linking: LinkingOptions<RootStackParamList> = {
           DJIDetail: '/dji',
           XAUUSDDetail: '/xauusd', // added
           USCLDetail: '/uscl', // added
+          USDCNHDetail: '/usdcnh', // added
           UserStatus: '/user',
           UserProfile: '/profile',
           TermsOfService: '/terms',
