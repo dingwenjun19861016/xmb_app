@@ -12,7 +12,7 @@ class VersionService {
   private static instance: VersionService;
   private readonly STORAGE_KEY = 'app_version_info';
   private readonly CHECK_INTERVAL = 5 * 60 * 1000; // 5分钟检查一次
-  private readonly CURRENT_VERSION = '1.0.4'; // 与SW中的版本保持一致
+  private readonly CURRENT_VERSION = '1.0.0'; // 与SW中的版本保持一致
   
   static getInstance(): VersionService {
     if (!VersionService.instance) {

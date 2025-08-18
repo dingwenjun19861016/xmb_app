@@ -62,5 +62,5 @@
     "typescript": "^5.3.3"
   },
   "name": "xmb_app",
-  "version": "1.0.4"
+  "version": "1.0.0"
 }
