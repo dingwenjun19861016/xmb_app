@@ -44,7 +44,7 @@
     "build": "npx expo export --platform web --output-dir dist",
     "build:prod": "NODE_ENV=production npx expo export --platform web --output-dir dist",
     "build:test": "EXPO_PUBLIC_API_ENV=test NODE_ENV=production npx expo export --platform web --output-dir dist",
-    "serve": "npx serve dist -s -l 3005",
+    "serve": "npx serve dist -s -l 3006",
     "prod": "yarn && npm run build:prod && pm2 start ecosystem.config.js --only xmb-app-web --env production",
     "prod:test": "EXPO_PUBLIC_API_ENV=test yarn && npm run build:test && pm2 start ecosystem.config.js --only xmb-app-web --env test",
     "prod:stop": "pm2 stop xmb-app-web",

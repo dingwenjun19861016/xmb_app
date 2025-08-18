@@ -32,7 +32,7 @@ import { getWebAppURL } from '../config/apiConfig';
 const linking: LinkingOptions<RootStackParamList> = {
   prefixes: [
     // Web端前缀
-    'http://localhost:3005', // 本地开发环境
+    'http://localhost:3006', // 本地开发环境
     'http://localhost:8081', // Expo Web开发环境
     'http://localhost:8082', // Expo Web备用端口
     'http://localhost:8083', // Expo Web备用端口2

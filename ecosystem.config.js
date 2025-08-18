@@ -3,24 +3,24 @@ module.exports = {
     {
       name: 'xmb-app-web',
       script: 'npx',
-      args: 'serve dist -s -l 3005',
+      args: 'serve dist -s -l 3006',
       cwd: process.env.HOME + '/work/xmb_app',
       autorestart: true,
       watch: false,
       max_memory_restart: '2G', // Mac生产环境：增加内存限制
       env: {
         NODE_ENV: 'development',
-        PORT: 3005,
+        PORT: 3006,
         PLATFORM: 'web'
       },
       env_development: {
         NODE_ENV: 'development',
-        PORT: 3005,
+        PORT: 3006,
         PLATFORM: 'web'
       },
       env_production: {
         NODE_ENV: 'production',
-        PORT: 3005,
+        PORT: 3006,
         PLATFORM: 'web',
         // Mac生产环境优化
         UV_THREADPOOL_SIZE: 128,
@@ -29,7 +29,7 @@ module.exports = {
       env_test: {
         NODE_ENV: 'production',
         API_ENV: 'test',
-        PORT: 3005,
+        PORT: 3006,
         PLATFORM: 'web',
         // 测试环境配置
         UV_THREADPOOL_SIZE: 64,
@@ -116,7 +116,7 @@ module.exports = {
       // 环境变量
       env: {
         NODE_ENV: 'production',
-        PORT: 3005
+        PORT: 3006
       }
     },
     staging: {
