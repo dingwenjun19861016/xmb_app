@@ -723,6 +723,9 @@ const MarketScreen = () => {
       }))
     );
     
+    // 用户点击过滤按钮时，收起"我的自选"分组，让用户专注于查看排序后的结果
+    setIsFavoritesExpanded(false);
+    
     // 立即重置数据并重新加载，使用计算出的新参数
     setUsStocks([]);
     setDisplayedItemCount(30);
