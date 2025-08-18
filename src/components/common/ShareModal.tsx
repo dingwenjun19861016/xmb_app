@@ -8,7 +8,7 @@
  * 4. 美观的UI设计，参考二维码设计图
  * 
  * @version 1.0.0
- * @author ChainAlert Team
+ * @author 小目标 Team
  */
 import React, { useState } from 'react';
 import {

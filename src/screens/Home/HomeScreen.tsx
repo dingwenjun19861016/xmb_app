@@ -735,7 +735,7 @@ const HomeScreen = () => {
         <View style={styles.sectionContainer}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>{marketIndicatorsTitle}</Text>
-            <TouchableOpacity style={styles.viewMoreButton} onPress={() => navigation.navigate('Data')}>
+            <TouchableOpacity style={styles.viewMoreButton} onPress={() => navigation.navigate('Articles', { screen: 'ArticlesMain', params: { from: 'home' } })}>
               <Text style={styles.viewMoreText}>{viewMoreText}</Text>
             </TouchableOpacity>
           </View>
@@ -756,7 +756,7 @@ const HomeScreen = () => {
         <View style={styles.sectionContainer}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>{latestNewsTitle}</Text>
-            <TouchableOpacity style={styles.viewMoreButton} onPress={() => navigation.navigate('Articles')}>
+            <TouchableOpacity style={styles.viewMoreButton} onPress={() => navigation.navigate('Articles', { screen: 'ArticlesMain', params: { from: 'home' } })}>
               <Text style={styles.viewMoreText}>{viewMoreText}</Text>
             </TouchableOpacity>
           </View>
@@ -796,7 +796,7 @@ const HomeScreen = () => {
         news={featuredNews} 
         title={featuredNewsTitle}
         viewMoreText={viewMoreText}
-        onViewAllPress={() => navigation.navigate('Articles')}
+        onViewAllPress={() => navigation.navigate('Articles', { screen: 'ArticlesMain', params: { from: 'home' } })}
         onArticlePress={(article) => {
           navigation.navigate('Articles', {
             screen: 'ArticleDetail',

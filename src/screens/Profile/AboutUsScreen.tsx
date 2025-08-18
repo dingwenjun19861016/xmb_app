@@ -71,7 +71,7 @@ const AboutUsScreen: React.FC = () => {
                 <Ionicons name="analytics" size={48} color="#007AFF" />
               </View>
               <Text style={styles.appName}>小目标</Text>
-              <Text style={styles.appVersion}>ChainAlert</Text>
+              <Text style={styles.appVersion}>小目标</Text>
             </View>
           </View>
 
@@ -155,7 +155,7 @@ const AboutUsScreen: React.FC = () => {
 
           {/* 版权信息 */}
           <View style={styles.footer}>
-            <Text style={styles.footerText}>© 2024 ChainAlert. All rights reserved.</Text>
+            <Text style={styles.footerText}>© 2024 小目标. All rights reserved.</Text>
             <Text style={styles.footerText}>专业的美股数据分析平台</Text>
           </View>
         </View>

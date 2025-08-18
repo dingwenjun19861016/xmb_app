@@ -32,7 +32,7 @@ const TermsOfServiceScreen: React.FC = () => {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>重要声明</Text>
             <Text style={styles.paragraph}>
-              欢迎使用小目标（ChainAlert）应用程序。在使用本应用前，请仔细阅读并理解以下服务条款。
+              欢迎使用小目标（小目标）应用程序。在使用本应用前，请仔细阅读并理解以下服务条款。
             </Text>
           </View>
 

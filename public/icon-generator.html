@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>ChainAlert Icon Generator</title>
+    <title>小目标 Icon Generator</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
         .upload-section { margin: 20px 0; padding: 20px; border: 2px dashed #ccc; border-radius: 8px; text-align: center; }
@@ -24,7 +24,7 @@
     </style>
 </head>
 <body>
-    <h1>ChainAlert PWA图标生成器</h1>
+    <h1>小目标 PWA图标生成器</h1>
     <p>上传您的图片，自动生成所有需要的PWA图标尺寸</p>
     
     <div class="upload-section" id="uploadArea">
@@ -256,7 +256,7 @@
                 ctx.fillStyle = '#333333';
                 ctx.font = `${Math.min(width, height) * 0.05}px Arial`;
                 ctx.textAlign = 'center';
-                ctx.fillText('ChainAlert', width / 2, height / 2 + iconSize / 2 + 80);
+                ctx.fillText('小目标', width / 2, height / 2 + iconSize / 2 + 80);
             }
             
             return tempCanvas.toDataURL('image/png');

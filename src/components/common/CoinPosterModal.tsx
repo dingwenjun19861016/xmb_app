@@ -8,7 +8,7 @@
  * 4. 跨平台兼容性保证
  * 
  * @version 4.0.0 - 简化版本，移除海报生成功能
- * @author ChainAlert Team
+ * @author 小目标 Team
  */
 import React, { useState } from 'react';
 import {

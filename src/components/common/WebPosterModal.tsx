@@ -585,7 +585,7 @@ const WebPosterModal: React.FC<WebPosterModalProps> = ({
         // 移动端使用系统分享
         const { Share } = require('react-native');
         await Share.share({
-          message: `${safeTitle} - ChainAlert\n\n${safeSummary}\n\n${shareUrl}`,
+          message: `${safeTitle} - 小目标\n\n${safeSummary}\n\n${shareUrl}`,
           url: shareUrl,
         });
       }
