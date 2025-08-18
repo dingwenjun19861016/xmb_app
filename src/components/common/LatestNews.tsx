@@ -58,7 +58,7 @@ const LatestNews: React.FC<LatestNewsProps> = ({
 
   const renderLoadingState = () => (
     <View style={styles.loadingContainer}>
-      <ActivityIndicator size="large" color="#007AFF" />
+      <ActivityIndicator size="large" color="#1976D2" />
       <Text style={styles.loadingText}>加载新闻中...</Text>
     </View>
   );
@@ -111,46 +111,54 @@ const LatestNews: React.FC<LatestNewsProps> = ({
 
 const styles = StyleSheet.create({
   section: {
-    backgroundColor: 'white',
-    borderRadius: 12,
+    backgroundColor: '#FFFFFF', // 纯白背景
+    borderRadius: 16,
     marginHorizontal: 16,
     marginVertical: 8,
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowColor: '#1565C0', // 深蓝色阴影
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 6,
+    borderWidth: 2,
+    borderColor: '#1565C0', // 深蓝色边框
   },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 16,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E3F2FD', // 浅蓝色内部分隔线
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
+    color: '#0D47A1', // 深蓝色标题
   },
   seeAllButton: {
     fontSize: 14,
-    color: '#007AFF',
-    fontWeight: '500',
+    color: '#1976D2', // 金融蓝色
+    fontWeight: '600',
   },
   newsItem: {
     flexDirection: 'row',
     marginBottom: 15,
     paddingBottom: 15,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: '#E3F2FD', // 浅蓝色分隔线
   },
   newsImage: {
     width: 80,
     height: 80,
     borderRadius: 10,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: '#F8FAFE', // 轻微蓝色调背景
+    borderWidth: 1,
+    borderColor: '#E3F2FD',
   },
   newsContent: {
     flex: 1,
@@ -165,58 +173,72 @@ const styles = StyleSheet.create({
   },
   newsCategory: {
     fontSize: 12,
-    color: '#007AFF',
-    fontWeight: '500',
+    color: '#1976D2', // 金融蓝色
+    fontWeight: '600',
   },
   newsDate: {
     fontSize: 12,
-    color: '#999',
+    color: '#546E7A', // 蓝灰色
   },
   newsTitle: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
     marginBottom: 4,
+    color: '#0D47A1', // 深蓝色
   },
   newsSummary: {
     fontSize: 14,
-    color: '#666',
+    color: '#546E7A', // 蓝灰色
   },
   loadingContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     padding: 30,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E3F2FD',
   },
   loadingText: {
     marginTop: 10,
     fontSize: 14,
-    color: '#666',
+    color: '#546E7A', // 蓝灰色
+    fontWeight: '500',
   },
   errorContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     padding: 30,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#FFCDD2', // 浅红色边框
   },
   errorText: {
     marginTop: 10,
     fontSize: 16,
-    color: '#FF3B30',
-    fontWeight: '500',
+    color: '#D32F2F', // 红色
+    fontWeight: '600',
   },
   errorSubText: {
     marginTop: 5,
     fontSize: 12,
-    color: '#999',
+    color: '#B71C1C', // 深红色
     textAlign: 'center',
   },
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     padding: 30,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E3F2FD',
   },
   emptyText: {
     marginTop: 10,
     fontSize: 14,
-    color: '#999',
+    color: '#546E7A', // 蓝灰色
   },
 });
 

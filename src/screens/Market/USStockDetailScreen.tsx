@@ -1129,7 +1129,7 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'ios' ? 44 : 24, // 减少头部高度，与TodayHeader保持一致
     paddingBottom: 12,
     paddingHorizontal: 16,
-    backgroundColor: '#007AFF',
+    backgroundColor: '#0056CC',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,

@@ -608,7 +608,7 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'ios' ? 44 : 24, // 减少头部高度，与其他屏幕保持一致
     paddingBottom: 15,
     paddingHorizontal: 15,
-    backgroundColor: '#007AFF',
+    backgroundColor: '#0056CC',
   },
   headerTitle: {
     fontSize: 18,

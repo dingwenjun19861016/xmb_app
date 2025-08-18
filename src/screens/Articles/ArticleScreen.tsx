@@ -1469,8 +1469,8 @@ const styles = StyleSheet.create({
   },
 
   activeCategoryButton: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
+    backgroundColor: '#0056CC',
+    borderColor: '#0056CC',
   },
 
   categoryText: {
@@ -1556,12 +1556,12 @@ const styles = StyleSheet.create({
   dateHeaderLeft: {
     width: 70,
     alignItems: 'center',
-    backgroundColor: '#007AFF',
+    backgroundColor: '#0056CC',
     paddingVertical: 8,
     marginRight: 0,
     borderTopRightRadius: 20,
     borderBottomRightRadius: 20,
-    shadowColor: '#007AFF',
+    shadowColor: '#0056CC',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
