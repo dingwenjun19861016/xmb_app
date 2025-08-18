@@ -82,8 +82,8 @@ const LatestNews: React.FC<LatestNewsProps> = ({
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
         <Text style={styles.sectionTitle}>{title}</Text>
-        <TouchableOpacity onPress={onViewAllPress}>
-          <Text style={styles.seeAllButton}>{viewMoreText}</Text>
+        <TouchableOpacity onPress={onViewAllPress} style={styles.viewMoreButton}>
+          <Text style={styles.viewMoreButtonText}>{viewMoreText}</Text>
         </TouchableOpacity>
       </View>
       
@@ -138,9 +138,19 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#0D47A1', // 深蓝色标题
   },
-  seeAllButton: {
-    fontSize: 14,
-    color: '#1976D2', // 金融蓝色
+  viewMoreButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#1976D2',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#1565C0',
+  },
+  viewMoreButtonText: {
+    fontSize: 13,
+    color: '#FFFFFF',
     fontWeight: '600',
   },
   newsItem: {
