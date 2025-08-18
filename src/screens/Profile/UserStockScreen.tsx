@@ -6,7 +6,8 @@ import {
   FlatList, 
   RefreshControl, 
   ActivityIndicator, 
-  TouchableOpacity 
+  TouchableOpacity,
+  ScrollView 
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -18,6 +19,19 @@ import stockLogoService from '../../services/StockLogoService';
 import TodayHeader from '../../components/common/TodayHeader';
 import LoginModal from '../../components/auth/LoginModal';
 import MessageModal from '../../components/common/MessageModal';
+
+// UI 颜色常量 - 与 MarketScreen 保持一致
+const UI_COLORS = {
+  primary: '#007AFF',
+  background: '#f2f2f7',
+  cardBackground: '#ffffff',
+  text: '#1c1c1e',
+  secondaryText: '#8e8e93',
+  border: '#e5e5ea',
+  shadow: 'rgba(0, 0, 0, 0.1)',
+  success: '#34C759',
+  danger: '#FF3B30',
+};
 
 interface FavoriteStockItem {
   stock: string;
@@ -32,7 +46,17 @@ const UserStockScreen: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [favoriteStocks, setFavoriteStocks] = useState<FavoriteStockItem[]>([]);
   const [stockData, setStockData] = useState<StockCardData[]>([]);
+  const [sortedStockData, setSortedStockData] = useState<StockCardData[]>([]); // 排序后的数据
   const [error, setError] = useState<string | null>(null);
+  
+  // 排序相关状态
+  const [selectedSortField, setSelectedSortField] = useState<'default' | 'price' | 'change'>('default');
+  const [selectedSortOrder, setSelectedSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [availableFilters] = useState([
+    { key: 'default', label: '默认排序', icon: 'list-outline' },
+    { key: 'price', label: '价格', icon: 'trending-up-outline' },
+    { key: 'change', label: '涨跌幅', icon: 'analytics-outline' }
+  ]);
   
   // Modal states
   const [loginModalVisible, setLoginModalVisible] = useState(false);
@@ -45,6 +69,61 @@ const UserStockScreen: React.FC = () => {
     style?: 'default' | 'cancel' | 'destructive';
     onPress: () => void;
   }>>([]);
+
+  // 排序函数
+  const sortStockData = useCallback((data: StockCardData[], field: string, order: 'asc' | 'desc') => {
+    if (field === 'default') {
+      // 默认排序：保持原始顺序
+      return [...data];
+    }
+    
+    const sortedData = [...data].sort((a, b) => {
+      let aValue: number, bValue: number;
+      
+      if (field === 'price') {
+        // 价格排序：提取数字部分
+        aValue = parseFloat(a.price.replace(/[$,]/g, '')) || 0;
+        bValue = parseFloat(b.price.replace(/[$,]/g, '')) || 0;
+      } else if (field === 'change') {
+        // 涨跌幅排序：提取百分比数字
+        aValue = parseFloat(a.change.replace(/[%]/g, '')) || 0;
+        bValue = parseFloat(b.change.replace(/[%]/g, '')) || 0;
+      } else {
+        return 0;
+      }
+      
+      if (order === 'asc') {
+        return aValue - bValue;
+      } else {
+        return bValue - aValue;
+      }
+    });
+    
+    console.log('🔄 UserStockScreen: 排序完成', { field, order, count: sortedData.length });
+    return sortedData;
+  }, []);
+  
+  // 处理排序选择
+  const handleSortPress = useCallback((field: string) => {
+    console.log('🔄 UserStockScreen: 排序按钮点击', { field, currentField: selectedSortField, currentOrder: selectedSortOrder });
+    
+    let newOrder: 'asc' | 'desc' = 'desc';
+    
+    if (field === selectedSortField) {
+      // 如果点击相同的排序字段，切换排序方向
+      newOrder = selectedSortOrder === 'desc' ? 'asc' : 'desc';
+    } else {
+      // 如果点击不同的排序字段，默认降序
+      newOrder = field === 'default' ? 'desc' : 'desc';
+    }
+    
+    setSelectedSortField(field as 'default' | 'price' | 'change');
+    setSelectedSortOrder(newOrder);
+    
+    // 立即应用排序
+    const sorted = sortStockData(stockData, field, newOrder);
+    setSortedStockData(sorted);
+  }, [selectedSortField, selectedSortOrder, stockData, sortStockData]);
 
   const showMessageModal = (
     type: 'success' | 'error' | 'warning' | 'info',
@@ -137,11 +216,16 @@ const UserStockScreen: React.FC = () => {
           });
           
           setStockData(transformedData);
+          // 应用当前排序设置
+          const sorted = sortStockData(transformedData, selectedSortField, selectedSortOrder);
+          setSortedStockData(sorted);
         } else {
           setStockData([]);
+          setSortedStockData([]);
         }
       } else {
         setStockData([]);
+        setSortedStockData([]);
       }
     } catch (e: any) {
       console.error('Failed to load favorites:', e);
@@ -165,7 +249,15 @@ const UserStockScreen: React.FC = () => {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [currentUser]);
+  }, [currentUser, sortStockData, selectedSortField, selectedSortOrder]);
+
+  // 当排序设置改变时，重新排序现有数据
+  useEffect(() => {
+    if (stockData.length > 0) {
+      const sorted = sortStockData(stockData, selectedSortField, selectedSortOrder);
+      setSortedStockData(sorted);
+    }
+  }, [stockData, selectedSortField, selectedSortOrder, sortStockData]);
 
   // 监听用户状态变化
   useEffect(() => {
@@ -187,11 +279,17 @@ const UserStockScreen: React.FC = () => {
   };
 
   const handleStockPress = (item: StockCardData) => {
-    navigation.navigate('CoinDetail', {
-      stockCode: item.symbol,
+    console.log('🔄 UserStockScreen: 股票卡片点击', { symbol: item.symbol, name: item.name });
+    const params: any = {
       name: item.symbol,
-      fromFavorites: true
-    });
+      stockCode: item.symbol,
+      fromFavorites: true,
+      returnTo: 'UserStock',
+      isStock: true
+    };
+    // 统一使用已存在的路由名称，避免别名不一致造成的首击无效
+    // @ts-ignore
+    navigation.navigate('CoinDetail', params);
   };
 
   const handleRemoveFavorite = async (stockSymbol: string) => {
@@ -213,21 +311,70 @@ const UserStockScreen: React.FC = () => {
     }
   };
 
+  // 渲染排序选项
+  const renderSortOptions = () => (
+    <View style={styles.filtersContainer}>
+      <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.sortOptionsList}
+      >
+        {availableFilters.map((filter) => {
+          const isSelected = selectedSortField === filter.key;
+          const showArrow = isSelected && filter.key !== 'default';
+          
+          return (
+            <TouchableOpacity
+              key={filter.key}
+              style={[
+                styles.sortOption,
+                isSelected && styles.selectedSortOption,
+              ]}
+              onPress={() => handleSortPress(filter.key)}
+            >
+              <View style={styles.sortOptionContent}>
+                <Ionicons
+                  name={filter.icon as any}
+                  size={16}
+                  color={isSelected ? 'white' : UI_COLORS.text}
+                  style={styles.sortOptionIcon}
+                />
+                <Text style={[
+                  styles.sortOptionText,
+                  isSelected && styles.selectedSortOptionText,
+                ]}>
+                  {filter.label}
+                </Text>
+                {showArrow && (
+                  <Ionicons
+                    name={selectedSortOrder === 'desc' ? 'chevron-down' : 'chevron-up'}
+                    size={14}
+                    color="white"
+                    style={styles.sortArrow}
+                  />
+                )}
+              </View>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+    </View>
+  );
+
   const renderItem = ({ item }: { item: StockCardData }) => (
-    <TouchableOpacity onPress={() => handleStockPress(item)}>
-      <StockCard
-        data={item}
-        context="market"
-        showFavoriteButton={true}
-        isFavorited={true}
-        onFavoritePress={(symbol, isAdding) => {
-          if (!isAdding) {
-            handleRemoveFavorite(symbol);
-          }
-        }}
-        onLoginRequired={() => setLoginModalVisible(true)}
-      />
-    </TouchableOpacity>
+    <StockCard
+      data={item}
+      context="market"
+      showFavoriteButton={true}
+      isFavorited={true}
+      onPress={() => handleStockPress(item)}
+      onFavoritePress={(symbol, isAdding) => {
+        if (!isAdding) {
+          handleRemoveFavorite(symbol);
+        }
+      }}
+      onLoginRequired={() => setLoginModalVisible(true)}
+    />
   );
 
   const renderHeader = () => (
@@ -323,9 +470,10 @@ const UserStockScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       {renderHeader()}
+      {renderSortOptions()}
       
       <FlatList
-        data={stockData}
+        data={sortedStockData}
         keyExtractor={(item) => item.id || item.symbol}
         renderItem={renderItem}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
@@ -433,6 +581,54 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 14,
     fontWeight: '500'
+  },
+  // 排序选项样式
+  filtersContainer: {
+    backgroundColor: 'white',
+    paddingVertical: 12,
+    marginBottom: 8,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  sortOptionsList: {
+    paddingHorizontal: 16,
+  },
+  sortOption: {
+    backgroundColor: UI_COLORS.background,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 22,
+    marginRight: 12,
+    borderWidth: 1,
+    borderColor: UI_COLORS.border,
+  },
+  selectedSortOption: {
+    backgroundColor: UI_COLORS.primary,
+    borderColor: UI_COLORS.primary,
+  },
+  sortOptionContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  sortOptionIcon: {
+    marginRight: 6,
+  },
+  sortOptionText: {
+    fontSize: 14,
+    color: UI_COLORS.text,
+    fontWeight: '600',
+  },
+  selectedSortOptionText: {
+    color: 'white',
+  },
+  sortArrow: {
+    marginLeft: 4,
   },
 });
 

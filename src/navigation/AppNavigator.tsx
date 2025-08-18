@@ -45,6 +45,8 @@ const HomeStackNavigator = React.forwardRef((props, ref) => {
     >
       <HomeStack.Screen name="HomeMain" component={HomeScreen} />
       <HomeStack.Screen name="CoinDetail" component={USStockDetailScreen} />
+      {/* 新增: 股票详情路由别名，兼容使用 USStockDetail 名称的导航调用 */}
+      <HomeStack.Screen name="USStockDetail" component={USStockDetailScreen} />
       {/* 允许从首页内栈直接打开文章详情，返回可回到股票详情 */}
       <HomeStack.Screen name="ArticleDetail" component={ArticleDetailScreen} />
       <HomeStack.Screen name="Data" component={DataScreen} />
@@ -93,6 +95,16 @@ const MarketStackNavigator = () => {
           })
         }}
       />
+      {/* 新增: 股票详情路由别名 */}
+      <MarketStack.Screen 
+        name="USStockDetail" 
+        component={USStockDetailScreen}
+        options={{
+          ...(Platform.OS === 'web' && {
+            title: '股票详情'
+          })
+        }}
+      />
       {/* 允许在行情内栈直接打开文章详情，返回可回到股票详情 */}
       <MarketStack.Screen name="ArticleDetail" component={ArticleDetailScreen} />
       <MarketStack.Screen name="UserStatus" component={UserStatusScreen} />
@@ -125,6 +137,16 @@ const UserStockStackNavigator = () => {
         component={USStockDetailScreen}
         options={{
           // Web端路由配置
+          ...(Platform.OS === 'web' && {
+            title: '股票详情'
+          })
+        }}
+      />
+      {/* 新增: 股票详情路由别名 */}
+      <UserStockStack.Screen 
+        name="USStockDetail" 
+        component={USStockDetailScreen}
+        options={{
           ...(Platform.OS === 'web' && {
             title: '股票详情'
           })
