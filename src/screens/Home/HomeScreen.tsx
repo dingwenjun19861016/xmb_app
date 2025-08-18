@@ -735,7 +735,7 @@ const HomeScreen = () => {
         <View style={styles.sectionContainer}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>{marketIndicatorsTitle}</Text>
-            <TouchableOpacity style={styles.viewMoreButton} onPress={() => navigation.navigate('Articles', { screen: 'ArticlesMain', params: { from: 'home' } })}>
+            <TouchableOpacity style={styles.viewMoreButton} onPress={() => navigation.navigate('Data')}>
               <Text style={styles.viewMoreText}>{viewMoreText}</Text>
             </TouchableOpacity>
           </View>
