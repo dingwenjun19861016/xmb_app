@@ -214,7 +214,7 @@ class UserService {
       console.log('🔐 UserService: 开始登录API请求');
       const result = await this.postPublic({ 
         method: 'login', 
-        params: [email, password] 
+        params: [email, password, "XMB"] 
       });
 
       if (result.result) {
@@ -687,7 +687,7 @@ class UserService {
       console.log('🔍 检查注册状态:', email);
       const result = await this.postPublic({
         method: 'checkRegister',
-        params: [email]
+        params: [email, 'XMB']
       });
 
       if (result.result) {
@@ -715,7 +715,7 @@ class UserService {
       console.log('📧 获取重发状态:', email);
       const result = await this.postPublic({
         method: 'getResendStatus',
-        params: [email]
+        params: [email, 'XMB']
       });
 
       if (result.result) {
