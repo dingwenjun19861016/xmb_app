@@ -775,12 +775,12 @@ const HomeScreen = () => {
                 key={article.id}
                 article={article}
                 onPress={(article) => {
+                  // 点击新闻卡片时跳转到快讯列表页面，而不是详情页面
                   navigation.navigate('Articles', {
-                    screen: 'ArticleDetail',
+                    screen: 'ArticlesMain',
                     params: {
-                      articleId: article.id,
-                      article: article, // 传递完整的文章数据
-                      returnTo: 'home'
+                      from: 'home',
+                      highlightArticleId: article.id // 传递文章ID用于高亮显示
                     }
                   });
                 }}
@@ -798,12 +798,12 @@ const HomeScreen = () => {
         viewMoreText={viewMoreText}
         onViewAllPress={() => navigation.navigate('Articles', { screen: 'ArticlesMain', params: { from: 'home' } })}
         onArticlePress={(article) => {
+          // 点击新闻卡片时跳转到快讯列表页面，而不是详情页面
           navigation.navigate('Articles', {
-            screen: 'ArticleDetail',
+            screen: 'ArticlesMain',
             params: {
-              articleId: article.id,
-              article: article, // 传递完整的文章数据
-              returnTo: 'home'
+              from: 'home',
+              highlightArticleId: article.id // 传递文章ID用于高亮显示
             }
           });
         }}
