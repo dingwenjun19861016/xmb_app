@@ -57,14 +57,7 @@ interface APIParams {
 const DEFAULT_CATEGORY_MAP: { [key: string]: string } = {
   'stockquicknews': '快讯',
   'stocknews': '最新消息',
-  'headline': '头条',
-  'market': '研报',
-  'eth': '以太坊',
-  'ethl2': '以太坊L2',
-  'ethlrt': '以太坊LRT',
-  'btclrt': '比特币LRT',
-  'btcl2': '比特币L2',
-  'defi': 'DeFi',
+  'usstockcomment': '头条'
 };
 
 // 反向分类映射默认 - 从显示名称到API参数
@@ -81,7 +74,8 @@ interface CacheItem {
 
 // 新闻服务类
 class NewsService {
-  private readonly DEFAULT_CATEGORIES = "headline,market,eth,ethl2,ethlrt,btclrt,btcl2,defi";
+  // 将精选新闻默认分类改为美股评论分类（原为加密货币相关）
+  private readonly DEFAULT_CATEGORIES = "usstockcomment";
   private readonly NEWS_CATEGORY = "stockquicknews";
   private readonly DEBUG = false; // 控制调试输出
   
