@@ -52,7 +52,7 @@ if [ -n "$1" ]; then
     APK_FILE="$1"
 else
     # 自动查找最新的签名APK
-    APK_FILE=$(find . -name "chainalert_*signed*.apk" -type f -exec ls -t {} + | head -n 1)
+    APK_FILE=$(find . -name "xmb_*signed*.apk" -type f -exec ls -t {} + | head -n 1)
     if [ -z "$APK_FILE" ]; then
         # 查找任何APK文件
         APK_FILE=$(find . -name "*.apk" -type f -exec ls -t {} + | head -n 1)
@@ -181,9 +181,9 @@ if ! jarsigner -verify "$APK_FILE" &> /dev/null 2>&1; then
     print_info "🔧 签名修复:"
     echo "APK未签名，执行以下命令修复:"
     echo "  jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA256 \\"
-    echo "    -keystore android/app/chainalert-release-new.keystore \\"
-    echo "    -storepass chainalert -keypass chainalert \\"
-    echo "    \"$APK_FILE\" chainalert"
+    echo "    -keystore android/app/xmb-release.keystore \\"
+    echo "    -storepass xmbstock -keypass xmbstock \\"
+    echo "    \"$APK_FILE\" xmb"
     echo ""
 fi
 

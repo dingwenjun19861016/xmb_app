@@ -110,10 +110,10 @@ else
     # 手动签名
     jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA256 \
         -keystore "$KEYSTORE_FILE" \
-        -storepass chainalert \
-        -keypass chainalert \
+        -storepass xmbstock \
+        -keypass xmbstock \
         "android/$APK_PATH" \
-        chainalert
+        xmb
     
     # 再次验证签名
     if jarsigner -verify "android/$APK_PATH" &> /dev/null; then
@@ -130,16 +130,16 @@ if ! jarsigner -verify "android/$APK_PATH" &> /dev/null; then
     print_warning "执行最终签名保障..."
     jarsigner -verbose -sigalg SHA256withRSA -digestalg SHA256 \
         -keystore "$KEYSTORE_FILE" \
-        -storepass chainalert \
-        -keypass chainalert \
+        -storepass xmbstock \
+        -keypass xmbstock \
         "android/$APK_PATH" \
-        chainalert
+        xmb
 fi
 
 # 生成最终APK文件名
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-APK_NAME="chainalert_signed_${VERSION}.apk"
-APK_NAME_WITH_TIME="chainalert_signed_${VERSION}_${TIMESTAMP}.apk"
+APK_NAME="xmb_signed_${VERSION}.apk"
+APK_NAME_WITH_TIME="xmb_signed_${VERSION}_${TIMESTAMP}.apk"
 
 # 复制并重命名APK
 print_info "复制APK文件..."
