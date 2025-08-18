@@ -775,14 +775,12 @@ const HomeScreen = () => {
                 key={article.id}
                 article={article}
                 onPress={(article) => {
-                  // 点击新闻卡片时跳转到快讯列表页面，而不是详情页面
-                  navigation.navigate('Articles', {
-                    screen: 'ArticlesMain',
-                    params: {
-                      from: 'home',
-                      highlightArticleId: article.id // 传递文章ID用于高亮显示
-                    }
-                  });
+                  // 点击今日要闻新闻卡片时直接跳转到文章详情
+                  navigation.navigate('ArticleDetail' as never, { 
+                    articleId: article.id, 
+                    article, 
+                    from: 'home' 
+                  } as never);
                 }}
                 cardStyle="compact"
               />
@@ -797,16 +795,6 @@ const HomeScreen = () => {
         title={featuredNewsTitle}
         viewMoreText={viewMoreText}
         onViewAllPress={() => navigation.navigate('Articles', { screen: 'ArticlesMain', params: { from: 'home' } })}
-        onArticlePress={(article) => {
-          // 点击新闻卡片时跳转到快讯列表页面，而不是详情页面
-          navigation.navigate('Articles', {
-            screen: 'ArticlesMain',
-            params: {
-              from: 'home',
-              highlightArticleId: article.id // 传递文章ID用于高亮显示
-            }
-          });
-        }}
         loading={loading}
         error={newsError}
       />
