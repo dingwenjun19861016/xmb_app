@@ -4,9 +4,9 @@ const CACHE_NAME = `xmb-stock-${APP_VERSION}`;
 
 // 备用接入点配置
 const BACKUP_DOMAINS = [
-  'https://stock.xmbapp.com',  // 主域名(更新)
-  'https://stock-backup1.xmbapp.com',     // 备用域名1(更新)
-  'https://stock-backup2.xmbapp.com'  // 备用域名2(更新)
+  'https://xmb.chainalert.me',  // 主域名(更新)
+  'https://xmb.gostake.io',     // 备用域名1(更新)
+  'https://xmb.airdrophunt.xyz'  // 备用域名2(更新)
 ];
 
 // 域名可用性缓存（避免重复检测）
