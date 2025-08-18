@@ -8,28 +8,34 @@ export interface AddUserStockRequest {
 
 export interface AddUserStockResponse {
   email: string;
-  coin: string; // API 仍然使用 coin 字段
+  stock: string;
   valid: boolean;
   currentCount: number;
   maxLimit: number;
 }
 
 export interface UserStockItem {
-  coin: string; // API 仍然使用 coin 字段
+  stock: string;
   created_at: string;
   updated_at: string;
 }
 
 export interface GetUserStocksResponse {
   email: string;
-  coins: UserStockItem[]; // API 仍然使用 coins 字段
+  stocks: UserStockItem[];
   total: number;
   maxLimit: number;
 }
 
+export interface RemoveUserStockResponse {
+  email: string;
+  stock: string;
+  valid: boolean;
+}
+
 export interface UserStockServiceResponse {
   success: boolean;
-  data?: AddUserStockResponse | GetUserStocksResponse;
+  data?: AddUserStockResponse | GetUserStocksResponse | RemoveUserStockResponse;
   error?: string;
 }
 
@@ -132,9 +138,8 @@ class UserStockService {
     try {
       console.log('📈 UserStockService: 添加自选股票', { email, stock });
       
-      // API 仍然使用 addUserCoin 方法名
       const result = await this.postSecure({ 
-        method: 'addUserCoin', 
+        method: 'addUserStock', 
         params: [email, stock.toUpperCase()]
       });
 
@@ -167,9 +172,8 @@ class UserStockService {
     try {
       console.log('📈 UserStockService: 移除自选股票', { email, stock });
       
-      // API 仍然使用 removeUserCoin 方法名
       const result = await this.postSecure({ 
-        method: 'removeUserCoin', 
+        method: 'removeUserStock', 
         params: [email, stock.toUpperCase()]
       });
 
@@ -185,6 +189,16 @@ class UserStockService {
       }
     } catch (error) {
       console.error('❌ UserStockService: 移除自选股票失败:', error);
+      
+      // 特殊处理：如果股票已经不在自选列表中，视为成功
+      if (error.message && error.message.includes('user is not following this stock')) {
+        console.log('✅ UserStockService: 股票已经不在自选列表中，视为移除成功');
+        return {
+          success: true,
+          data: { message: '股票已从自选列表中移除' }
+        };
+      }
+      
       return {
         success: false,
         error: error.message || '移除自选股票失败，请稍后重试'
@@ -201,9 +215,8 @@ class UserStockService {
     try {
       console.log('📈 UserStockService: 获取用户自选股票', { email });
       
-      // API 仍然使用 getUserCoins 方法名
       const result = await this.postSecure({ 
-        method: 'getUserCoins', 
+        method: 'getUserStocks', 
         params: [email]
       });
 
@@ -224,19 +237,6 @@ class UserStockService {
         error: error.message || '获取自选股票失败，请稍后重试'
       };
     }
-  }
-
-  // 为了兼容性，保留旧的方法名
-  async addUserCoin(email: string, coin: string): Promise<UserStockServiceResponse> {
-    return this.addUserStock(email, coin);
-  }
-
-  async removeUserCoin(email: string, coin: string): Promise<UserStockServiceResponse> {
-    return this.removeUserStock(email, coin);
-  }
-
-  async getUserCoins(email: string): Promise<UserStockServiceResponse> {
-    return this.getUserStocks(email);
   }
 }
 

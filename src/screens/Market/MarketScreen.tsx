@@ -616,7 +616,8 @@ const MarketScreen = () => {
   // 将股票数据转换为StockCard组件需要的格式 - 美股专用版本
   const transformStockData = async (stockData: any[], useRealTimePrices = false): Promise<StockCardData[]> => {
     // 简化处理：美股APP只处理股票数据，统一使用股票logo服务
-    const symbols = stockData.map(stock => stock.name || stock.code);
+    // 修复：优先使用英文股票代码(code)而不是中文名称(name)
+    const symbols = stockData.map(stock => stock.code || stock.symbol || stock.name);
     
     // 优先级设置
     const priority = refreshing ? 'high' : (currentPage === 0 ? 'normal' : 'background');
@@ -648,18 +649,18 @@ const MarketScreen = () => {
       const priceChangeDirection = stockPriceChanges[stockKey] || null;
 
       return {
-        id: `${stock.name || stock.code}_${stock.rank}`, // 使用股票代码和rank的组合
-        name: stock.name || stock.code, // 股票代码如NVDA, AAPL
-        fullName: stock.fullName || (stock.name && stock.code ? `${stock.name} Corporation` : ''), // 公司全名
-        symbol: stock.name || stock.code, // 股票代码
+        id: `${stock.code || stock.name}_${stock.rank}`, // 使用股票代码和rank的组合
+        name: stock.code || stock.name, // 优先使用code字段（英文代码）
+        fullName: stock.fullName || stock.chineseName || stock.name || '', // 公司全名
+        symbol: stock.code || stock.name, // 优先使用code字段（英文代码）
         price: formattedPrice,
         change: stock.priceChange24h || stock.priceChangePercent || '0%',
         isPositive: !(stock.priceChange24h || stock.priceChangePercent || '').startsWith('-'),
         rank: stock.rank,
         marketCap: stock.marketcap || stock.baseinfo?.marketCap || '',
         volume: stock.volume || stock.baseinfo?.volume || '',
-        // 使用股票logo服务获取的logo
-        logo: logos[stock.name || stock.code],
+        // 修复：使用英文股票代码获取logo，与symbols数组保持一致
+        logo: logos[stock.code || stock.symbol || stock.name],
         // 添加价格变动标志
         priceChangeDirection,
         // 添加24小时价格数据 - 处理两种可能的数据格式
@@ -1536,11 +1537,11 @@ const MarketScreen = () => {
       setLoadingUserStocks(true);
       console.log('🔄 MarketScreen: 获取用户自选股票...', currentUser.email);
       
-      const result = await userStockService.getUserCoins(currentUser.email);
+      const result = await userStockService.getUserStocks(currentUser.email);
       
       if (result.success && result.data) {
-        const favoriteStocksData = result.data as any; // getUserCoinsResponse
-        const stockSymbols = favoriteStocksData.coins.map((item: any) => item.coin.toUpperCase());
+        const favoriteStocksData = result.data as any; // getUserStocksResponse
+        const stockSymbols = favoriteStocksData.stocks.map((item: any) => item.stock.toUpperCase());
         const stockSet = new Set(stockSymbols);
         setUserFavoriteStocks(stockSet);
         console.log('✅ MarketScreen: 获取用户自选股票成功:', stockSymbols);
@@ -1551,7 +1552,7 @@ const MarketScreen = () => {
           // 从所有股票数据中过滤出自选的股票
           const allStocks = await stockService.getUSStocksList(0, 1000);
           const favoriteStocks = allStocks.filter(stock => 
-            stockSymbols.includes(stock.code.toUpperCase())
+            stockSymbols.includes((stock.code || stock.name).toUpperCase())
           );
           const transformedFavoriteData = await transformStockData(favoriteStocks, false);
           setFavoriteStocksData(transformedFavoriteData);
@@ -1734,11 +1735,11 @@ const MarketScreen = () => {
         console.log('🔄 MarketScreen: 强制刷新用户自选数据...');
         
         // 直接使用传入的user参数，避免依赖Context状态更新
-        const result = await userStockService.getUserCoins(user.email);
+        const result = await userStockService.getUserStocks(user.email);
         
         if (result.success && result.data) {
           const favoriteStocksData = result.data as any;
-          const stockSymbols = favoriteStocksData.coins.map((item: any) => item.coin.toUpperCase());
+          const stockSymbols = favoriteStocksData.stocks.map((item: any) => item.stock.toUpperCase());
           const stockSet = new Set(stockSymbols);
           
           console.log('✅ MarketScreen: 强制刷新用户自选股票成功:', stockSymbols);
@@ -1750,7 +1751,7 @@ const MarketScreen = () => {
             // 从所有股票数据中过滤出自选的股票
             const allStocks = await stockService.getUSStocksList(0, 1000);
             const favoriteStocks = allStocks.filter(stock => 
-              coinSymbols.includes(stock.code.toUpperCase())
+              stockSymbols.includes(stock.code.toUpperCase())
             );
             const transformedFavoriteData = await transformStockData(favoriteStocks, false);
             setFavoriteStocksData(transformedFavoriteData);

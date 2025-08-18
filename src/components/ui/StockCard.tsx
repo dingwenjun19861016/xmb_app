@@ -152,6 +152,12 @@ const StockCard: React.FC<StockCardProps> = ({
       return;
     }
 
+    // 防止重复点击
+    if (isAddingToFavorites) {
+      console.log('⚠️ StockCard: 操作进行中，忽略重复点击');
+      return;
+    }
+
     try {
       console.log(`⏳ StockCard: 开始${actionText}...`);
       setIsAddingToFavorites(true);
@@ -162,8 +168,8 @@ const StockCard: React.FC<StockCardProps> = ({
       
       // 根据当前状态选择API
       const response = isRemoving 
-        ? await userStockService.removeUserCoin(currentUser.email, stockSymbol)
-        : await userStockService.addUserCoin(currentUser.email, stockSymbol);
+        ? await userStockService.removeUserStock(currentUser.email, stockSymbol)
+        : await userStockService.addUserStock(currentUser.email, stockSymbol);
         
       console.log(`✅ StockCard: ${actionText} API响应:`, response);
       
@@ -318,14 +324,14 @@ const StockCard: React.FC<StockCardProps> = ({
       showFavoriteButton ? styles.stockInfoWithFavorite : styles.stockInfoDefault
     ]}>
       <View style={styles.topRow}>
-        {/* 左侧：股票名称（不包含排名） */}
+        {/* 左侧：股票代码（不包含排名） */}
         <View style={styles.nameContainer}>
           <Text style={[
             styles.stockName, 
             variant === 'compact' ? styles.compactStockName : {},
             variant === 'large' ? styles.largeStockName : {}
           ]}>
-            {data.name}
+            {data.symbol || data.name}
           </Text>
           {/* 实时价格变动箭头 */}
           {data.priceChangeDirection && (

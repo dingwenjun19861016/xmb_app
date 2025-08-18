@@ -17,6 +17,7 @@ import USBond10YRDetail from '../screens/Data/USBond10YRDetail';
 import USDJPYDetail from '../screens/Data/USDJPYDetail';
 import UserStatusScreen from '../screens/Profile/UserStatusScreen';
 import UserProfileScreen from '../screens/Profile/UserProfileScreen';
+import UserStockScreen from '../screens/Profile/UserStockScreen';
 import TermsOfServiceScreen from '../screens/Profile/TermsOfServiceScreen';
 import AboutUsScreen from '../screens/Profile/AboutUsScreen';
 import SP500Detail from '../screens/Data/SP500Detail';
@@ -30,6 +31,7 @@ import USDCNHDetail from '../screens/Data/USDCNHDetail'; // added
 const Tab = createBottomTabNavigator();
 const HomeStack = createStackNavigator();
 const MarketStack = createStackNavigator();
+const UserStockStack = createStackNavigator();
 const ArticlesStack = createStackNavigator();
 const DataStack = createStackNavigator();
 
@@ -101,6 +103,41 @@ const MarketStackNavigator = () => {
   );
 };
 
+// UserStock stack navigator
+const UserStockStackNavigator = () => {
+  return (
+    <UserStockStack.Navigator 
+      screenOptions={{ headerShown: false }}
+      initialRouteName="UserStockMain"
+    >
+      <UserStockStack.Screen 
+        name="UserStockMain" 
+        component={UserStockScreen}
+        options={{
+          // Web端路由配置
+          ...(Platform.OS === 'web' && {
+            title: '自选'
+          })
+        }}
+      />
+      <UserStockStack.Screen 
+        name="CoinDetail" 
+        component={USStockDetailScreen}
+        options={{
+          // Web端路由配置
+          ...(Platform.OS === 'web' && {
+            title: '股票详情'
+          })
+        }}
+      />
+      <UserStockStack.Screen name="UserStatus" component={UserStatusScreen} />
+      <UserStockStack.Screen name="UserProfile" component={UserProfileScreen} />
+      <UserStockStack.Screen name="TermsOfService" component={TermsOfServiceScreen} />
+      <UserStockStack.Screen name="AboutUs" component={AboutUsScreen} />
+    </UserStockStack.Navigator>
+  );
+};
+
 // Articles stack navigator
 const ArticlesStackNavigator = () => {
   return (
@@ -151,6 +188,8 @@ const AppNavigator = () => {
             iconName = focused ? 'home' : 'home-outline';
           } else if (route.name === 'Market') {
             iconName = focused ? 'stats-chart' : 'stats-chart-outline';
+          } else if (route.name === 'UserStock') {
+            iconName = focused ? 'star' : 'star-outline';
           } else if (route.name === 'Articles') {
             iconName = focused ? 'newspaper' : 'newspaper-outline';
           } else if (route.name === 'Data') {
@@ -201,6 +240,11 @@ const AppNavigator = () => {
         name="Market" 
         component={MarketStackNavigator}
         options={{ tabBarLabel: '行情' }}
+      />
+      <Tab.Screen 
+        name="UserStock" 
+        component={UserStockStackNavigator}
+        options={{ tabBarLabel: '自选' }}
       />
       <Tab.Screen 
         name="Articles" 

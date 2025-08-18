@@ -19,7 +19,7 @@ import stockService, { TransformedStockData } from '../../services/StockService'
 import stockLogoService from '../../services/StockLogoService';
 import { useUSStockRealTimePrice } from '../../contexts/USStockRealTimePriceContext';
 import { newsService, NewsArticle } from '../../services/NewsService';
-import userCoinService from '../../services/UserCoinService';
+import userStockService from '../../services/UserStockService';
 import { useUser } from '../../contexts/UserContext';
 import { generateStockSearchTerms, generateStockSearchTermsSync } from '../Market/USStockAlias';
 import { getWebAppURL } from '../../config/apiConfig';
@@ -190,11 +190,11 @@ const USStockDetailScreen = () => {
     }
 
     try {
-      const result = await userCoinService.getUserCoins(currentUser.email);
+      const result = await userStockService.getUserStocks(currentUser.email);
       if (result.success && result.data) {
-        const favoriteCoinsData = result.data as any;
-        const coinSymbols = favoriteCoinsData.coins.map((item: any) => item.coin.toUpperCase());
-        const isStockFavorite = coinSymbols.includes(stockCode.toUpperCase());
+        const favoriteStocksData = result.data as any;
+        const stockSymbols = favoriteStocksData.stocks.map((item: any) => item.stock.toUpperCase());
+        const isStockFavorite = stockSymbols.includes(stockCode.toUpperCase());
         setIsFavorite(isStockFavorite);
       }
     } catch (error: any) {
@@ -446,8 +446,8 @@ const USStockDetailScreen = () => {
       
       // 根据当前状态选择API
       const response = isRemoving 
-        ? await userCoinService.removeUserCoin(currentUser.email, stockCode)
-        : await userCoinService.addUserCoin(currentUser.email, stockCode);
+        ? await userStockService.removeUserStock(currentUser.email, stockCode)
+        : await userStockService.addUserStock(currentUser.email, stockCode);
         
       if (response.success && response.data) {
         // 更新本地状态
