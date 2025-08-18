@@ -1,12 +1,15 @@
 {
   "name": "小目标",
   "short_name": "小目标",
-  "description": "实时加密货币市场数据和提醒",
+  "description": "实时美股市场数据和财经资讯",
+  "id": "/",
+  "scope": "/",
   "start_url": "/",
   "display": "standalone",
   "theme_color": "#007AFF",
   "background_color": "#ffffff",
   "orientation": "portrait",
+  "categories": ["finance", "productivity"],
   "icons": [
     {
       "src": "/icons/favicon-16x16.png",
@@ -102,6 +105,18 @@
       "src": "/icons/apple-touch-icon-180x180.png",
       "sizes": "180x180",
       "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }

@@ -1,12 +1,12 @@
 // 小目标 Service Worker - Final Version
 const APP_VERSION = '1.0.1'; // 每次部署时更新这个版本号
-const CACHE_NAME = `chainalert-${APP_VERSION}`;
+const CACHE_NAME = `xmb-stock-${APP_VERSION}`;
 
 // 备用接入点配置
 const BACKUP_DOMAINS = [
-  'https://app.chainalert.me',  // 主域名
-  'https://app.gostake.io',     // 备用域名1
-  'https://app.airdrophunt.me'  // 备用域名2
+  'https://stock.xmbapp.com',  // 主域名(更新)
+  'https://stock-backup1.xmbapp.com',     // 备用域名1(更新)
+  'https://stock-backup2.xmbapp.com'  // 备用域名2(更新)
 ];
 
 // 域名可用性缓存（避免重复检测）
