@@ -123,8 +123,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 12,
     elevation: 6,
-    borderWidth: 2,
-    borderColor: '#1565C0', // 深蓝色边框
   },
   sectionHeader: {
     flexDirection: 'row',
