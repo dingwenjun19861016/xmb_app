@@ -38,6 +38,7 @@ export interface StockCardData {
     price: number;
     createdAt: string;
   }>;
+  peRatio?: string; // 新增: 市盈率
 }
 
 // 定义卡片样式类型
@@ -400,6 +401,9 @@ const StockCard: React.FC<StockCardProps> = ({
         <View style={styles.detailsContainer}>
           {showMarketCap && data.marketCap && (
             <Text style={styles.marketCapText}>市值: {data.marketCap}</Text>
+          )}
+          {data.peRatio && (
+            <Text style={styles.marketCapText}>市盈率: {data.peRatio}</Text>
           )}
         </View>
       )}

@@ -50,12 +50,14 @@ const UserStockScreen: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   
   // 排序相关状态
-  const [selectedSortField, setSelectedSortField] = useState<'default' | 'price' | 'change'>('default');
+  const [selectedSortField, setSelectedSortField] = useState<'default' | 'price' | 'change' | 'peRatio' | 'volume'>('default');
   const [selectedSortOrder, setSelectedSortOrder] = useState<'asc' | 'desc'>('desc');
   const [availableFilters] = useState([
     { key: 'default', label: '默认排序', icon: 'list-outline' },
     { key: 'price', label: '价格', icon: 'trending-up-outline' },
-    { key: 'change', label: '涨跌幅', icon: 'analytics-outline' }
+    { key: 'change', label: '涨跌幅', icon: 'analytics-outline' },
+    { key: 'peRatio', label: '市盈率', icon: 'git-commit-outline' },
+    { key: 'volume', label: '成交量', icon: 'stats-chart-outline' }
   ]);
   
   // Modal states
@@ -73,32 +75,27 @@ const UserStockScreen: React.FC = () => {
   // 排序函数
   const sortStockData = useCallback((data: StockCardData[], field: string, order: 'asc' | 'desc') => {
     if (field === 'default') {
-      // 默认排序：保持原始顺序
       return [...data];
     }
-    
     const sortedData = [...data].sort((a, b) => {
-      let aValue: number, bValue: number;
-      
+      let aValue: number = 0, bValue: number = 0;
       if (field === 'price') {
-        // 价格排序：提取数字部分
         aValue = parseFloat(a.price.replace(/[$,]/g, '')) || 0;
         bValue = parseFloat(b.price.replace(/[$,]/g, '')) || 0;
       } else if (field === 'change') {
-        // 涨跌幅排序：提取百分比数字
         aValue = parseFloat(a.change.replace(/[%]/g, '')) || 0;
         bValue = parseFloat(b.change.replace(/[%]/g, '')) || 0;
-      } else {
-        return 0;
+      } else if (field === 'peRatio') {
+        // 将 peRatio 放在 data.volume 或未来扩展字段? 需要在StockCardData添加? 这里暂时从 (a as any).peRatio
+        aValue = parseFloat(((a as any).peRatio || '0').replace(/[^0-9.\-]/g, '')) || 0;
+        bValue = parseFloat(((b as any).peRatio || '0').replace(/[^0-9.\-]/g, '')) || 0;
+      } else if (field === 'volume') {
+        // 处理可能带逗号的volume字符串
+        aValue = parseFloat((a.volume || '0').toString().replace(/[$,]/g, '')) || 0;
+        bValue = parseFloat((b.volume || '0').toString().replace(/[$,]/g, '')) || 0;
       }
-      
-      if (order === 'asc') {
-        return aValue - bValue;
-      } else {
-        return bValue - aValue;
-      }
+      return order === 'asc' ? aValue - bValue : bValue - aValue;
     });
-    
     console.log('🔄 UserStockScreen: 排序完成', { field, order, count: sortedData.length });
     return sortedData;
   }, []);
@@ -117,7 +114,7 @@ const UserStockScreen: React.FC = () => {
       newOrder = field === 'default' ? 'desc' : 'desc';
     }
     
-    setSelectedSortField(field as 'default' | 'price' | 'change');
+    setSelectedSortField(field as 'default' | 'price' | 'change' | 'peRatio' | 'volume');
     setSelectedSortOrder(newOrder);
     
     // 立即应用排序
@@ -180,6 +177,7 @@ const UserStockScreen: React.FC = () => {
             const change = item.priceChange24h || item.change24h || '0';
             const changeNum = parseFloat(change.toString());
             const price = item.currentPrice || item.price || 0;
+            const peRatio = (item.baseinfo?.peRatio || item.peRatio || '').toString();
             
             // Debug: 检查股票数据结构
             console.log('🔍 UserStockScreen: 股票数据:', {
@@ -211,8 +209,10 @@ const UserStockScreen: React.FC = () => {
               logo: stockLogoService.getLogoUrlSync(stockCode), // 使用英文股票代码
               stock24h: item.stock24h || [], // 添加24小时价格数据
               priceChangeDirection: changeNum > 0 ? 'up' : (changeNum < 0 ? 'down' : null), // 添加价格变动方向
-              rank: item.rank || 0 // 添加排名字段
-            };
+              rank: item.rank || 0, // 添加排名字段
+              // 新增字段: 市盈率，用于排序显示
+              peRatio: peRatio,
+            } as StockCardData & { peRatio?: string };
           });
           
           setStockData(transformedData);

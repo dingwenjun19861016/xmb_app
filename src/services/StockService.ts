@@ -103,6 +103,8 @@ export interface TransformedStockData {
   date: string;
   updated_at: string;
   coin_id?: string;
+  // 新增: 市盈率 (用于排序显示)
+  peRatio?: string;
   // 24小时价格数据
   usstock24h?: Array<{
     _id: string;
@@ -243,6 +245,7 @@ class StockService {
         date: stock.date,
         updated_at: stock.updated_at,
         coin_id: stock._id,
+        peRatio: stock.baseinfo?.peRatio || stock.peRatio || '',
         usstock24h: stock.usstock24h
       }));
 
@@ -301,6 +304,7 @@ class StockService {
         date: stock.date,
         updated_at: stock.updated_at,
         coin_id: stock._id,
+        peRatio: stock.baseinfo?.peRatio || stock.peRatio || '',
         usstock24h: stock.usstock24h
       };
 
@@ -356,6 +360,7 @@ class StockService {
         date: stock.date || new Date().toISOString(),
         updated_at: stock.updated_at || new Date().toISOString(),
         coin_id: stock._id || stock.id || '',
+        peRatio: stock.baseinfo?.peRatio || stock.peRatio || '',
         usstock24h: stock.usstock24h || []
       }));
 
@@ -422,6 +427,7 @@ class StockService {
         date: stock.date,
         updated_at: stock.updated_at,
         coin_id: stock._id,
+        peRatio: stock.baseinfo?.peRatio || stock.peRatio || '',
         usstock24h: stock.usstock24h
       }));
     } catch (fallbackError) {
