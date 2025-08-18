@@ -863,79 +863,88 @@ const HomeScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA',
+    backgroundColor: '#F8FAFE', // 轻微的蓝色调背景
   },
   
-  // 分区样式
+  // 分区样式 - 明快金融主题
   sectionContainer: {
-    backgroundColor: 'white',
+    backgroundColor: '#FFFFFF', // 纯白背景
     marginHorizontal: 16,
-    marginTop: 4, // 减少顶部边距，使内容更贴近头部
+    marginTop: 4,
     marginBottom: 12,
-    paddingTop: 10, // 减少内边距使布局更紧凑
-    paddingBottom: 10, // 减少内边距使布局更紧凑
-    paddingHorizontal: 16,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 3,
-    borderWidth: 1,
-    borderColor: '#F0F0F0',
+    paddingTop: 16,
+    paddingBottom: 16,
+    paddingHorizontal: 18,
+    borderRadius: 16,
+    shadowColor: '#1565C0', // 蓝色阴影
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 6,
+    borderWidth: 2,
+    borderColor: '#E3F2FD', // 浅蓝色边框
   },
   
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10, // 减少标题与内容之间的间距
+    marginBottom: 14,
+    paddingBottom: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E3F2FD',
   },
   
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1A1A1A',
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#0D47A1', // 深蓝色标题
+    letterSpacing: 0.3,
   },
   
   viewMoreButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 6,
-    paddingHorizontal: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#1976D2', // 金融蓝色
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#1565C0',
   },
   
   viewMoreText: {
-    fontSize: 14,
-    color: '#007AFF',
+    fontSize: 13,
+    color: '#FFFFFF',
     marginRight: 4,
+    fontWeight: '600',
   },
   
   // 市场指标
   marketIndicatorsGrid: {
-    gap: 12,
+    gap: 16,
   },
   
   indicatorRow: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 16,
   },
   
   indicatorCard: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    height: 116,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: '#EFEFEF',
+    borderRadius: 16,
+    height: 120,
+    shadowColor: '#1565C0', // 蓝色阴影
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 5,
+    borderWidth: 2,
+    borderColor: '#E3F2FD', // 浅蓝色边框
     overflow: 'hidden',
   },
-  // 嵌入式小部件样式，去除内部卡片视觉元素，避免双重边框/阴影
+  // 嵌入式小部件样式
   widgetEmbedded: {
     backgroundColor: 'transparent',
     borderWidth: 0,
@@ -946,47 +955,62 @@ const styles = StyleSheet.create({
   },
   // 状态样式
   newsCardsContainer: {
-    gap: 6, // 减少卡片之间的间距
-    minHeight: 300, // 设置最小高度，避免内容变化时的抖动
+    gap: 12,
+    minHeight: 300,
   },
   
   loadingContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     padding: 40,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E3F2FD',
   },
   
   loadingText: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: 15,
+    color: '#546E7A', // 蓝灰色
+    fontWeight: '500',
   },
   
   errorContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     padding: 40,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#FFCDD2', // 浅红色边框
   },
   
   errorText: {
-    fontSize: 14,
-    color: '#FF6B6B',
+    fontSize: 15,
+    color: '#D32F2F', // 红色
     marginTop: 8,
     textAlign: 'center',
+    fontWeight: '600',
   },
   
   // 骨架加载样式
   newsCardSkeleton: {
     flexDirection: 'row',
-    backgroundColor: 'white',
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: '#F0F0F0',
+    backgroundColor: '#FFFFFF',
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: '#E3F2FD',
+    shadowColor: '#1565C0',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
   },
 
   newsCardImageSkeleton: {
-    marginRight: 12,
+    marginRight: 16,
   },
 
   newsCardContentSkeleton: {

@@ -63,7 +63,7 @@ const TodayHeader: React.FC<TodayHeaderProps> = ({
             style={styles.backButton}
             onPress={onBackPress}
           >
-            <Ionicons name="arrow-back" size={24} color="#333" />
+            <Ionicons name="arrow-back" size={24} color="#1976D2" />
           </TouchableOpacity>
         )}
         
@@ -73,7 +73,7 @@ const TodayHeader: React.FC<TodayHeaderProps> = ({
             style={styles.shareButton}
             onPress={onSharePress}
           >
-            <Ionicons name="share-outline" size={20} color="#007AFF" />
+            <Ionicons name="share-outline" size={20} color="#FFFFFF" />
           </TouchableOpacity>
         )}
         
@@ -84,7 +84,7 @@ const TodayHeader: React.FC<TodayHeaderProps> = ({
             onPress={onUserPress}
           >
             <View style={styles.userAvatar}>
-              <Ionicons name="person" size={16} color="#007AFF" />
+              <Ionicons name="person" size={16} color="#FFFFFF" />
             </View>
             <Text style={styles.userEmailText} numberOfLines={1}>
               {formatEmail(currentUser?.email)}
@@ -95,7 +95,7 @@ const TodayHeader: React.FC<TodayHeaderProps> = ({
             style={styles.loginButton} 
             onPress={onLoginPress}
           >
-            <Ionicons name="person-outline" size={18} color="#007AFF" />
+            <Ionicons name="person-outline" size={18} color="#FFFFFF" />
             <Text style={styles.loginButtonText}>登录/注册</Text>
           </TouchableOpacity>
         )}
@@ -109,93 +109,129 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    paddingTop: Platform.OS === 'ios' ? 44 : 24, // 减少头部高度，iOS状态栏高度适配
+    paddingTop: Platform.OS === 'ios' ? 44 : 24,
     paddingHorizontal: 20,
-    paddingBottom: 10,
-    backgroundColor: 'white',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    paddingBottom: 16,
+    backgroundColor: '#FFFFFF', // 纯白背景
+    borderBottomWidth: 2,
+    borderBottomColor: '#E3F2FD', // 浅蓝色边框
+    shadowColor: '#1565C0', // 蓝色阴影
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 6,
   },
   greeting: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#0D47A1', // 深蓝色
+    letterSpacing: 0.5,
   },
   dateTimeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 3,
+    marginTop: 6,
+    paddingTop: 6,
+    borderTopWidth: 1,
+    borderTopColor: '#E3F2FD',
   },
   date: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: 15,
+    color: '#546E7A', // 蓝灰色
+    fontWeight: '500',
   },
   time: {
-    fontSize: 14,
-    color: '#666',
-    marginLeft: 10,
+    fontSize: 15,
+    color: '#1976D2', // 金融蓝色强调
+    marginLeft: 12,
+    fontWeight: '600',
   },
   headerButtons: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#F8FAFE',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+    borderWidth: 2,
+    borderColor: '#E3F2FD',
+    shadowColor: '#1565C0',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  shareButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F0F0F0',
+    backgroundColor: '#1976D2', // 金融蓝色
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 10,
-  },
-  shareButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#E3F2FD',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
+    marginRight: 12,
     borderWidth: 1,
-    borderColor: '#007AFF',
+    borderColor: '#1565C0',
+    shadowColor: '#1976D2',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
   loginButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E3F2FD',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
+    backgroundColor: '#1976D2', // 金融蓝色
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 24,
     borderWidth: 1,
-    borderColor: '#007AFF',
+    borderColor: '#1565C0',
+    shadowColor: '#1976D2',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
   loginButtonText: {
-    color: '#007AFF',
-    fontSize: 12,
-    fontWeight: '500',
-    marginLeft: 4,
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '600',
+    marginLeft: 6,
   },
   userButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8F9FA',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 20,
-    maxWidth: 120,
+    backgroundColor: '#F8FAFE', // 轻微蓝色调背景
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 24,
+    maxWidth: 140,
+    borderWidth: 2,
+    borderColor: '#E3F2FD',
+    shadowColor: '#1565C0',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 3,
   },
   userAvatar: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#E3F2FD',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#1976D2', // 金融蓝色
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 6,
+    marginRight: 8,
   },
   userEmailText: {
-    color: '#333',
-    fontSize: 11,
-    fontWeight: '500',
+    color: '#0D47A1', // 深蓝色
+    fontSize: 12,
+    fontWeight: '600',
     flex: 1,
   },
 });

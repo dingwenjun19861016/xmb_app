@@ -6,17 +6,17 @@ import stockService, { TransformedStockData } from '../../services/StockService'
 import stockLogoService from '../../services/StockLogoService';
 import { useUSStockRealTimePrice } from '../../contexts/USStockRealTimePriceContext';
 
-// UI 颜色常量 - 与其他组件保持一致
+// UI 颜色常量 - 明快金融主题
 const UI_COLORS = {
-  primary: '#007AFF',
-  background: '#f2f2f7',
-  cardBackground: '#ffffff',
-  text: '#1c1c1e',
-  secondaryText: '#8e8e93',
-  border: '#e5e5ea',
-  shadow: 'rgba(0, 0, 0, 0.1)',
-  success: '#34C759',
-  danger: '#FF3B30',
+  primary: '#1976D2', // 金融蓝色
+  background: '#F8FAFE', // 轻微蓝色调背景
+  cardBackground: '#FFFFFF', // 纯白卡片背景
+  text: '#0D47A1', // 深蓝色文字
+  secondaryText: '#546E7A', // 蓝灰色
+  border: '#E3F2FD', // 浅蓝色边框
+  shadow: '#1565C0', // 蓝色阴影
+  success: '#2E7D32', // 深绿色
+  danger: '#D32F2F', // 深红色
 };
 
 interface StockOverviewProps {
@@ -292,86 +292,122 @@ const StockOverview: React.FC<StockOverviewProps> = ({
 const styles = StyleSheet.create({
   container: {
     backgroundColor: UI_COLORS.cardBackground,
-    borderRadius: 12,
+    borderRadius: 16,
     marginHorizontal: 16,
     marginVertical: 8,
-    padding: 16,
+    padding: 18,
     shadowColor: UI_COLORS.shadow,
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 3,
     },
     shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
+    shadowRadius: 12,
+    elevation: 6,
+    borderWidth: 2,
+    borderColor: UI_COLORS.border,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 18,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: UI_COLORS.border,
   },
   title: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 20,
+    fontWeight: '700',
     color: UI_COLORS.text,
+    letterSpacing: 0.3,
   },
   viewMoreButton: {
-    paddingVertical: 4,
-    paddingHorizontal: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: UI_COLORS.primary,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#1565C0',
   },
   viewMoreText: {
-    fontSize: 14,
-    color: UI_COLORS.primary,
-    fontWeight: '500',
+    fontSize: 13,
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
   listContainer: {
     flexGrow: 1,
   },
   separator: {
-    height: 12,
+    height: 16,
   },
   loadingContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 40,
+    paddingVertical: 50,
+    backgroundColor: UI_COLORS.cardBackground,
+    borderRadius: 12,
+    marginHorizontal: 16,
+    marginVertical: 8,
+    borderWidth: 1,
+    borderColor: UI_COLORS.border,
   },
   loadingText: {
-    marginTop: 12,
-    fontSize: 14,
+    marginTop: 16,
+    fontSize: 15,
     color: UI_COLORS.secondaryText,
+    fontWeight: '500',
   },
   errorContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 40,
+    paddingVertical: 50,
+    backgroundColor: UI_COLORS.cardBackground,
+    borderRadius: 12,
+    marginHorizontal: 16,
+    marginVertical: 8,
+    borderWidth: 2,
+    borderColor: '#FFCDD2', // 浅红色边框
   },
   errorText: {
     fontSize: 16,
     color: UI_COLORS.danger,
-    marginBottom: 16,
+    marginBottom: 20,
     textAlign: 'center',
+    fontWeight: '600',
   },
   retryButton: {
     backgroundColor: UI_COLORS.primary,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 10,
+    shadowColor: UI_COLORS.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
   retryButtonText: {
-    color: 'white',
+    color: '#FFFFFF',
     fontSize: 14,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 40,
+    paddingVertical: 50,
+    backgroundColor: UI_COLORS.cardBackground,
+    borderRadius: 12,
+    marginHorizontal: 16,
+    marginVertical: 8,
+    borderWidth: 1,
+    borderColor: UI_COLORS.border,
   },
   emptyText: {
     fontSize: 16,
     color: UI_COLORS.secondaryText,
     textAlign: 'center',
+    fontWeight: '500',
   },
 });
 

@@ -69,7 +69,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
           </Text>
           <View style={styles.footerContainer}>
             <Text style={styles.dateText}>{article.date}</Text>
-            <Ionicons name="chevron-forward" size={16} color="#999" />
+            <Ionicons name="chevron-forward" size={16} color="#1976D2" />
           </View>
         </View>
         {shouldShowImage && (
@@ -91,7 +91,7 @@ const NewsCard: React.FC<NewsCardProps> = ({
         </Text>
         <View style={styles.compactFooter}>
           <Text style={styles.compactDate}>{article.date}</Text>
-          <Ionicons name="time-outline" size={12} color="#999" />
+          <Ionicons name="time-outline" size={12} color="#1976D2" />
         </View>
       </View>
     </TouchableOpacity>
@@ -152,123 +152,138 @@ const NewsCard: React.FC<NewsCardProps> = ({
 };
 
 const styles = StyleSheet.create({
-  // Default card styles
+  // Default card styles - 明快金融主题
   defaultCard: {
-    backgroundColor: 'white',
-    borderRadius: 12,
+    backgroundColor: '#FFFFFF', // 保持白色背景
+    borderRadius: 16,
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-    borderWidth: 1,
-    borderColor: '#F0F0F0',
+    shadowColor: '#1565C0', // 蓝色阴影
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 6,
+    borderWidth: 2,
+    borderColor: '#E3F2FD', // 浅蓝色边框
   },
   defaultContent: {
     flexDirection: 'row',
-    padding: 16,
+    padding: 18,
   },
   defaultTextContainer: {
     flex: 1,
-    marginRight: 12,
+    marginRight: 16,
   },
   categoryContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 10,
+    paddingBottom: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E3F2FD',
   },
   categoryText: {
     fontSize: 12,
-    color: '#007AFF',
-    fontWeight: '600',
+    color: '#1565C0', // 深蓝色
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   dot: {
-    width: 3,
-    height: 3,
-    borderRadius: 1.5,
-    backgroundColor: '#999',
-    marginHorizontal: 8,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#42A5F5', // 中蓝色
+    marginHorizontal: 10,
   },
   dateText: {
     fontSize: 12,
-    color: '#999',
+    color: '#546E7A', // 蓝灰色
+    fontWeight: '500',
   },
   defaultTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1A1A1A',
-    lineHeight: 22,
-    marginBottom: 8,
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#0D47A1', // 深蓝色标题
+    lineHeight: 24,
+    marginBottom: 10,
+    letterSpacing: 0.2,
   },
   defaultSummary: {
     fontSize: 14,
-    color: '#666',
-    lineHeight: 20,
-    marginBottom: 12,
+    color: '#37474F', // 深灰色
+    lineHeight: 21,
+    marginBottom: 14,
   },
   footerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-  },
-  dateText: {
-    fontSize: 12,
-    color: '#999',
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#E3F2FD',
   },
   defaultImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
+    width: 88,
+    height: 88,
+    borderRadius: 12,
     backgroundColor: '#F5F5F5',
+    borderWidth: 2,
+    borderColor: '#E3F2FD',
   },
 
-  // Compact card styles
+  // Compact card styles - 明快金融主题
   compactCard: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    marginBottom: 5, // 减少底部边距
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-    borderWidth: 1,
-    borderColor: '#F0F0F0',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    marginBottom: 8,
+    shadowColor: '#1565C0',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 4,
+    borderWidth: 1.5,
+    borderColor: '#E3F2FD',
     overflow: 'hidden',
   },
   compactContent: {
-    padding: 8, // 减少内边距
+    padding: 14,
   },
   compactTitle: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#1A1A1A',
-    lineHeight: 20,
-    marginBottom: 5, // 减少标题与底部的间距
+    color: '#0D47A1',
+    lineHeight: 21,
+    marginBottom: 8,
+    letterSpacing: 0.1,
   },
   compactFooter: {
     flexDirection: 'row',
     alignItems: 'center',
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#E3F2FD',
   },
   compactDate: {
     fontSize: 12,
-    color: '#999',
-    marginRight: 4,
+    color: '#546E7A',
+    marginRight: 6,
+    fontWeight: '500',
   },
 
-  // Featured card styles
+  // Featured card styles - 明快金融主题
   featuredCard: {
-    backgroundColor: 'white',
-    borderRadius: 16,
-    marginBottom: 16,
-    shadowColor: '#000',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    marginBottom: 20,
+    shadowColor: '#1565C0',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 6,
+    shadowRadius: 16,
+    elevation: 8,
     overflow: 'hidden',
-    height: 200,
+    height: 220,
+    borderWidth: 2,
+    borderColor: '#E3F2FD',
   },
   featuredImage: {
     width: '100%',
@@ -280,70 +295,80 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: '60%',
-    backgroundColor: 'rgba(0,0,0,0.5)', // Web平台兼容性：简化为纯色背景
+    height: '65%',
+    backgroundColor: 'rgba(13, 71, 161, 0.85)', // 深蓝色半透明
     justifyContent: 'flex-end',
   },
   featuredOverlayNoImage: {
     position: 'relative',
     height: 'auto',
-    backgroundColor: '#ffffff',
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
-    padding: 20,
+    padding: 24,
   },
   featuredContent: {
-    padding: 16,
+    padding: 20,
   },
   featuredCategoryContainer: {
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(0, 122, 255, 0.9)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    marginBottom: 8,
+    backgroundColor: '#1976D2', // 金融蓝色
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#FFFFFF',
   },
   featuredCategoryText: {
     fontSize: 10,
-    color: 'white',
-    fontWeight: '600',
+    color: '#FFFFFF',
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   featuredTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '700',
-    color: 'white',
-    lineHeight: 22,
-    marginBottom: 6,
+    color: '#FFFFFF',
+    lineHeight: 25,
+    marginBottom: 8,
+    letterSpacing: 0.3,
   },
   featuredSummary: {
-    fontSize: 13,
+    fontSize: 14,
     color: 'rgba(255, 255, 255, 0.9)',
-    lineHeight: 18,
-    marginBottom: 8,
+    lineHeight: 20,
+    marginBottom: 10,
   },
   featuredFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.3)',
   },
   featuredAuthor: {
     fontSize: 11,
     color: 'rgba(255, 255, 255, 0.8)',
+    fontWeight: '500',
   },
   featuredDate: {
     fontSize: 11,
     color: 'rgba(255, 255, 255, 0.8)',
+    fontWeight: '500',
   },
   featuredTitleNoImage: {
-    color: '#1A1A1A',
+    color: '#0D47A1',
   },
   featuredSummaryNoImage: {
-    color: '#666',
+    color: '#37474F',
   },
   featuredAuthorNoImage: {
-    color: '#999',
+    color: '#546E7A',
   },
   featuredDateNoImage: {
-    color: '#999',
+    color: '#546E7A',
   },
 });
 
