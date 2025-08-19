@@ -30,6 +30,14 @@
           }
         },
         {
+          "client_id": "516014443439-hr7jrsbdi4e7srcr3d6nnqn6orkficrn.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.xmb.app",
+            "certificate_hash": "bf3539d9bd218c5c746bcecbf64d21f41a750b83"
+          }
+        },
+        {
           "client_id": "516014443439-fcrkkf7b3b2q3b3umatovipb4dg7fitn.apps.googleusercontent.com",
           "client_type": 3
         }

@@ -33,6 +33,7 @@ local.properties
 .cxx/
 *.keystore
 !debug.keystore
+!android/app/xmb-release.keystore
 
 # node.js
 #
