@@ -131,7 +131,6 @@ const HomeScreen = () => {
   // 数量配置状态
   const [featuredNewsCount, setFeaturedNewsCount] = useState(3);
   const [latestNewsCount, setLatestNewsCount] = useState(5);
-  const [marketOverviewCount, setMarketOverviewCount] = useState(2);
 
   // 数据卡片配置状态 - 仅显示美股相关指标
   const [dataCardsConfig, setDataCardsConfig] = useState('DXY,USBond10YR,SP500,Nasdaq,DJI,XAUUSD,USCL,USDCNH');
@@ -154,7 +153,6 @@ const HomeScreen = () => {
       // 获取数量配置
       const featuredNewsCountConfig = await configService.getConfig('HOME_FEATURED_NEWS_COUNT', 3);
       const latestNewsCountConfig = await configService.getConfig('HOME_LATEST_NEWS_COUNT', 5);
-      const marketOverviewCountConfig = await configService.getConfig('HOME_MARKET_OVERVIEW_COUNT', 2);
       
       // 获取数据卡片配置 - 默认为美股相关指标
       const dataCardsConfig = await configService.getConfig('HOME_DATA_CARDS_CONFIG', 'DXY,USBond10YR,SP500,Nasdaq,DJI,XAUUSD,USCL,USDCNH');
@@ -186,7 +184,6 @@ const HomeScreen = () => {
       // 设置数量配置
       setFeaturedNewsCount(featuredNewsCountConfig);
       setLatestNewsCount(latestNewsCountConfig);
-      setMarketOverviewCount(marketOverviewCountConfig);
       
       // 设置数据卡片配置
       setDataCardsConfig(dataCardsConfig);
@@ -229,7 +226,6 @@ const HomeScreen = () => {
       // 设置数量默认值
       setFeaturedNewsCount(3);
       setLatestNewsCount(5);
-      setMarketOverviewCount(2);
       setDataCardsConfig('DXY,USBond10YR,SP500,Nasdaq,DJI,XAUUSD,USCL,USDCNH');
       setViewMoreText('查看全部 >');
       setSearchPlaceholder('搜索资讯...');
@@ -754,7 +750,7 @@ const HomeScreen = () => {
 
       {/* 股市行情 */}
       <StockOverview 
-        limit={marketOverviewCount} 
+        /* limit prop removed; number of stocks solely from HOME_MARKET_DISPLAY */
         showRank={true} 
         title={marketOverviewTitle}
         viewMoreText={viewMoreText}

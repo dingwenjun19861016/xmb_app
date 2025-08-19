@@ -452,11 +452,8 @@ class MarketService {
     try {
       console.log('🔄 MarketService: Delegating to StockService for home display stocks...');
       
-      // 从配置获取需要显示的股票数量
-      const displayCount = await configService.getConfig('HOME_MARKET_OVERVIEW_COUNT', 2);
-      
       // 使用StockService获取股票数据
-      const stocksData = await stockService.getHomeDisplayStocks(displayCount);
+      const stocksData = await stockService.getHomeDisplayStocks();
       
       if (!stocksData || stocksData.length === 0) {
         console.warn('⚠️ MarketService: No stock data received from StockService');

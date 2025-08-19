@@ -20,7 +20,7 @@ const UI_COLORS = {
 };
 
 interface StockOverviewProps {
-  limit?: number; // 可配置显示数量
+  // limit?: number; // REMOVED: number controlled by HOME_MARKET_DISPLAY config
   onStockPress?: (stockCode: string) => void; // 自定义点击处理
   showRank?: boolean; // 是否显示排名
   variant?: 'default' | 'compact' | 'detailed' | 'large'; // 卡片样式
@@ -29,7 +29,7 @@ interface StockOverviewProps {
 }
 
 const StockOverview: React.FC<StockOverviewProps> = ({ 
-  limit = 4,
+  // limit = 4, // REMOVED
   onStockPress,
   showRank = true,
   variant = 'default',
@@ -99,8 +99,8 @@ const StockOverview: React.FC<StockOverviewProps> = ({
       setLoading(true);
       setError(null);
       
-      console.log('🔄 StockOverview: Fetching stock data with limit:', limit);
-      const stocksData = await stockService.getHomeDisplayStocks(limit);
+      console.log('🔄 StockOverview: Fetching stock data (no limit prop, uses HOME_MARKET_DISPLAY config)');
+      const stocksData = await stockService.getHomeDisplayStocks();
       
       if (stocksData && stocksData.length > 0) {
         const transformedStocks = transformStockData(stocksData);
@@ -133,7 +133,7 @@ const StockOverview: React.FC<StockOverviewProps> = ({
   // 组件挂载时获取数据
   useEffect(() => {
     fetchStockData();
-  }, [limit]);
+  }, []); // removed dependency on limit
 
   // 监听Context价格变化，更新股票数据（如果Context开始支持股票价格）
   useEffect(() => {
@@ -257,7 +257,7 @@ const StockOverview: React.FC<StockOverviewProps> = ({
   // 渲染骨架加载状态
   const renderSkeleton = () => (
     <View style={styles.skeletonContainer}>
-      {Array.from({ length: limit || 2 }).map((_, index) => (
+      {Array.from({ length: Math.max(stocks.length || 0, 4) }).map((_, index) => (
         <View key={index} style={styles.skeletonItem}>
           {/* 股票Logo骨架 */}
           <SkeletonBox width={40} height={40} borderRadius={20} style={styles.skeletonLogo} />

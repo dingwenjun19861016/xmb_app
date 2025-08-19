@@ -201,17 +201,17 @@ class StockService {
 
   /**
    * 获取首页展示的美股数据（从配置获取显示的股票代码）
-   * @param limit 返回的记录数，默认从配置获取
    * @returns Promise<TransformedStockData[]>
    */
-  async getHomeDisplayStocks(limit?: number): Promise<TransformedStockData[]> {
+  async getHomeDisplayStocks(): Promise<TransformedStockData[]> {
     try {
       console.log('🔄 StockService: Fetching home display stocks...');
 
       // 从HOME_MARKET_DISPLAY配置获取指定的股票代码
-      const displayStockCodes = await configService.getConfig('HOME_MARKET_DISPLAY', 'MSFT,TSLA');
+      const displayStockCodes = await configService.getConfig('HOME_MARKET_DISPLAY', 'NVDA,AAPL,TSLA,COIN');
       
       console.log('📊 StockService: Using HOME_MARKET_DISPLAY config:', displayStockCodes);
+      console.log('🔍 StockService: Config type:', typeof displayStockCodes, 'length:', displayStockCodes?.length);
       
       if (!displayStockCodes || !displayStockCodes.trim()) {
         console.warn('⚠️ StockService: HOME_MARKET_DISPLAY config is empty');
@@ -230,6 +230,7 @@ class StockService {
       }
 
       console.log('📈 StockService: Parsed stock codes:', stockCodes);
+      console.log('🔢 StockService: Total stock codes count:', stockCodes.length);
       
       // 将股票代码数组转换为逗号分隔的字符串
       const stockCodesString = stockCodes.join(',');
@@ -298,7 +299,28 @@ class StockService {
       }));
 
       console.log('📊 StockService: Sample transformed custom stock:', transformedStocks[0]);
-      return transformedStocks;
+      
+      // 按照配置的顺序重新排序股票数据，确保前端展示顺序与配置一致
+      const orderedStocks: TransformedStockData[] = [];
+      
+      for (const configCode of stockCodes) {
+        const matchingStock = transformedStocks.find(stock => 
+          stock.code.toUpperCase() === configCode.toUpperCase()
+        );
+        if (matchingStock) {
+          orderedStocks.push(matchingStock);
+        } else {
+          console.warn(`⚠️ StockService: Stock ${configCode} not found in API response`);
+        }
+      }
+      
+      console.log('🔄 StockService: Reordered stocks according to config:', 
+        orderedStocks.map(s => s.code).join(','));
+      console.log('📊 StockService: Expected order:', stockCodes.join(','));
+      console.log('✅ StockService: Order verification:', 
+        orderedStocks.map(s => s.code).join(',') === stockCodes.join(',') ? 'CORRECT' : 'MISMATCH');
+      
+      return orderedStocks;
 
     } catch (error) {
       console.error('❌ StockService: Failed to fetch home display stocks:', error);
