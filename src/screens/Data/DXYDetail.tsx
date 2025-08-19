@@ -65,46 +65,17 @@ const DXYDetail = () => {
     fetchDXYData();
   }, []);
 
-  const renderDXYGauge = () => {
+  const renderDataCard = () => {
     if (!dxyData) return null;
 
     const value = DXYService.parseDXYValue(dxyData.dxy);
-    const color = DXYService.getDXYColor(value);
     const description = DXYService.getDXYDescription(value);
 
-    // 计算进度条百分比 (假设 DXY 范围 80-120)
-    const progressPercentage = Math.min(Math.max((value - 80) / 40 * 100, 0), 100);
-
     return (
-      <View style={styles.gaugeContainer}>
-        <View style={styles.gaugeWrapper}>
-          <View style={[styles.gaugeCircle, { borderColor: color }]}>
-            <Text style={[styles.gaugeValue, { color }]}>{DXYService.formatDXYValue(value)}</Text>
-          </View>
-          <View style={styles.gaugeInfo}>
-            <Text style={[styles.gaugeLevel, { color }]}>{description}</Text>
-            <View style={styles.progressBarContainer}>
-              <View style={styles.progressBar}>
-                <View 
-                  style={[
-                    styles.progressFill, 
-                    { 
-                      width: `${progressPercentage}%`, 
-                      backgroundColor: color 
-                    }
-                  ]} 
-                />
-              </View>
-              <View style={styles.progressLabels}>
-                <Text style={styles.progressLabel}>80</Text>
-                <Text style={styles.progressLabel}>弱</Text>
-                <Text style={styles.progressLabel}>中性</Text>
-                <Text style={styles.progressLabel}>强</Text>
-                <Text style={styles.progressLabel}>120</Text>
-              </View>
-            </View>
-          </View>
-        </View>
+      <View style={styles.dataCard}>
+        <Text style={styles.dataTitle}>美元指数</Text>
+        <Text style={styles.dataValue}>{DXYService.formatDXYValue(value)}</Text>
+        <Text style={styles.dataLabel}>{description}</Text>
       </View>
     );
   };
@@ -330,7 +301,7 @@ const DXYDetail = () => {
         showsVerticalScrollIndicator={false}
       >
         {/* DXY 指标展示 */}
-        {renderDXYGauge()}
+        {renderDataCard()}
 
         {/* 历史数据图表 */}
         <DXYChart
@@ -389,78 +360,38 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  // Gauge/Circle Display
-  gaugeContainer: {
-    backgroundColor: '#FFFFFF',
-    marginHorizontal: 16,
-    marginTop: 16,
-    borderRadius: 16,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
-    borderWidth: 1,
-    borderColor: '#F0F0F0',
-  },
-
-  gaugeWrapper: {
-    flexDirection: 'row',
+  // Data card styles
+  dataCard: { 
+    backgroundColor: '#FFFFFF', 
+    marginHorizontal: 16, 
+    marginTop: 16, 
+    borderRadius: 16, 
+    padding: 24, 
     alignItems: 'center',
+    shadowColor: '#1976D2', 
+    shadowOffset: { width: 0, height: 2 }, 
+    shadowOpacity: 0.08, 
+    shadowRadius: 8, 
+    elevation: 4, 
+    borderWidth: 1, 
+    borderColor: '#E3F2FD' 
   },
-
-  gaugeCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    borderWidth: 4,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 20,
+  dataTitle: { 
+    fontSize: 16, 
+    fontWeight: '600', 
+    color: '#1976D2', 
+    marginBottom: 12 
   },
-
-  gaugeValue: {
-    fontSize: 18,
-    fontWeight: '700',
+  dataValue: { 
+    fontSize: 36, 
+    fontWeight: '800', 
+    color: '#1A1A1A', 
+    marginBottom: 4 
   },
-
-  gaugeInfo: {
-    flex: 1,
-  },
-
-  gaugeLevel: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-
-  progressBarContainer: {
-    marginTop: 4,
-  },
-
-  progressBar: {
-    height: 8,
-    backgroundColor: '#F8F9FA',
-    borderRadius: 4,
-    overflow: 'hidden',
-    marginBottom: 8,
-  },
-
-  progressFill: {
-    height: '100%',
-    borderRadius: 4,
-  },
-
-  progressLabels: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-
-  progressLabel: {
-    fontSize: 10,
-    color: '#6C757D',
-    fontWeight: '500',
+  dataLabel: { 
+    fontSize: 14, 
+    color: '#8E8E93', 
+    fontWeight: '500' 
   },
 
   // Sections

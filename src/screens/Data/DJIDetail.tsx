@@ -39,31 +39,13 @@ const DJIDetail: React.FC = () => {
 
   const onRefresh = useCallback(() => { setRefreshing(true); fetchData(); }, []);
 
-  const renderGauge = () => {
+  const renderDataCard = () => {
     if (!current) return null;
     const value = DJIService.parseValue(current.dji);
-    const color = '#007AFF';
-    const progress = Math.min(Math.max(((value - 20000) / 20000) * 100, 0), 100); // 粗略范围 20000-60000
     return (
-      <View style={styles.gaugeContainer}>
-        <View style={styles.gaugeWrapper}>
-          <View style={[styles.gaugeCircle, { borderColor: color }]}> 
-            <Text style={[styles.gaugeValue, { color }]}>{DJIService.formatValue(value)}</Text>
-          </View>
-          <View style={styles.gaugeInfo}>
-            <Text style={[styles.gaugeLevel, { color }]}>现价</Text>
-            <View style={styles.progressBarContainer}>
-              <View style={styles.progressBar}>
-                <View style={[styles.progressFill, { width: `${progress}%`, backgroundColor: color }]} />
-              </View>
-              <View style={styles.progressLabels}>
-                <Text style={styles.progressLabel}>20000</Text>
-                <Text style={styles.progressLabel}>区间</Text>
-                <Text style={styles.progressLabel}>60000</Text>
-              </View>
-            </View>
-          </View>
-        </View>
+      <View style={styles.dataCard}>
+        <Text style={styles.dataTitle}>道琼斯指数</Text>
+        <Text style={styles.dataValue}>{DJIService.formatValue(value)}</Text>
       </View>
     );
   };
@@ -108,7 +90,7 @@ const DJIDetail: React.FC = () => {
         </TouchableOpacity>
       </View>
       <ScrollView style={styles.scrollView} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />} showsVerticalScrollIndicator={false}>
-        {renderGauge()}
+        {renderDataCard()}
         <DXYChart
           historicalData={history.map(h => ({ date: h.date, dxy: h.dji, timestamp: h.timestamp }))}
           selectedTimePeriod={selectedTimePeriod}
@@ -130,17 +112,38 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 18, fontWeight: '600', color: '#1A1A1A' },
   refreshButton: { padding: 8, marginRight: -8 },
   scrollView: { flex: 1 },
-  gaugeContainer: { backgroundColor: '#FFFFFF', marginHorizontal: 16, marginTop: 16, borderRadius: 16, padding: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 4 },
-  gaugeWrapper: { flexDirection: 'row', alignItems: 'center' },
-  gaugeCircle: { width: 64, height: 64, borderRadius: 32, borderWidth: 3, justifyContent: 'center', alignItems: 'center', marginRight: 16 },
-  gaugeValue: { fontSize: 18, fontWeight: '700' },
-  gaugeInfo: { flex: 1 },
-  gaugeLevel: { fontSize: 13, fontWeight: '600', marginBottom: 6 },
-  progressBarContainer: { marginTop: 6 },
-  progressBar: { height: 8, backgroundColor: '#F1F1F6', borderRadius: 4, overflow: 'hidden' },
-  progressFill: { height: '100%', borderRadius: 4 },
-  progressLabels: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 },
-  progressLabel: { fontSize: 11, color: '#8E8E93' },
+  dataCard: { 
+    backgroundColor: '#FFFFFF', 
+    marginHorizontal: 16, 
+    marginTop: 16, 
+    borderRadius: 16, 
+    padding: 24, 
+    alignItems: 'center',
+    shadowColor: '#1976D2', 
+    shadowOffset: { width: 0, height: 2 }, 
+    shadowOpacity: 0.08, 
+    shadowRadius: 8, 
+    elevation: 4, 
+    borderWidth: 1, 
+    borderColor: '#E3F2FD' 
+  },
+  dataTitle: { 
+    fontSize: 16, 
+    fontWeight: '600', 
+    color: '#1976D2', 
+    marginBottom: 12 
+  },
+  dataValue: { 
+    fontSize: 36, 
+    fontWeight: '800', 
+    color: '#1A1A1A', 
+    marginBottom: 4 
+  },
+  dataLabel: { 
+    fontSize: 14, 
+    color: '#8E8E93', 
+    fontWeight: '500' 
+  },
   sectionContainer: { backgroundColor: '#FFFFFF', marginHorizontal: 16, marginTop: 16, borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#F0F0F5' },
   sectionTitle: { fontSize: 16, fontWeight: '700', color: '#1A1A1A', marginBottom: 8 },
   descriptionText: { fontSize: 14, color: '#3A3A3C', lineHeight: 20 },

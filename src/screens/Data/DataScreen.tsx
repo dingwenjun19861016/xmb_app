@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#1A1A1A',
+    color: '#1976D2', // 改为蓝色
   },
 
   moreDataButton: {
