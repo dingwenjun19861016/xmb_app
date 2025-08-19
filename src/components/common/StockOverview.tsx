@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import StockCard, { StockCardData } from '../ui/StockCard';
 import stockService, { TransformedStockData } from '../../services/StockService';
@@ -274,17 +274,14 @@ const StockOverview: React.FC<StockOverviewProps> = ({
           <Text style={styles.viewMoreText}>{viewMoreText}</Text>
         </TouchableOpacity>
       </View>
-      
-      <FlatList
-        data={stocks}
-        renderItem={renderStockItem}
-        keyExtractor={(item) => item.id}
-        horizontal={false}
-        scrollEnabled={false}
-        showsVerticalScrollIndicator={false}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-        contentContainerStyle={styles.listContainer}
-      />
+      {/* NOTE: 为解决首页在该区域无法滑动的问题，去掉内部 FlatList，改为直接渲染静态列表，让外层 ScrollView 处理滚动（参考 chainalert_rn 的 MarketOverview 实现） */}
+      <View style={styles.listContainer /* 保留间距样式 */}>
+        {stocks.map((item) => (
+          <View key={item.id} style={styles.stockItemWrapper}>
+            {renderStockItem({ item })}
+          </View>
+        ))}
+      </View>
     </View>
   );
 };
@@ -337,6 +334,9 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     flexGrow: 1,
+  },
+  stockItemWrapper: {
+    marginBottom: 16,
   },
   separator: {
     height: 16,
