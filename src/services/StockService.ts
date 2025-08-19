@@ -2,6 +2,33 @@ import apiService from './APIService';
 import configService from './ConfigService';
 import stockLogoService from './StockLogoService';
 
+// API 调用监控 - 防止灾难级批量调用
+const apiCallMonitor = {
+  checkForDangerousCall(method: string, params: any[]) {
+    if (method === 'listUsstocks' && params.length >= 2) {
+      const limit = parseInt(params[1] || '0');
+      if (limit > 300) {
+        console.error('🚨 DANGEROUS API CALL DETECTED:', { method, params, limit });
+        console.error('🚨 This may cause performance issues! Consider using getMultipleUsstocksInfo instead.');
+      }
+    }
+    if (method === 'getMultipleUsstocksInfo' && params.length > 0) {
+      const codes = (params[0] || '').split(',').filter(Boolean);
+      if (codes.length > 100) {
+        console.error('🚨 TOO MANY CODES IN BATCH:', { method, codesCount: codes.length });
+        console.error('🚨 Consider splitting into smaller chunks!');
+      }
+    }
+  }
+};
+
+// 重写 apiService.call 以添加监控
+const originalCall = apiService.call.bind(apiService);
+(apiService as any).call = function<T>(method: string, params: any[] = []): Promise<T> {
+  apiCallMonitor.checkForDangerousCall(method, params);
+  return originalCall(method, params);
+};
+
 // 股票数据接口 - 基于API返回的数据结构
 export interface StockData {
   _id: string;
@@ -206,125 +233,30 @@ class StockService {
   async getHomeDisplayStocks(): Promise<TransformedStockData[]> {
     try {
       console.log('🔄 StockService: Fetching home display stocks...');
-
-      // 从HOME_MARKET_DISPLAY配置获取指定的股票代码
       const displayStockCodes = await configService.getConfig('HOME_MARKET_DISPLAY', 'NVDA,AAPL,TSLA,COIN');
-      
-      console.log('📊 StockService: Using HOME_MARKET_DISPLAY config:', displayStockCodes);
-      console.log('🔍 StockService: Config type:', typeof displayStockCodes, 'length:', displayStockCodes?.length);
       
       if (!displayStockCodes || !displayStockCodes.trim()) {
         console.warn('⚠️ StockService: HOME_MARKET_DISPLAY config is empty');
         return [];
       }
 
-      // 解析股票代码配置（支持逗号分隔）
-      const stockCodes = displayStockCodes
-        .split(',')
-        .map(code => code.trim().toUpperCase())
-        .filter(code => code.length > 0);
-      
+      const stockCodes = displayStockCodes.split(',').map(c => c.trim()).filter(Boolean);
       if (stockCodes.length === 0) {
         console.warn('⚠️ StockService: No valid stock codes found in config');
         return [];
       }
 
       console.log('📈 StockService: Parsed stock codes:', stockCodes);
-      console.log('🔢 StockService: Total stock codes count:', stockCodes.length);
       
-      // 将股票代码数组转换为逗号分隔的字符串
-      const stockCodesString = stockCodes.join(',');
-      console.log('🔗 StockService: Stock codes string for API:', stockCodesString);
+      // 使用统一的批量获取方法
+      const orderedStocks = await this.fetchMultipleStocks(stockCodes, { chunkSize: 30, warnThreshold: 60 });
       
-      // 使用getMultipleUsstocksInfo API获取指定股票的数据
-      const response = await apiService.call<any>('getMultipleUsstocksInfo', [stockCodesString]);
-      console.log('📥 StockService: Raw getMultipleUsstocksInfo response type:', typeof response, 'keys:', response && typeof response === 'object' ? Object.keys(response) : 'n/a');
-
-      // 兼容多种可能的返回结构
-      let stocksArray: any[] = [];
-      if (Array.isArray(response)) {
-        stocksArray = response;
-        console.log('📦 StockService: Parsed response as direct array, length:', stocksArray.length);
-      } else if (response && Array.isArray(response.result)) {
-        stocksArray = response.result;
-        console.log('📦 StockService: Parsed response.result as array, length:', stocksArray.length);
-      } else if (response && response.result && Array.isArray(response.result.stocks)) {
-        stocksArray = response.result.stocks;
-        console.log('📦 StockService: Parsed response.result.stocks as array, length:', stocksArray.length);
-      } else if (response && Array.isArray(response.stocks)) {
-        stocksArray = response.stocks;
-        console.log('📦 StockService: Parsed response.stocks as array, length:', stocksArray.length);
-      } else if (response && response.data && Array.isArray(response.data)) {
-        stocksArray = response.data;
-        console.log('📦 StockService: Parsed response.data as array, length:', stocksArray.length);
-      } else {
-        console.warn('⚠️ StockService: Unrecognized getMultipleUsstocksInfo response structure:', response);
-      }
-      
-      if (!Array.isArray(stocksArray) || stocksArray.length === 0) {
-        console.warn('⚠️ StockService: getMultipleUsstocksInfo returned empty or invalid data after parsing');
-        return [];
-      }
-
-      console.log(`✅ StockService: Successfully fetched ${stocksArray.length} custom stocks from getMultipleUsstocksInfo`);
-      
-      // 转换数据格式
-      const transformedStocks = stocksArray.map((stock): TransformedStockData => ({
-        _id: stock._id || stock.id || `stock_${stock.code}`,
-        rank: Number(stock.rank) || 0,
-        name: stock.code || stock.symbol || '',
-        code: stock.code || stock.symbol || '',
-        fullName: stock.name || stock.fullName || stock.code || '',
-        currentPrice: stock.currentPrice || stock.price || '0',
-        priceChange24h: stock.priceChangePercent || stock.priceChange24h || '0',
-        priceChangePercent: stock.priceChangePercent || stock.priceChange24h || '0',
-        marketcap: stock.baseinfo?.marketCap || stock.marketCap || '',
-        volume: stock.baseinfo?.volume || stock.volume || '',
-        exchange: stock.exchange || 'NASDAQ',
-        sector: stock.sector || '',
-        logoUrl: stockLogoService.getLogoUrlSync(stock.code || stock.symbol || ''),
-        // 兼容字段
-        fdv: stock.baseinfo?.marketCap || stock.marketCap || '',
-        totalSupply: stock.baseinfo?.sharesOutstanding || '',
-        circulatingSupply: stock.baseinfo?.sharesOutstanding || '',
-        description: `${stock.name || ''} (${stock.code || ''}) - ${stock.sector || ''}`,
-        cexInfos: [],
-        valid: true,
-        created_at: stock.created_at || new Date().toISOString(),
-        date: stock.date || new Date().toISOString(),
-        updated_at: stock.updated_at || new Date().toISOString(),
-        coin_id: stock._id || stock.id || '',
-        peRatio: stock.baseinfo?.peRatio || stock.peRatio || '',
-        usstock24h: stock.usstock24h || []
-      }));
-
-      console.log('📊 StockService: Sample transformed custom stock:', transformedStocks[0]);
-      
-      // 按照配置的顺序重新排序股票数据，确保前端展示顺序与配置一致
-      const orderedStocks: TransformedStockData[] = [];
-      
-      for (const configCode of stockCodes) {
-        const matchingStock = transformedStocks.find(stock => 
-          stock.code.toUpperCase() === configCode.toUpperCase()
-        );
-        if (matchingStock) {
-          orderedStocks.push(matchingStock);
-        } else {
-          console.warn(`⚠️ StockService: Stock ${configCode} not found in API response`);
-        }
-      }
-      
-      console.log('🔄 StockService: Reordered stocks according to config:', 
-        orderedStocks.map(s => s.code).join(','));
-      console.log('📊 StockService: Expected order:', stockCodes.join(','));
-      console.log('✅ StockService: Order verification:', 
-        orderedStocks.map(s => s.code).join(',') === stockCodes.join(',') ? 'CORRECT' : 'MISMATCH');
-      
+      console.log('✅ StockService: getHomeDisplayStocks completed with', orderedStocks.length, 'stocks');
       return orderedStocks;
-
+      
     } catch (error) {
       console.error('❌ StockService: Failed to fetch home display stocks:', error);
-      return []; // 返回空数组而不是抛出错误，以避免UI崩溃
+      return [];
     }
   }
 
@@ -337,47 +269,17 @@ class StockService {
     try {
       console.log('🔄 StockService: Fetching stock detail for:', stockCode);
 
-      // 获取所有股票数据并查找指定的股票
-      const stocksData = await this.getUSStocksList(0, 1000);
-      const stock = stocksData.find(s => s.code.toLowerCase() === stockCode.toLowerCase());
-
-      if (!stock) {
+      // ✅ 修复灾难级API调用：改为使用getUsstockInfo API按需查询单个股票
+      const stocksData = await this.getUsstockInfo(stockCode, 1);
+      
+      if (!Array.isArray(stocksData) || stocksData.length === 0) {
         console.warn('⚠️ StockService: Stock not found:', stockCode);
         return null;
       }
 
-      // 转换数据格式
-      const transformedStock: TransformedStockData = {
-        _id: stock._id,
-        rank: stock.rank,
-        name: stock.code,
-        code: stock.code,
-        fullName: stock.name,
-        currentPrice: stock.currentPrice,
-        priceChange24h: stock.priceChangePercent,
-        priceChangePercent: stock.priceChangePercent,
-        marketcap: stock.baseinfo.marketCap || stock.marketCap || '',
-        volume: stock.baseinfo.volume || stock.volume || '',
-        exchange: stock.exchange,
-        sector: stock.sector,
-        logoUrl: stockLogoService.getLogoUrlSync(stock.code), // 使用StockLogoService生成正确的logo URL
-        // 兼容字段
-        fdv: stock.baseinfo.marketCap || stock.marketCap || '',
-        totalSupply: stock.baseinfo.sharesOutstanding || '',
-        circulatingSupply: stock.baseinfo.sharesOutstanding || '',
-        description: `${stock.name} (${stock.code}) - ${stock.sector}`,
-        cexInfos: [],
-        valid: true,
-        created_at: stock.created_at,
-        date: stock.date,
-        updated_at: stock.updated_at,
-        coin_id: stock._id,
-        peRatio: stock.baseinfo?.peRatio || stock.peRatio || '',
-        usstock24h: stock.usstock24h
-      };
-
+      // 返回第一个结果（最新数据）
       console.log(`✅ StockService: Successfully fetched stock detail for ${stockCode}`);
-      return transformedStock;
+      return stocksData[0];
 
     } catch (error) {
       console.error(`❌ StockService: Failed to fetch stock detail for ${stockCode}:`, error);
@@ -439,17 +341,16 @@ class StockService {
       console.error(`❌ StockService: Failed to fetch stock info for ${stockCode}:`, error);
       return [];
     }
-  }
-
-  /**
+  }  /**
    * 基于API的美股搜索（getUsstockInfo），并兼容回退到本地过滤
    * @param query 股票代码或名称关键词
    * @param limit 返回的最大条数
    */
   async searchUSStocks(query: string, limit: number = 20): Promise<TransformedStockData[]> {
+    const q = (query || '').trim();
+    if (!q) return [];
+    
     try {
-      const q = (query || '').trim();
-      if (!q) return [];
       console.log('🔎 StockService: searchUSStocks via getUsstockInfo', { query: q, limit });
 
       // 首选调用后端搜索API
@@ -457,49 +358,30 @@ class StockService {
       if (Array.isArray(apiList) && apiList.length > 0) {
         return apiList.slice(0, limit);
       }
-
-      console.warn('⚠️ StockService: API search returned empty, fallback to local list filter');
+      console.warn('⚠️ StockService: API search returned empty, fallback to local batch search');
     } catch (e) {
-      console.error('❌ StockService: searchUSStocks API call failed, fallback to local filter:', e);
+      console.error('❌ StockService: searchUSStocks API call failed, fallback to local batch search:', e);
     }
 
-    // 回退方案：从列表中本地过滤
+    // 回退方案：使用更保守的搜索策略，只查询前100只股票进行本地过滤
     try {
-      const all = await this.getUSStocksList(0, 1000, 'rank', 'asc');
-      const filtered = all.filter(s =>
-        s.code?.toLowerCase().includes(query.toLowerCase()) ||
-        s.name?.toLowerCase().includes(query.toLowerCase())
-      ).slice(0, limit);
-
-      return filtered.map((stock): TransformedStockData => ({
-        _id: stock._id,
-        rank: stock.rank,
-        name: stock.code,
-        code: stock.code,
-        fullName: stock.name,
-        currentPrice: stock.currentPrice,
-        priceChange24h: stock.priceChangePercent,
-        priceChangePercent: stock.priceChangePercent,
-        marketcap: stock.baseinfo?.marketCap || stock.marketCap || '',
-        volume: stock.baseinfo?.volume || stock.volume || '',
-        exchange: stock.exchange,
-        sector: stock.sector,
-        logoUrl: stockLogoService.getLogoUrlSync(stock.code),
-        fdv: stock.baseinfo?.marketCap || stock.marketCap || '',
-        totalSupply: stock.baseinfo?.sharesOutstanding || '',
-        circulatingSupply: stock.baseinfo?.sharesOutstanding || '',
-        description: `${stock.name} (${stock.code}) - ${stock.sector}`,
-        cexInfos: [],
-        valid: true,
-        created_at: stock.created_at,
-        date: stock.date,
-        updated_at: stock.updated_at,
-        coin_id: stock._id,
-        peRatio: stock.baseinfo?.peRatio || stock.peRatio || '',
-        usstock24h: stock.usstock24h
-      }));
+      console.log('🔄 StockService: Using fallback search on top 100 stocks...');
+      const topStocks = await this.getUSStocksList(0, 100, 'rank', 'asc');
+      
+      // 在前100只股票中过滤匹配的
+      const filtered = topStocks.filter(s =>
+        s.code?.toLowerCase().includes(q.toLowerCase()) ||
+        s.name?.toLowerCase().includes(q.toLowerCase())
+      );
+      
+      // 使用统一的转换方法
+      const transformedFiltered = this.transformRawStocks(filtered);
+      
+      console.log(`✅ StockService: Fallback search found ${transformedFiltered.length} results for "${q}"`);
+      return transformedFiltered.slice(0, limit);
+      
     } catch (fallbackError) {
-      console.error('❌ StockService: Local fallback search failed:', fallbackError);
+      console.error('❌ StockService: Fallback search failed:', fallbackError);
       return [];
     }
   }
@@ -550,6 +432,120 @@ class StockService {
   clearCache(): void {
     this.cache.clear();
     console.log('✅ StockService: Cache cleared');
+  }
+
+  /**
+   * 统一批量获取多个股票（带去重、分块、防御、顺序保持）
+   * @param codes 原始股票代码数组
+   * @param options 配置：chunkSize(默认30) warnThreshold(默认80)
+   */
+  async fetchMultipleStocks(
+    codes: string[],
+    options: { chunkSize?: number; warnThreshold?: number } = {}
+  ): Promise<TransformedStockData[]> {
+    const chunkSize = options.chunkSize ?? 30;
+    const warnThreshold = options.warnThreshold ?? 80;
+
+    // 预处理 & 去重
+    const originalOrder: string[] = [];
+    const normalized = codes
+      .map(c => (c || '').trim().toUpperCase())
+      .filter(c => !!c);
+    const seen = new Set<string>();
+    for (const c of normalized) {
+      if (!seen.has(c)) {
+        seen.add(c);
+        originalOrder.push(c);
+      }
+    }
+
+    if (originalOrder.length === 0) {
+      console.warn('⚠️ StockService: fetchMultipleStocks received empty codes');
+      return [];
+    }
+
+    if (originalOrder.length > warnThreshold) {
+      console.warn(`⚠️ StockService: codes length ${originalOrder.length} exceeds warnThreshold ${warnThreshold}, truncating`);
+    }
+    const effectiveCodes = originalOrder.slice(0, warnThreshold);
+
+    // 分块
+    const chunks: string[][] = [];
+    for (let i = 0; i < effectiveCodes.length; i += chunkSize) {
+      chunks.push(effectiveCodes.slice(i, i + chunkSize));
+    }
+
+    let aggregatedRaw: any[] = [];
+    for (const ch of chunks) {
+      const codesStr = ch.join(',');
+      try {
+        const resp = await apiService.call<any>('getMultipleUsstocksInfo', [codesStr]);
+        const parsed = this.parseMultipleStocksResponse(resp);
+        if (parsed.length > 0) aggregatedRaw = aggregatedRaw.concat(parsed);
+      } catch (e) {
+        console.error('❌ StockService: fetchMultipleStocks chunk failed', { chunk: codesStr, error: e });
+      }
+    }
+
+    if (aggregatedRaw.length === 0) {
+      console.warn('⚠️ StockService: fetchMultipleStocks aggregated empty result');
+      return [];
+    }
+
+    // 转换 & 按原始顺序排序
+    const transformed = this.transformRawStocks(aggregatedRaw);
+    const transformedMap = new Map(transformed.map(s => [s.code.toUpperCase(), s] as const));
+    const ordered: TransformedStockData[] = [];
+    for (const c of effectiveCodes) {
+      const m = transformedMap.get(c);
+      if (m) ordered.push(m);
+    }
+    
+    console.log(`✅ StockService: fetchMultipleStocks completed, requested: ${effectiveCodes.length}, returned: ${ordered.length}`);
+    return ordered;
+  }
+
+  /** 解析 getMultipleUsstocksInfo 多种返回结构，返回原始数组 */
+  private parseMultipleStocksResponse(resp: any): any[] {
+    if (!resp) return [];
+    if (Array.isArray(resp)) return resp;
+    if (Array.isArray(resp.result)) return resp.result;
+    if (resp.result && Array.isArray(resp.result.stocks)) return resp.result.stocks;
+    if (Array.isArray(resp.stocks)) return resp.stocks;
+    if (resp.data && Array.isArray(resp.data)) return resp.data;
+    console.warn('⚠️ StockService: parseMultipleStocksResponse unrecognized structure');
+    return [];
+  }
+
+  /** 将原始股票数组转换为 TransformedStockData 数组 */
+  private transformRawStocks(raw: any[]): TransformedStockData[] {
+    return raw.map(stock => ({
+      _id: stock._id || stock.id || `stock_${stock.code}`,
+      rank: Number(stock.rank) || 0,
+      name: stock.code || stock.symbol || '',
+      code: stock.code || stock.symbol || '',
+      fullName: stock.name || stock.fullName || stock.code || '',
+      currentPrice: stock.currentPrice || stock.price || '0',
+      priceChange24h: stock.priceChangePercent || stock.priceChange24h || '0',
+      priceChangePercent: stock.priceChangePercent || stock.priceChange24h || '0',
+      marketcap: stock.baseinfo?.marketCap || stock.marketCap || '',
+      volume: stock.baseinfo?.volume || stock.volume || '',
+      exchange: stock.exchange || 'NASDAQ',
+      sector: stock.sector || '',
+      logoUrl: stockLogoService.getLogoUrlSync(stock.code || stock.symbol || ''),
+      fdv: stock.baseinfo?.marketCap || stock.marketCap || '',
+      totalSupply: stock.baseinfo?.sharesOutstanding || '',
+      circulatingSupply: stock.baseinfo?.sharesOutstanding || '',
+      description: `${stock.name || ''} (${stock.code || ''}) - ${stock.sector || ''}`,
+      cexInfos: [],
+      valid: true,
+      created_at: stock.created_at || new Date().toISOString(),
+      date: stock.date || new Date().toISOString(),
+      updated_at: stock.updated_at || new Date().toISOString(),
+      coin_id: stock._id || stock.id || '',
+      peRatio: stock.baseinfo?.peRatio || stock.peRatio || '',
+      usstock24h: stock.usstock24h || []
+    }));
   }
 }
 

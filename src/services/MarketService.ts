@@ -169,31 +169,20 @@ class MarketService {
   }
 
   /**
-   * 搜索美股数据
+   * 搜索美股数据 - 使用优化后的搜索API，避免批量拉取
    * @param query 搜索关键词
    * @param limit 返回数量限制
    * @returns Promise<CoinData[]>
    */
   private async searchStocks(query: string, limit: number = 20): Promise<CoinData[]> {
     try {
-      console.log('🔄 MarketService: Searching US stocks...', { query, limit });
+      console.log('🔄 MarketService: Searching US stocks with optimized API...', { query, limit });
       
-      // 获取所有股票数据进行本地搜索
-      const stocksData = await stockService.getUSStocksList(0, 200); // 获取更多数据用于搜索
-      
-      // 过滤股票：匹配代码或公司名称
-      const filteredStocks = stocksData.filter(stock => {
-        const queryLower = query.toLowerCase();
-        const codeLower = stock.code.toLowerCase();
-        const nameLower = stock.name.toLowerCase();
-        
-        return codeLower.includes(queryLower) || 
-               nameLower.includes(queryLower) ||
-               codeLower === queryLower;
-      });
+      // 使用StockService的优化搜索方法，直接返回匹配的股票
+      const stocksData = await stockService.searchUSStocks(query, limit);
       
       // 转换为CoinData格式
-      const stockResults: CoinData[] = filteredStocks.slice(0, limit).map(stock => ({
+      const stockResults: CoinData[] = stocksData.map(stock => ({
         _id: stock._id,
         coin_id: stock._id,
         rank: stock.rank,
@@ -500,15 +489,17 @@ class MarketService {
   }
 
   /**
-   * 获取美股列表数据（使用StockService获取完整的股票列表）
+   * 获取美股列表数据（使用优化后的分页加载，避免一次性获取大量数据）
+   * @param skip 跳过数量，默认0
+   * @param limit 限制数量，默认50
    * @returns Promise<CoinData[]>
    */
-  async getUSStockList(): Promise<CoinData[]> {
+  async getUSStockList(skip: number = 0, limit: number = 50): Promise<CoinData[]> {
     try {
-      console.log('🔄 MarketService: Delegating to StockService for full stock list...');
+      console.log('🔄 MarketService: Getting US stock list with pagination...', { skip, limit });
       
-      // 使用StockService获取股票列表，获取更多数据用于市场页面
-      const stocksData = await stockService.getUSStocksList(0, 100); // 获取前100只股票
+      // 使用分页方式获取股票列表，避免一次性获取过多数据
+      const stocksData = await stockService.getUSStocksList(skip, limit, 'rank', 'asc');
       
       if (!stocksData || stocksData.length === 0) {
         console.warn('⚠️ MarketService: No stock list data received from StockService');
@@ -653,7 +644,7 @@ class MarketService {
       
       switch (labelType) {
         case '美股':
-          return await this.getUSStockList();
+          return await this.getUSStockList(0, 50); // 使用分页方式获取美股数据
         case '市值':
         case '涨跌幅':
         case '24h成交量':

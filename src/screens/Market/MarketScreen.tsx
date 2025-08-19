@@ -73,6 +73,7 @@ import stockService, { StockData, TransformedStockData } from '../../services/St
 import stockLogoService from '../../services/StockLogoService';
 import userStockService from '../../services/UserStockService';
 import configService from '../../services/ConfigService';
+import apiService from '../../services/APIService';
 import { useUSStockRealTimePrice } from '../../contexts/USStockRealTimePriceContext';
 import { useUser } from '../../contexts/UserContext';
 import MessageModal from '../../components/common/MessageModal';
@@ -1544,14 +1545,23 @@ const MarketScreen = () => {
         // 获取自选股票的完整数据
         if (stockSymbols.length > 0) {
           console.log('🔄 MarketScreen: 获取自选股票的完整数据...');
-          // 从所有股票数据中过滤出自选的股票
-          const allStocks = await stockService.getUSStocksList(0, 1000);
-          const favoriteStocks = allStocks.filter(stock => 
-            stockSymbols.includes((stock.code || stock.name).toUpperCase())
-          );
-          const transformedFavoriteData = await transformStockData(favoriteStocks, false);
-          setFavoriteStocksData(transformedFavoriteData);
-          console.log('✅ MarketScreen: 获取自选股票数据成功:', transformedFavoriteData.length, '个股票');
+          
+          try {
+            // ✅ 使用 StockService 统一方法
+            const favoriteStocks = await stockService.fetchMultipleStocks(stockSymbols, { chunkSize: 30, warnThreshold: 50 });
+            
+            if (favoriteStocks.length > 0) {
+              const transformedFavoriteData = await transformStockData(favoriteStocks, false);
+              setFavoriteStocksData(transformedFavoriteData);
+              console.log('✅ MarketScreen: 按需获取自选股票数据成功:', transformedFavoriteData.length, '个股票');
+            } else {
+              console.warn('⚠️ MarketScreen: 自选股票数据为空');
+              setFavoriteStocksData([]);
+            }
+          } catch (error) {
+            console.error('❌ MarketScreen: 按需获取自选股票失败:', error);
+            setFavoriteStocksData([]);
+          }
           
           // 保持自选分组默认收起状态，不自动展开
           // 用户可以手动点击展开按钮查看自选股票
@@ -1743,14 +1753,23 @@ const MarketScreen = () => {
           // 获取自选股票的完整数据
           if (stockSymbols.length > 0) {
             console.log('🔄 MarketScreen: 强制刷新自选股票的完整数据...');
-            // 从所有股票数据中过滤出自选的股票
-            const allStocks = await stockService.getUSStocksList(0, 1000);
-            const favoriteStocks = allStocks.filter(stock => 
-              stockSymbols.includes(stock.code.toUpperCase())
-            );
-            const transformedFavoriteData = await transformStockData(favoriteStocks, false);
-            setFavoriteStocksData(transformedFavoriteData);
-            console.log('✅ MarketScreen: 强制刷新自选股票数据成功:', transformedFavoriteData.length, '个股票');
+            
+            try {
+              // ✅ 使用 StockService 统一方法
+              const favoriteStocks = await stockService.fetchMultipleStocks(stockSymbols, { chunkSize: 30, warnThreshold: 50 });
+              
+              if (favoriteStocks.length > 0) {
+                const transformedFavoriteData = await transformStockData(favoriteStocks, false);
+                setFavoriteStocksData(transformedFavoriteData);
+                console.log('✅ MarketScreen: 按需获取自选股票数据成功(强制刷新):', transformedFavoriteData.length, '个股票');
+              } else {
+                console.warn('⚠️ MarketScreen: 自选股票数据为空(强制刷新)');
+                setFavoriteStocksData([]);
+              }
+            } catch (error) {
+              console.error('❌ MarketScreen: 按需获取自选股票失败(强制刷新):', error);
+              setFavoriteStocksData([]);
+            }
             
             // 保持自选分组默认收起状态，即使登录成功也不自动展开
             // 用户可以手动点击展开按钮查看自选币种
