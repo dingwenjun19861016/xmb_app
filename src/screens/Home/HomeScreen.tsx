@@ -272,7 +272,20 @@ const HomeScreen = () => {
             
             return (
               <View key={`${widgetName}-${rowIndex}-${cardIndex}`} style={styles.indicatorCard}>
-                <WidgetComponent style={styles.widgetEmbedded} />
+                <WidgetComponent 
+                  style={styles.widgetEmbedded}
+                  themeColors={{
+                    background: '#F8FAFE',
+                    titleColor: '#1565C0',
+                    valueColor: '#0D47A1',
+                    labelColor: '#42A5F5',
+                  }}
+                  fontSizes={{
+                    title: 11,
+                    value: 18,
+                    label: 10,
+                  }}
+                />
               </View>
             );
           })}
@@ -924,7 +937,7 @@ const styles = StyleSheet.create({
   
   indicatorCard: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8FAFE', // 浅蓝色背景
     borderRadius: 16,
     height: 120,
     shadowColor: '#1565C0', // 蓝色阴影
@@ -943,7 +956,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0,
     elevation: 0,
     minHeight: 0,
-    paddingVertical: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+  },
+  
+  // Widget样式覆盖容器
+  widgetOverrides: {
+    flex: 1,
   },
   // 状态样式
   newsCardsContainer: {

@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { USDJPYData, USDJPYService } from '../../services/data';
+import { marketWidgetStyles, MarketWidgetColors, getValueFontSize } from './MarketWidgetStyles';
 
 interface USDJPYWidgetProps {
   style?: any;
@@ -51,18 +52,18 @@ const USDJPYWidget: React.FC<USDJPYWidgetProps> = ({ style, onPress, title = '�
   const renderContent = () => {
     if (loading) {
       return (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="small" color="#007AFF" />
-          <Text style={styles.loadingText}>加载中...</Text>
+        <View style={marketWidgetStyles.loadingContainer}>
+          <ActivityIndicator size="small" color={MarketWidgetColors.loadingColor} />
+          <Text style={marketWidgetStyles.loadingText}>加载中...</Text>
         </View>
       );
     }
 
     if (error || !usdJpyData) {
       return (
-        <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle-outline" size={20} color="#FF3B30" />
-          <Text style={styles.errorText}>{error || '数据异常'}</Text>
+        <View style={marketWidgetStyles.errorContainer}>
+          <Ionicons name="alert-circle-outline" size={20} color={MarketWidgetColors.errorColor} />
+          <Text style={marketWidgetStyles.errorText}>{error || '数据异常'}</Text>
         </View>
       );
     }
@@ -71,10 +72,10 @@ const USDJPYWidget: React.FC<USDJPYWidgetProps> = ({ style, onPress, title = '�
     const formattedValue = USDJPYService.formatUSDJPYValue(usdJpyValue);
 
     return (
-      <View style={styles.contentContainer}>
-        <View style={styles.dataDisplay}>
-          <Text style={styles.mainValue}>{formattedValue}</Text>
-          <Text style={styles.valueLabel}>汇率</Text>
+      <View style={marketWidgetStyles.contentContainer}>
+        <View style={marketWidgetStyles.dataDisplay}>
+          <Text style={marketWidgetStyles.mainValue}>{formattedValue}</Text>
+          <Text style={marketWidgetStyles.valueLabel}>汇率</Text>
         </View>
       </View>
     );
@@ -82,78 +83,14 @@ const USDJPYWidget: React.FC<USDJPYWidgetProps> = ({ style, onPress, title = '�
 
   return (
     <TouchableOpacity 
-      style={[styles.container, style]} 
+      style={[marketWidgetStyles.container, style]} 
       onPress={handlePress}
       activeOpacity={0.7}
     >
-      <Text style={styles.title}>{title}</Text>
+      <Text style={marketWidgetStyles.title}>{title}</Text>
       {renderContent()}
     </TouchableOpacity>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: 12,
-    minHeight: 120,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  title: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#1A1A1A',
-    textAlign: 'center',
-    marginBottom: 12,
-  },
-  contentContainer: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  dataDisplay: {
-    alignItems: 'center',
-  },
-  mainValue: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#1A1A1A',
-    marginBottom: 4,
-  },
-  valueLabel: {
-    fontSize: 12,
-    color: '#8E8E93',
-    fontWeight: '500',
-  },
-  // Loading states
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    fontSize: 14,
-    color: '#6C757D',
-    marginTop: 8,
-  },
-  // Error states
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  errorText: {
-    fontSize: 12,
-    color: '#FF3B30',
-    textAlign: 'center',
-    marginTop: 4,
-  },
-});
 
 export default USDJPYWidget;
