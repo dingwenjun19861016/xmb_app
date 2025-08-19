@@ -129,7 +129,7 @@ const DXYDetail = () => {
           <View style={[styles.levelDot, { backgroundColor: '#FF9500' }]} />
           <View style={styles.levelContent}>
             <Text style={styles.levelRange}>100-105：偏强</Text>
-            <Text style={styles.levelDescription}>美元相对强势，可能对加密货币市场形成阻力</Text>
+            <Text style={styles.levelDescription}>美元相对强势，可能对股票市场形成阻力</Text>
           </View>
         </View>
         
@@ -153,7 +153,7 @@ const DXYDetail = () => {
           <View style={[styles.levelDot, { backgroundColor: '#8E8E93' }]} />
           <View style={styles.levelContent}>
             <Text style={styles.levelRange}>90以下：弱势</Text>
-            <Text style={styles.levelDescription}>美元处于弱势，历史上往往有利于加密货币上涨</Text>
+            <Text style={styles.levelDescription}>美元处于弱势，历史上往往有利于股票上涨</Text>
           </View>
         </View>
       </View>
@@ -243,16 +243,16 @@ const DXYDetail = () => {
       strategyContent = '美元指数处于强势区间，建议降低风险资产配置，关注美联储政策变化对市场的影响。';
       strategyColor = '#FF3B30';
     } else if (value >= 100) {
-      strategyContent = '美元指数偏强，可能对加密货币市场形成阻力，建议保持谨慎态度并关注技术面支撑。';
+      strategyContent = '美元指数偏强，可能对股票市场形成阻力，建议保持谨慎态度并关注技术面支撑。';
       strategyColor = '#FF9500';
     } else if (value >= 95) {
       strategyContent = '美元指数处于中性区间，建议关注其他基本面因素，如市场情绪和技术指标。';
       strategyColor = '#007AFF';
     } else if (value >= 90) {
-      strategyContent = '美元指数偏弱，通常有利于风险资产表现，可适当关注加密货币投资机会。';
+      strategyContent = '美元指数偏弱，通常有利于风险资产表现，可适当关注股票投资机会。';
       strategyColor = '#34C759';
     } else {
-      strategyContent = '美元指数处于弱势，历史上往往有利于加密货币等风险资产上涨，建议积极关注投资机会。';
+      strategyContent = '美元指数处于弱势，历史上往往有利于股票等风险资产上涨，建议积极关注投资机会。';
       strategyColor = '#34C759';
     }
 

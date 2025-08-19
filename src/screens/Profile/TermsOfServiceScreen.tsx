@@ -40,7 +40,7 @@ const TermsOfServiceScreen: React.FC = () => {
             <Text style={styles.sectionTitle}>投资风险提示</Text>
             <Text style={styles.paragraph}>
               <Text style={styles.highlight}>本应用内容不构成投资建议。</Text>
-              加密货币投资具有极高的风险性和波动性，您应当根据自己的财务状况、投资经验和风险承受能力做出独立的投资决策。
+              股票投资具有极高的风险性和波动性，您应当根据自己的财务状况、投资经验和风险承受能力做出独立的投资决策。
             </Text>
             <Text style={styles.paragraph}>
               任何投资决策均应基于您自己的研究和判断，本应用不对您的投资损失承担任何责任。
@@ -70,7 +70,7 @@ const TermsOfServiceScreen: React.FC = () => {
               • 用户因使用本应用信息而产生的任何损失，我们不承担责任
             </Text>
             <Text style={styles.paragraph}>
-              • 加密货币市场存在极大风险，价格波动剧烈，请谨慎投资
+              • 股票市场存在极大风险，价格波动剧烈，请谨慎投资
             </Text>
           </View>
 

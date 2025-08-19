@@ -113,7 +113,7 @@ const USBond10YRDetail = () => {
     <View style={styles.sectionContainer}>
       <Text style={styles.sectionTitle}>收益率说明</Text>
       <Text style={styles.descriptionText}>
-        美国十年期国债收益率是衡量长期利率水平的重要指标，反映了市场对未来经济增长和通胀预期。该收益率对全球金融市场，包括股票、债券和加密货币市场都有重要影响。
+        美国十年期国债收益率是衡量长期利率水平的重要指标，反映了市场对未来经济增长和通胀预期。该收益率对全球金融市场，包括股票、债券和股票市场都有重要影响。
       </Text>
       
       <View style={styles.levelList}>
@@ -248,7 +248,7 @@ const USBond10YRDetail = () => {
           <Text style={styles.strategyItem}>• 收益率上升时，关注利率敏感行业的影响</Text>
           <Text style={styles.strategyItem}>• 收益率下降时，风险资产通常表现更好</Text>
           <Text style={styles.strategyItem}>• 密切关注美联储政策会议和经济数据</Text>
-          <Text style={styles.strategyItem}>• 考虑债券收益率对加密货币的溢出效应</Text>
+          <Text style={styles.strategyItem}>• 考虑债券收益率对股票的溢出效应</Text>
           <Text style={styles.strategyItem}>• 结合通胀数据进行综合分析判断</Text>
         </View>
       </View>

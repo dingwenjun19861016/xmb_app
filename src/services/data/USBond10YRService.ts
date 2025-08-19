@@ -203,7 +203,7 @@ class USBond10YRService {
    * 获取投资建议
    */
   static getInvestmentAdvice(value: number): string {
-    if (value >= 5.0) return '收益率极高，债券价格承压，可能对股市和加密货币构成挑战';
+    if (value >= 5.0) return '收益率极高，债券价格承压，可能对股市和股票构成挑战';
     if (value >= 4.5) return '收益率处于高位，建议关注利率敏感性资产的风险';
     if (value >= 3.5) return '收益率偏高，可能影响风险资产表现，需密切观察';
     if (value >= 2.5) return '收益率处于中性区间，对市场影响相对平衡';

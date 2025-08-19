@@ -39,12 +39,12 @@ const US_STOCK_SYMBOLS = {
   'PYPL': ['paypal', 'pypl', 'PayPal'],
   'SQ': ['square', 'sq', 'Block', 'Square公司'],
   
-  // 加密货币相关
+  // 股票相关
   'COIN': ['coinbase', 'coin', 'Coinbase'],
   'MSTR': ['microstrategy', 'mstr', '微策略', 'Bitcoin'],
   'HOOD': ['robinhood', 'hood', 'Robinhood'],
-  'RIOT': ['riot platforms', 'riot', '比特币挖矿', '加密货币'],
-  'MARA': ['marathon digital', 'mara', '比特币挖矿', '加密货币'],
+  'RIOT': ['riot platforms', 'riot', '比特币挖矿', '股票'],
+  'MARA': ['marathon digital', 'mara', '比特币挖矿', '股票'],
   
   // 医疗健康
   'JNJ': ['johnson & johnson', 'jnj', '强生'],

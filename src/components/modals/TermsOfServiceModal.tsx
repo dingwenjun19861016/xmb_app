@@ -65,7 +65,7 @@ export const TermsOfServiceModal: React.FC<TermsOfServiceModalProps> = ({
               本应用内容不构成投资建议。
             </Text>
             <Text style={styles.sectionText}>
-              加密货币投资具有极高的风险性和波动性，您应当根据自己的财务状况、投资经验和风险承受能力做出独立的投资决策。
+              股票投资具有极高的风险性和波动性，您应当根据自己的财务状况、投资经验和风险承受能力做出独立的投资决策。
             </Text>
             <Text style={styles.sectionText}>
               任何投资决策均应基于您自己的研究和判断，本应用不对您的投资损失承担任何责任。

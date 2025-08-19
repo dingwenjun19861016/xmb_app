@@ -634,8 +634,8 @@ const MarketScreen = () => {
       const rawPrice = stock.currentPrice;
       const parsedPrice = parseFloat(stock.currentPrice);
       
-      // 美股价格处理：不使用实时价格API，因为该API只支持加密货币
-      // 始终使用API返回的股票价格，避免与同名加密货币代币混淆
+      // 美股价格处理：不使用实时价格API，因为该API只支持股票
+      // 始终使用API返回的股票价格，避免与同名股票代币混淆
       const currentPrice = parsedPrice;
       
       // 格式化价格
