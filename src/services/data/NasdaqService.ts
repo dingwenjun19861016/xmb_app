@@ -181,11 +181,7 @@ class NasdaqService {
    * 获取Nasdaq指数描述
    */
   static getNasdaqDescription(value: number): string {
-    if (value >= 20000) return '历史高位';
-    if (value >= 15000) return '高位';
-    if (value >= 12000) return '正常';
-    if (value >= 8000) return '偏低';
-    return '低位';
+    return '';
   }
 
   /**

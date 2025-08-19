@@ -65,46 +65,17 @@ const NasdaqDetail = () => {
     fetchNasdaqData();
   }, []);
 
-  const renderNasdaqGauge = () => {
+  const renderDataCard = () => {
     if (!nasdaqData) return null;
 
     const value = NasdaqService.parseNasdaqValue(nasdaqData.ixic);
-    const color = NasdaqService.getNasdaqColor(value);
     const description = NasdaqService.getNasdaqDescription(value);
 
-    // 计算进度条百分比 (假设 Nasdaq 范围 5000-25000)
-    const progressPercentage = Math.min(Math.max((value - 5000) / 20000 * 100, 0), 100);
-
     return (
-      <View style={styles.gaugeContainer}>
-        <View style={styles.gaugeWrapper}>
-          <View style={[styles.gaugeCircle, { borderColor: color }]}>
-            <Text style={[styles.gaugeValue, { color }]}>
-              {NasdaqService.formatNasdaqValue(value)}
-            </Text>
-          </View>
-          <View style={styles.gaugeInfo}>
-            <Text style={[styles.gaugeLevel, { color }]}>{description}</Text>
-            <View style={styles.progressBarContainer}>
-              <View style={styles.progressBar}>
-                <View 
-                  style={[
-                    styles.progressFill, 
-                    { 
-                      width: `${progressPercentage}%`, 
-                      backgroundColor: color 
-                    }
-                  ]} 
-                />
-              </View>
-              <View style={styles.progressLabels}>
-                <Text style={styles.progressLabel}>5,000</Text>
-                <Text style={styles.progressLabel}>15,000</Text>
-                <Text style={styles.progressLabel}>25,000</Text>
-              </View>
-            </View>
-          </View>
-        </View>
+      <View style={styles.dataCard}>
+        <Text style={styles.dataTitle}>纳斯达克指数</Text>
+        <Text style={styles.dataValue}>{NasdaqService.formatNasdaqValue(value)}</Text>
+        <Text style={styles.dataLabel}>{description}</Text>
       </View>
     );
   };
@@ -331,7 +302,7 @@ const NasdaqDetail = () => {
         showsVerticalScrollIndicator={false}
       >
         {/* Nasdaq 指标展示 */}
-        {renderNasdaqGauge()}
+        {renderDataCard()}
 
         {/* 历史数据图表 */}
         <NasdaqChart
@@ -390,78 +361,38 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 
-  // Gauge/Circle Display
-  gaugeContainer: {
-    backgroundColor: '#FFFFFF',
-    marginHorizontal: 16,
-    marginTop: 16,
-    borderRadius: 16,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 3,
-    borderWidth: 1,
-    borderColor: '#F0F0F0',
-  },
-
-  gaugeWrapper: {
-    flexDirection: 'row',
+  // Data card styles
+  dataCard: { 
+    backgroundColor: '#FFFFFF', 
+    marginHorizontal: 16, 
+    marginTop: 16, 
+    borderRadius: 16, 
+    padding: 24, 
     alignItems: 'center',
+    shadowColor: '#1976D2', 
+    shadowOffset: { width: 0, height: 2 }, 
+    shadowOpacity: 0.08, 
+    shadowRadius: 8, 
+    elevation: 4, 
+    borderWidth: 1, 
+    borderColor: '#E3F2FD' 
   },
-
-  gaugeCircle: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    borderWidth: 4,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 20,
+  dataTitle: { 
+    fontSize: 16, 
+    fontWeight: '600', 
+    color: '#1976D2', 
+    marginBottom: 12 
   },
-
-  gaugeValue: {
-    fontSize: 16,
-    fontWeight: '700',
+  dataValue: { 
+    fontSize: 36, 
+    fontWeight: '800', 
+    color: '#1A1A1A', 
+    marginBottom: 4 
   },
-
-  gaugeInfo: {
-    flex: 1,
-  },
-
-  gaugeLevel: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-
-  progressBarContainer: {
-    marginTop: 4,
-  },
-
-  progressBar: {
-    height: 8,
-    backgroundColor: '#F8F9FA',
-    borderRadius: 4,
-    overflow: 'hidden',
-    marginBottom: 8,
-  },
-
-  progressFill: {
-    height: '100%',
-    borderRadius: 4,
-  },
-
-  progressLabels: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-
-  progressLabel: {
-    fontSize: 10,
-    color: '#6C757D',
-    fontWeight: '500',
+  dataLabel: { 
+    fontSize: 14, 
+    color: '#8E8E93', 
+    fontWeight: '500' 
   },
 
   // Sections
