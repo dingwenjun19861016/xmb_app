@@ -55,6 +55,7 @@ class ConfigService {
     // 特殊处理：如果是GOOGLE_CLIENT_ID且值为mock或无效值，使用前端默认值
     if (key === 'GOOGLE_CLIENT_ID') {
       if (!value || value === 'mock-google-client-id' || value.startsWith('mock-')) {
+        // 使用Web应用的客户端ID（市链快报Web）
         const frontendDefault = '516014443439-fcrkkf7b3b2q3b3umatovipb4dg7fitn.apps.googleusercontent.com';
         return frontendDefault;
       }

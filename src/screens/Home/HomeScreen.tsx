@@ -242,7 +242,9 @@ const HomeScreen = () => {
       // 解析配置字符串为数组
       let widgetNames: string[] = [];
       if (typeof dataCardsConfig === 'string' && dataCardsConfig.trim()) {
-        widgetNames = dataCardsConfig.split(',').map(name => name.trim()).filter(name => name && DATA_WIDGET_COMPONENTS[name]);
+        widgetNames = dataCardsConfig.split(',')
+          .map(name => name.trim())
+          .filter(name => name && DATA_WIDGET_COMPONENTS.hasOwnProperty(name));
       }
       
       // 如果解析失败，使用默认配置
@@ -265,7 +267,11 @@ const HomeScreen = () => {
             
             if (!WidgetComponent) {
               console.warn(`⚠️ HomeScreen: Widget component ${widgetName} not found`);
-              return null;
+              return (
+                <View key={`empty-${rowIndex}-${cardIndex}`} style={styles.indicatorCard}>
+                  <View style={styles.widgetEmbedded} />
+                </View>
+              );
             }
             
             return (
@@ -752,8 +758,10 @@ const HomeScreen = () => {
         showRank={true} 
         title={marketOverviewTitle}
         viewMoreText={viewMoreText}
-      />        {/* 今日要闻 */}
-        <View style={styles.sectionContainer}>
+      />
+      
+      {/* 今日要闻 */}
+      <View style={styles.sectionContainer}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>{latestNewsTitle}</Text>
             <TouchableOpacity style={styles.viewMoreButton} onPress={() => navigation.navigate('Articles', { screen: 'ArticlesMain', params: { from: 'home' } })}>

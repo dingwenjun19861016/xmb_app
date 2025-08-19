@@ -1,35 +1,52 @@
 {
   "project_info": {
     "project_number": "516014443439",
-    "project_id": "xmb-app",
-    "storage_bucket": "xmb-app.appspot.com"
+    "project_id": "chainalert-466902",
+    "storage_bucket": "chainalert-466902.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:516014443439:android:abcdef1234567890",
+        "mobilesdk_app_id": "1:516014443439:android:hr7jrsbdi4e7srcr3d6nnqn6orkficrn",
         "android_client_info": {
           "package_name": "com.xmb.app"
         }
       },
       "oauth_client": [
         {
-          "client_id": "516014443439-fokinuj3kanvogsdg92pt9bbcckqlfm1.apps.googleusercontent.com",
+          "client_id": "516014443439-hr7jrsbdi4e7srcr3d6nnqn6orkficrn.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.xmb.app",
             "certificate_hash": "5e8f16062ea3cd2c4a0d547876baa6f38cabf625"
           }
+        },
+        {
+          "client_id": "516014443439-hr7jrsbdi4e7srcr3d6nnqn6orkficrn.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.xmb.app",
+            "certificate_hash": "acf01beb4e2050ba5207287d5e71bbef3cfb15b5"
+          }
+        },
+        {
+          "client_id": "516014443439-fcrkkf7b3b2q3b3umatovipb4dg7fitn.apps.googleusercontent.com",
+          "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyDummyKeyForAndroidApp123456789"
+          "current_key": "AIzaSyC3-YrKqx8n9vQg7L2mP1dF5tR8sE9uI0o"
         }
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "516014443439-fcrkkf7b3b2q3b3umatovipb4dg7fitn.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

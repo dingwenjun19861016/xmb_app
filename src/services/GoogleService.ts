@@ -61,6 +61,7 @@ class WebGoogleService {
       
       // 如果配置值为mock或无效值，使用默认客户端ID
       if (!clientId || clientId === 'mock-google-client-id' || clientId.startsWith('mock-')) {
+        // 使用Web应用的客户端ID（市链快报Web）
         clientId = '516014443439-fcrkkf7b3b2q3b3umatovipb4dg7fitn.apps.googleusercontent.com';
       }
       
@@ -292,6 +293,7 @@ class NativeGoogleService {
       
       // 如果配置值为mock或无效值，使用默认客户端ID
       if (!clientId || clientId === 'mock-google-client-id' || clientId.startsWith('mock-')) {
+        // 使用Web应用的客户端ID（市链快报Web）
         clientId = '516014443439-fcrkkf7b3b2q3b3umatovipb4dg7fitn.apps.googleusercontent.com';
       }
       
@@ -304,6 +306,12 @@ class NativeGoogleService {
         };
       }
 
+      console.log('🔧 Native Google登录配置详情:', {
+        clientId: `${clientId.substring(0, 20)}...`,
+        platform: 'native',
+        packageName: 'com.xmb.app'
+      });
+
       GoogleSignin.configure({
         webClientId: clientId,
         offlineAccess: true,
@@ -311,6 +319,8 @@ class NativeGoogleService {
         forceCodeForRefreshToken: true,
         scopes: ['email', 'profile', 'openid'],
       });
+
+      console.log('✅ Native Google登录配置成功');
 
       this.isConfigured = true;
       this.currentClientId = clientId;
