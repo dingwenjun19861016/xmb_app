@@ -53,7 +53,7 @@ const DJIDetail: React.FC = () => {
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FAFAFA" />
+        <StatusBar barStyle="dark-content" backgroundColor="#F8FAFE" />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#007AFF" />
           <Text style={styles.loadingText}>加载道琼斯指数...</Text>
@@ -65,7 +65,7 @@ const DJIDetail: React.FC = () => {
   if (error) {
     return (
       <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="dark-content" backgroundColor="#FAFAFA" />
+        <StatusBar barStyle="dark-content" backgroundColor="#F8FAFE" />
         <View style={styles.errorContainer}>
           <Ionicons name="alert-circle-outline" size={48} color="#FF3B30" />
             <Text style={styles.errorText}>{error}</Text>

@@ -1116,7 +1116,7 @@ const USStockDetailScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAFAFA', // 与HomeScreen和MarketScreen保持一致
+    backgroundColor: '#F8FAFE', // 浅蓝色背景，与主题一致
   },
   priceText: {
     fontSize: 24,
@@ -1456,7 +1456,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   skeletonBox: {
-    backgroundColor: '#E1E9EE',
+    backgroundColor: '#E3F2FD', // 浅蓝色骨架，与主题一致
     borderRadius: 4,
   },
   // 价格区域布局样式

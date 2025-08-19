@@ -81,15 +81,15 @@ import TodayHeader from '../../components/common/TodayHeader';
 import ShareModal from '../../components/common/ShareModal';
 import { getWebAppURL } from '../../config/apiConfig';
 
-// UI 颜色常量
+// UI 颜色常量 - 统一蓝色主题
 const UI_COLORS = {
-  primary: '#007AFF',
-  background: '#f2f2f7',
-  cardBackground: '#ffffff',
-  text: '#1c1c1e',
-  secondaryText: '#8e8e93',
-  border: '#e5e5ea',
-  shadow: 'rgba(0, 0, 0, 0.1)',
+  primary: '#1976D2', // 金融蓝色
+  background: '#F8FAFE', // 浅蓝色背景
+  cardBackground: '#FFFFFF', // 白色卡片背景
+  text: '#0D47A1', // 深蓝色文字
+  secondaryText: '#546E7A', // 蓝灰色次要文字
+  border: '#E3F2FD', // 浅蓝色边框
+  shadow: '#1565C0', // 蓝色阴影
   success: '#34C759',
   danger: '#FF3B30',
 };
@@ -392,11 +392,11 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   skeletonCard: {
-    backgroundColor: '#F0F0F0',
+    backgroundColor: '#F8FAFE', // 浅蓝色背景
     borderRadius: 12,
     marginBottom: 12,
     overflow: 'hidden',
-    shadowColor: '#000',
+    shadowColor: UI_COLORS.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
@@ -410,14 +410,14 @@ const styles = StyleSheet.create({
   skeletonRank: {
     width: 50,
     height: 20,
-    backgroundColor: '#D0D0D0',
+    backgroundColor: '#E3F2FD', // 浅蓝色骨架
     borderRadius: 10,
     marginRight: 12,
   },
   skeletonIcon: {
     width: 40,
     height: 40,
-    backgroundColor: '#D0D0D0',
+    backgroundColor: '#E3F2FD', // 浅蓝色骨架
     borderRadius: 20,
     marginRight: 12,
   },
@@ -427,14 +427,14 @@ const styles = StyleSheet.create({
   skeletonName: {
     width: '60%',
     height: 14,
-    backgroundColor: '#D0D0D0',
+    backgroundColor: '#E3F2FD', // 浅蓝色骨架
     borderRadius: 7,
     marginBottom: 6,
   },
   skeletonSymbol: {
     width: '40%',
     height: 12,
-    backgroundColor: '#D0D0D0',
+    backgroundColor: '#E3F2FD', // 浅蓝色骨架
     borderRadius: 6,
   },
   skeletonPrice: {
@@ -444,14 +444,14 @@ const styles = StyleSheet.create({
   skeletonPriceValue: {
     width: '80%',
     height: 16,
-    backgroundColor: '#D0D0D0',
+    backgroundColor: '#E3F2FD', // 浅蓝色骨架
     borderRadius: 8,
     marginBottom: 4,
   },
   skeletonChange: {
     width: '60%',
     height: 14,
-    backgroundColor: '#D0D0D0',
+    backgroundColor: '#E3F2FD', // 浅蓝色骨架
     borderRadius: 7,
   },
 });
@@ -1982,11 +1982,6 @@ const MarketScreen = () => {
     // 使用骨架屏替代简单的loading指示器，提供更好的用户体验
     return (
       <View style={styles.container}>
-        <View style={styles.listHeader}>
-          <Text style={styles.rankHeader}>{getMarketLabel('rank')}</Text>
-          <Text style={styles.nameHeader}>{getMarketLabel('name')}</Text>
-          <Text style={styles.priceHeader}>{getMarketLabel('currentPrice')}/{getMarketLabel('priceChangePercent')}</Text>
-        </View>
         <SkeletonList count={15} />
       </View>
     );
@@ -2147,19 +2142,12 @@ const MarketScreen = () => {
           contentContainerStyle={[
             styles.coinsList,
             flatListData.length === 0 && styles.coinsListEmpty
-          ]}
+          ]          }
           refreshControl={
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
           onEndReached={searchText ? undefined : loadMore}
           onEndReachedThreshold={0.3}
-          ListHeaderComponent={
-            <View style={styles.listHeader}>
-              <Text style={styles.rankHeader}>{getMarketLabel('rank')}</Text>
-              <Text style={styles.nameHeader}>{getMarketLabel('name')}</Text>
-              <Text style={styles.priceHeader}>{getMarketLabel('currentPrice')}/{getMarketLabel('priceChangePercent')}</Text>
-            </View>
-          }
           ListFooterComponent={searchText ? null : renderFooter}
           ListEmptyComponent={renderEmpty}
           // 性能优化配置

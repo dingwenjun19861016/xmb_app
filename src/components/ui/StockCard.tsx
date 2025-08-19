@@ -7,15 +7,15 @@ import { useUser } from '../../contexts/UserContext';
 // 导入图表组件
 import SVGMiniPriceChart from '../charts/SVGMiniPriceChart';
 
-// UI 颜色常量 - 与 MarketScreen 保持一致
+// UI 颜色常量 - 统一蓝色主题
 const UI_COLORS = {
-  primary: '#007AFF',
-  background: '#f2f2f7',
-  cardBackground: '#ffffff',
-  text: '#1c1c1e',
-  secondaryText: '#8e8e93',
-  border: '#e5e5ea',
-  shadow: 'rgba(0, 0, 0, 0.1)',
+  primary: '#1976D2', // 金融蓝色
+  background: '#F8FAFE', // 浅蓝色背景
+  cardBackground: '#FFFFFF', // 白色卡片背景
+  text: '#0D47A1', // 深蓝色文字
+  secondaryText: '#546E7A', // 蓝灰色次要文字
+  border: '#E3F2FD', // 浅蓝色边框
+  shadow: '#1565C0', // 蓝色阴影
   success: '#34C759',
   danger: '#FF3B30',
 };
@@ -483,50 +483,68 @@ const styles = StyleSheet.create({
     position: 'relative',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14, // 稍微增加垂直间距
-    paddingHorizontal: 16,
-    borderBottomWidth: 0.5,
-    borderBottomColor: UI_COLORS.border,
-    backgroundColor: '#ffffff', // 强制设置为白色，确保在所有平台上一致
-    minHeight: 70, // 稍微增加最小高度，给两行布局更多空间
+    paddingVertical: 16,
+    paddingHorizontal: 18,
+    borderBottomWidth: 1,
+    borderBottomColor: UI_COLORS.border, // 浅蓝色边框
+    backgroundColor: UI_COLORS.cardBackground, // 白色背景
+    minHeight: 75,
+    shadowColor: UI_COLORS.shadow, // 蓝色阴影
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   compactCard: {
-    paddingVertical: 8,
+    paddingVertical: 12,
+    minHeight: 65,
   },
   detailedCard: {
-    paddingVertical: 16,
+    paddingVertical: 18,
     borderBottomWidth: 0,
-    backgroundColor: '#FAFAFA',
-    borderRadius: 8,
-    marginVertical: 4,
-    paddingHorizontal: 12,
+    backgroundColor: UI_COLORS.background, // 浅蓝色背景
+    borderRadius: 16,
+    marginVertical: 6,
+    paddingHorizontal: 18,
+    borderWidth: 2,
+    borderColor: UI_COLORS.border, // 浅蓝色边框
+    shadowColor: UI_COLORS.shadow, // 蓝色阴影
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 5,
   },
   largeCard: {
     paddingVertical: 20,
     borderBottomWidth: 0,
-    backgroundColor: 'white',
-    borderRadius: 12,
-    marginVertical: 6,
-    paddingHorizontal: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    backgroundColor: UI_COLORS.cardBackground,
+    borderRadius: 16,
+    marginVertical: 8,
+    paddingHorizontal: 18,
+    borderWidth: 2,
+    borderColor: UI_COLORS.border, // 浅蓝色边框
+    shadowColor: UI_COLORS.shadow, // 蓝色阴影
+    shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 12,
+    elevation: 6,
   },
   stockLogo: {
-    marginRight: 12, // 增加与右侧内容的间距
-    backgroundColor: '#F8FAFE', // 浅蓝色背景，与主题一致
+    marginRight: 14,
+    backgroundColor: UI_COLORS.background, // 浅蓝色背景
+    borderRadius: 8,
   },
   placeholderLogo: {
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#E3F2FD', // 浅蓝色背景，与主题一致
+    backgroundColor: UI_COLORS.border, // 浅蓝色边框色作为占位符背景
+    borderRadius: 8,
   },
   loadingLogo: {
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F8FAFE', // 浅蓝色背景，与主题一致
+    backgroundColor: UI_COLORS.background, // 浅蓝色背景
+    borderRadius: 8,
   },
   loadingText: {
     fontSize: 16,
@@ -534,11 +552,12 @@ const styles = StyleSheet.create({
   },
   placeholderText: {
     fontSize: 14,
-    fontWeight: 'bold',
-    color: '#666',
+    fontWeight: '700',
+    color: UI_COLORS.primary, // 使用主蓝色
   },
   largePlaceholderText: {
     fontSize: 18,
+    fontWeight: '700',
   },
   stockInfo: {
     flex: 1,
@@ -639,26 +658,21 @@ const styles = StyleSheet.create({
   },
   // Context相关样式
   homeContextCard: {
-    // 首页特定样式 - 减少左侧间距让内容更靠左
-    backgroundColor: '#ffffff',
+    backgroundColor: UI_COLORS.cardBackground, // 白色背景
   },
   homeContextContent: {
-    // 首页内容容器特定样式 - 减少左边距
-    paddingLeft: 8, // 大幅减少左边距，让内容更靠左
+    paddingLeft: 8,
   },
   homeContextLogo: {
-    // 首页logo特定样式 - 减少右边距
-    marginRight: 8, // 减少logo右边距，让名称和VOL更靠左
+    marginRight: 10,
   },
   marketContextCard: {
-    // Market页面特定样式
-    paddingVertical: 14, // 稍微增加垂直间距
-    paddingHorizontal: 18, // 增加水平间距，使内容更宽松
-    backgroundColor: '#ffffff', // 强制设置白色背景，确保Android一致性
+    paddingVertical: 16,
+    paddingHorizontal: 18,
+    backgroundColor: UI_COLORS.cardBackground, // 白色背景
   },
   searchContextCard: {
-    // 搜索页面特定样式
-    backgroundColor: '#ffffff', // 确保搜索页面也是白色背景
+    backgroundColor: UI_COLORS.cardBackground, // 白色背景
   },
   // 自选按钮在不同context下的位置
   favoriteButtonHome: {
