@@ -11,9 +11,9 @@ const testConfigService = async () => {
     await configService.init();
     console.log('✅ 初始化成功');
     
-    // 2. 获取美股列表
-    const usStockList = await configService.getConfigAsArray('MARKET_LIST');
-    console.log('美股列表:', usStockList);
+    // 2. REMOVED: MARKET_LIST config test - config has been deleted
+    // const usStockList = await configService.getConfigAsArray('MARKET_LIST');
+    // console.log('美股列表:', usStockList);
     
     // 3. 获取首页显示的美股
     const homeDisplayStocks = await configService.getConfigAsArray('HOME_MARKET_DISPLAY');
