@@ -307,39 +307,96 @@ const ArticleDetailScreen = () => {
     return getWebAppURL(`articles/${article.id}`);
   };
 
+  // 检查是否需要显示APP下载按钮
+  const shouldShowAppDownload = () => {
+    // Android原生APP环境 - 不显示
+    if (Platform.OS === 'android') {
+      return false;
+    }
+    
+    // iOS原生APP环境 - 不显示
+    if (Platform.OS === 'ios') {
+      return false;
+    }
+    
+    // Web环境下进一步检查
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      // 检查是否为PWA模式（添加到主屏幕的网页应用）
+      const isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
+                          (window.navigator as any).standalone === true ||
+                          document.referrer.includes('android-app://');
+      
+      // 如果是PWA模式，不显示下载按钮
+      if (isStandalone) {
+        return false;
+      }
+      
+      // 检查User Agent来判断是否在原生APP的WebView中
+      const userAgent = window.navigator.userAgent.toLowerCase();
+      if (userAgent.includes('xmb') || userAgent.includes('wv')) {
+        return false;
+      }
+    }
+    
+    // 其他情况显示下载按钮（主要是普通web浏览器）
+    return Platform.OS === 'web';
+  };
+
+  // 处理APP下载按钮点击
+  const handleAppDownloadPress = async () => {
+    const downloadUrl = 'https://chainalert.me/view/research/4ebcb1';
+    
+    try {
+      if (Platform.OS === 'web') {
+        window.open(downloadUrl, '_blank');
+      } else {
+        const supported = await Linking.canOpenURL(downloadUrl);
+        if (supported) {
+          await Linking.openURL(downloadUrl);
+        } else {
+          showMessageModal(
+            'error',
+            '无法打开链接',
+            '无法打开下载页面，请手动复制链接：\n' + downloadUrl,
+            [{ text: '确定', onPress: () => setModalVisible(false) }]
+          );
+        }
+      }
+    } catch (error) {
+      console.error('Failed to open download URL:', error);
+      showMessageModal(
+        'error',
+        '打开失败',
+        '无法打开下载页面，请稍后重试',
+        [{ text: '确定', onPress: () => setModalVisible(false) }]
+      );
+    }
+  };
+
   // 骨架加载组件
   const renderSkeleton = () => (
     <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-      {/* Timeline Skeleton */}
-      <View style={styles.timelineContainer}>
-        {/* Timeline Left Skeleton */}
-        <View style={styles.timelineLeft}>
-          <SkeletonBox width={12} height={12} borderRadius={6} />
-          <View style={styles.timelineLine} />
+      {/* Article Skeleton */}
+      <View style={styles.articleContainer}>
+        {/* Time Header Skeleton */}
+        <View style={styles.timeHeader}>
+          <SkeletonBox width={80} height={16} />
+          <SkeletonBox width={60} height={24} borderRadius={16} />
         </View>
         
-        {/* Timeline Content Skeleton */}
-        <View style={styles.timelineContent}>
-          {/* Time Header Skeleton */}
-          <View style={styles.timeHeader}>
-            <SkeletonBox width={80} height={16} />
-            <SkeletonBox width={60} height={24} borderRadius={16} />
-          </View>
+        {/* Article Card Skeleton */}
+        <View style={styles.articleCard}>
+          <SkeletonBox width="100%" height={24} style={{ marginBottom: 16 }} />
+          <SkeletonBox width="90%" height={18} style={{ marginBottom: 12 }} />
+          <SkeletonBox width="95%" height={18} style={{ marginBottom: 12 }} />
+          <SkeletonBox width="85%" height={18} style={{ marginBottom: 16 }} />
           
-          {/* Article Card Skeleton */}
-          <View style={styles.articleCard}>
-            <SkeletonBox width="100%" height={24} style={{ marginBottom: 16 }} />
-            <SkeletonBox width="90%" height={18} style={{ marginBottom: 12 }} />
-            <SkeletonBox width="95%" height={18} style={{ marginBottom: 12 }} />
-            <SkeletonBox width="85%" height={18} style={{ marginBottom: 16 }} />
-            
-            <SkeletonBox width="100%" height={18} style={{ marginBottom: 12 }} />
-            <SkeletonBox width="88%" height={18} style={{ marginBottom: 12 }} />
-            <SkeletonBox width="92%" height={18} style={{ marginBottom: 16 }} />
-            
-            <SkeletonBox width="94%" height={18} style={{ marginBottom: 12 }} />
-            <SkeletonBox width="87%" height={18} />
-          </View>
+          <SkeletonBox width="100%" height={18} style={{ marginBottom: 12 }} />
+          <SkeletonBox width="88%" height={18} style={{ marginBottom: 12 }} />
+          <SkeletonBox width="92%" height={18} style={{ marginBottom: 16 }} />
+          
+          <SkeletonBox width="94%" height={18} style={{ marginBottom: 12 }} />
+          <SkeletonBox width="87%" height={18} />
         </View>
       </View>
 
@@ -494,37 +551,49 @@ const ArticleDetailScreen = () => {
       </View>
 
       <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-        {/* Timeline Article Layout */}
-        <View style={styles.timelineContainer}>
-          {/* Timeline Line and Dot */}
-          <View style={styles.timelineLeft}>
-            <View style={styles.timelineDot} />
-            <View style={styles.timelineLine} />
+        {/* Article Layout */}
+        <View style={styles.articleContainer}>
+          {/* Time and Category */}
+          <View style={styles.timeHeader}>
+            <Text style={styles.timeText}>{article.date}</Text>
+            <View style={styles.categoryBadge}>
+              <Text style={styles.categoryText}>{article.category}</Text>
+            </View>
           </View>
           
-          {/* Article Content */}
-          <View style={styles.timelineContent}>
-            {/* Time and Category */}
-            <View style={styles.timeHeader}>
-              <Text style={styles.timeText}>{article.date}</Text>
-              <View style={styles.categoryBadge}>
-                <Text style={styles.categoryText}>{article.category}</Text>
-              </View>
-            </View>
-            
-            {/* Article Card */}
-            <View style={styles.articleCard}>
-              <Text style={styles.title}>{article.title}</Text>
-              <Markdown style={markdownStyles}>
-                {article.content}
-              </Markdown>
-            </View>
+          {/* Article Card */}
+          <View style={styles.articleCard}>
+            <Text style={styles.title}>{article.title}</Text>
+            <Markdown style={markdownStyles}>
+              {article.content}
+            </Markdown>
           </View>
         </View>
 
 
 
 
+
+        {/* APP下载推荐区域 - 仅在符合条件时显示 */}
+        {shouldShowAppDownload() && (
+          <View style={styles.appDownloadSection}>
+            <TouchableOpacity 
+              style={styles.appDownloadButton}
+              onPress={handleAppDownloadPress}
+            >
+              <View style={styles.appDownloadContent}>
+                <View style={styles.appDownloadIcon}>
+                  <Ionicons name="phone-portrait-outline" size={20} color="#1976D2" />
+                </View>
+                <View style={styles.appDownloadText}>
+                  <Text style={styles.appDownloadTitle}>下载小目标APP</Text>
+                  <Text style={styles.appDownloadSubtitle}>获得更好的阅读体验</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color="#999" />
+              </View>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Related Articles */}
         {relatedArticles.length > 0 && (
@@ -658,9 +727,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   
-  // Timeline styles
-  timelineContainer: {
-    flexDirection: 'row',
+  // Article container styles
+  articleContainer: {
     paddingHorizontal: 16,
     paddingVertical: 24,
     backgroundColor: '#FFFFFF',
@@ -672,35 +740,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 1,
-  },
-  timelineLeft: {
-    width: 20,
-    alignItems: 'center',
-    marginRight: 16,
-    paddingTop: 8,
-  },
-  timelineDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#007AFF',
-    borderWidth: 3,
-    borderColor: '#ffffff',
-    shadowColor: '#007AFF',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.4,
-    shadowRadius: 3,
-    elevation: 3,
-  },
-  timelineLine: {
-    flex: 1,
-    width: 2,
-    backgroundColor: '#E5F3FF',
-    marginTop: 12,
-    minHeight: 200,
-  },
-  timelineContent: {
-    flex: 1,
   },
   timeHeader: {
     flexDirection: 'row',
@@ -886,6 +925,51 @@ const styles = StyleSheet.create({
   relatedContentSkeleton: {
     flex: 1,
     justifyContent: 'space-between',
+  },
+  
+  // APP下载按钮样式
+  appDownloadSection: {
+    paddingHorizontal: 12,
+    paddingVertical: 15,
+    backgroundColor: '#F8FAFE',
+  },
+  appDownloadButton: {
+    backgroundColor: 'white',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E3F2FD',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  appDownloadContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  appDownloadIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#E8F0FE',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  appDownloadText: {
+    flex: 1,
+  },
+  appDownloadTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1D1D1F',
+    marginBottom: 2,
+  },
+  appDownloadSubtitle: {
+    fontSize: 14,
+    color: '#8E8E93',
   },
 });
 
