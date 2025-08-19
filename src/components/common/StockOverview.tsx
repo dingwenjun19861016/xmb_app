@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ActivityIndicator, Animated } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import StockCard, { StockCardData } from '../ui/StockCard';
 import stockService, { TransformedStockData } from '../../services/StockService';
@@ -210,6 +210,80 @@ const StockOverview: React.FC<StockOverviewProps> = ({
     </View>
   );
 
+  // 骨架加载组件
+  const SkeletonBox = ({ width, height, borderRadius = 6, style = {} }: { 
+    width: number | string; 
+    height: number; 
+    borderRadius?: number;
+    style?: any;
+  }) => {
+    const opacity = useRef(new Animated.Value(0.3)).current;
+
+    useEffect(() => {
+      const animation = Animated.loop(
+        Animated.sequence([
+          Animated.timing(opacity, {
+            toValue: 0.7,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(opacity, {
+            toValue: 0.3,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+      animation.start();
+      return () => animation.stop();
+    }, []);
+
+    return (
+      <Animated.View 
+        style={[
+          {
+            backgroundColor: '#E1E9EE',
+            width,
+            height,
+            borderRadius,
+            opacity
+          },
+          style
+        ]} 
+      />
+    );
+  };
+
+  // 渲染骨架加载状态
+  const renderSkeleton = () => (
+    <View style={styles.skeletonContainer}>
+      {Array.from({ length: limit || 2 }).map((_, index) => (
+        <View key={index} style={styles.skeletonItem}>
+          {/* 股票Logo骨架 */}
+          <SkeletonBox width={40} height={40} borderRadius={20} style={styles.skeletonLogo} />
+          
+          <View style={styles.skeletonContent}>
+            {/* 股票代码骨架 */}
+            <SkeletonBox width={60} height={16} style={{ marginBottom: 4 }} />
+            
+            {/* 公司名称骨架 */}
+            <SkeletonBox width={100} height={14} style={{ marginBottom: 8 }} />
+            
+            {/* 价格信息骨架 */}
+            <View style={styles.skeletonPriceRow}>
+              <SkeletonBox width={80} height={18} style={{ marginRight: 12 }} />
+              <SkeletonBox width={50} height={16} />
+            </View>
+          </View>
+          
+          {showRank && (
+            <SkeletonBox width={24} height={16} style={styles.skeletonRank} />
+          )}
+        </View>
+      ))}
+    </View>
+  );
+
   // 渲染错误状态
   const renderError = () => (
     <View style={styles.errorContainer}>
@@ -238,8 +312,11 @@ const StockOverview: React.FC<StockOverviewProps> = ({
       <View style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.title}>{title}</Text>
+          <TouchableOpacity style={styles.viewMoreButton} onPress={handleViewMore}>
+            <Text style={styles.viewMoreText}>{viewMoreText}</Text>
+          </TouchableOpacity>
         </View>
-        {renderLoading()}
+        {renderSkeleton()}
       </View>
     );
   }
@@ -358,6 +435,55 @@ const styles = StyleSheet.create({
     color: UI_COLORS.secondaryText,
     fontWeight: '500',
   },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 50,
+    backgroundColor: UI_COLORS.cardBackground,
+    borderRadius: 12,
+    marginHorizontal: 16,
+    marginVertical: 8,
+    borderWidth: 1,
+    borderColor: UI_COLORS.border,
+  },
+  emptyText: {
+    fontSize: 16,
+    color: UI_COLORS.secondaryText,
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  // 骨架加载样式
+  skeletonContainer: {
+    paddingHorizontal: 16,
+  },
+  skeletonItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: UI_COLORS.cardBackground,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: UI_COLORS.border,
+    shadowColor: UI_COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  skeletonLogo: {
+    marginRight: 12,
+  },
+  skeletonContent: {
+    flex: 1,
+  },
+  skeletonPriceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  skeletonRank: {
+    marginLeft: 12,
+  },
   errorContainer: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -391,23 +517,6 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '600',
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 50,
-    backgroundColor: UI_COLORS.cardBackground,
-    borderRadius: 12,
-    marginHorizontal: 16,
-    marginVertical: 8,
-    borderWidth: 1,
-    borderColor: UI_COLORS.border,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: UI_COLORS.secondaryText,
-    textAlign: 'center',
-    fontWeight: '500',
   },
 });
 

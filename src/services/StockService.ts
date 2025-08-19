@@ -208,50 +208,96 @@ class StockService {
     try {
       console.log('🔄 StockService: Fetching home display stocks...');
 
-      // 从配置获取首页显示的股票数量
-      const configLimit = limit || await configService.getConfig('HOME_MARKET_OVERVIEW_COUNT', 2);
+      // 从HOME_MARKET_DISPLAY配置获取指定的股票代码
+      const displayStockCodes = await configService.getConfig('HOME_MARKET_DISPLAY', 'MSFT,TSLA');
       
-      // 获取股票列表，按排名排序取前N个
-      const stocksData = await this.getUSStocksList(0, configLimit, "rank", "asc");
-
-      if (stocksData.length === 0) {
-        console.warn('⚠️ StockService: No stocks data received');
+      console.log('📊 StockService: Using HOME_MARKET_DISPLAY config:', displayStockCodes);
+      
+      if (!displayStockCodes || !displayStockCodes.trim()) {
+        console.warn('⚠️ StockService: HOME_MARKET_DISPLAY config is empty');
         return [];
       }
 
-      // 转换数据格式以兼容现有的UI组件
-      const transformedStocks = stocksData.map((stock): TransformedStockData => ({
-        _id: stock._id,
-        rank: stock.rank,
-        name: stock.code, // 使用code作为name显示
-        code: stock.code,
-        fullName: stock.name, // 使用name作为fullName显示
-        currentPrice: stock.currentPrice,
-        priceChange24h: stock.priceChangePercent,
-        priceChangePercent: stock.priceChangePercent,
-        marketcap: stock.baseinfo.marketCap || stock.marketCap || '',
-        volume: stock.baseinfo.volume || stock.volume || '',
-        exchange: stock.exchange,
-        sector: stock.sector,
-        logoUrl: stockLogoService.getLogoUrlSync(stock.code), // 使用StockLogoService生成正确的logo URL
+      // 解析股票代码配置（支持逗号分隔）
+      const stockCodes = displayStockCodes
+        .split(',')
+        .map(code => code.trim().toUpperCase())
+        .filter(code => code.length > 0);
+      
+      if (stockCodes.length === 0) {
+        console.warn('⚠️ StockService: No valid stock codes found in config');
+        return [];
+      }
+
+      console.log('📈 StockService: Parsed stock codes:', stockCodes);
+      
+      // 将股票代码数组转换为逗号分隔的字符串
+      const stockCodesString = stockCodes.join(',');
+      console.log('🔗 StockService: Stock codes string for API:', stockCodesString);
+      
+      // 使用getMultipleUsstocksInfo API获取指定股票的数据
+      const response = await apiService.call<any>('getMultipleUsstocksInfo', [stockCodesString]);
+      console.log('📥 StockService: Raw getMultipleUsstocksInfo response type:', typeof response, 'keys:', response && typeof response === 'object' ? Object.keys(response) : 'n/a');
+
+      // 兼容多种可能的返回结构
+      let stocksArray: any[] = [];
+      if (Array.isArray(response)) {
+        stocksArray = response;
+        console.log('📦 StockService: Parsed response as direct array, length:', stocksArray.length);
+      } else if (response && Array.isArray(response.result)) {
+        stocksArray = response.result;
+        console.log('📦 StockService: Parsed response.result as array, length:', stocksArray.length);
+      } else if (response && response.result && Array.isArray(response.result.stocks)) {
+        stocksArray = response.result.stocks;
+        console.log('📦 StockService: Parsed response.result.stocks as array, length:', stocksArray.length);
+      } else if (response && Array.isArray(response.stocks)) {
+        stocksArray = response.stocks;
+        console.log('📦 StockService: Parsed response.stocks as array, length:', stocksArray.length);
+      } else if (response && response.data && Array.isArray(response.data)) {
+        stocksArray = response.data;
+        console.log('📦 StockService: Parsed response.data as array, length:', stocksArray.length);
+      } else {
+        console.warn('⚠️ StockService: Unrecognized getMultipleUsstocksInfo response structure:', response);
+      }
+      
+      if (!Array.isArray(stocksArray) || stocksArray.length === 0) {
+        console.warn('⚠️ StockService: getMultipleUsstocksInfo returned empty or invalid data after parsing');
+        return [];
+      }
+
+      console.log(`✅ StockService: Successfully fetched ${stocksArray.length} custom stocks from getMultipleUsstocksInfo`);
+      
+      // 转换数据格式
+      const transformedStocks = stocksArray.map((stock): TransformedStockData => ({
+        _id: stock._id || stock.id || `stock_${stock.code}`,
+        rank: Number(stock.rank) || 0,
+        name: stock.code || stock.symbol || '',
+        code: stock.code || stock.symbol || '',
+        fullName: stock.name || stock.fullName || stock.code || '',
+        currentPrice: stock.currentPrice || stock.price || '0',
+        priceChange24h: stock.priceChangePercent || stock.priceChange24h || '0',
+        priceChangePercent: stock.priceChangePercent || stock.priceChange24h || '0',
+        marketcap: stock.baseinfo?.marketCap || stock.marketCap || '',
+        volume: stock.baseinfo?.volume || stock.volume || '',
+        exchange: stock.exchange || 'NASDAQ',
+        sector: stock.sector || '',
+        logoUrl: stockLogoService.getLogoUrlSync(stock.code || stock.symbol || ''),
         // 兼容字段
-        fdv: stock.baseinfo.marketCap || stock.marketCap || '',
-        totalSupply: stock.baseinfo.sharesOutstanding || '',
-        circulatingSupply: stock.baseinfo.sharesOutstanding || '',
-        description: `${stock.name} (${stock.code}) - ${stock.sector}`,
+        fdv: stock.baseinfo?.marketCap || stock.marketCap || '',
+        totalSupply: stock.baseinfo?.sharesOutstanding || '',
+        circulatingSupply: stock.baseinfo?.sharesOutstanding || '',
+        description: `${stock.name || ''} (${stock.code || ''}) - ${stock.sector || ''}`,
         cexInfos: [],
         valid: true,
-        created_at: stock.created_at,
-        date: stock.date,
-        updated_at: stock.updated_at,
-        coin_id: stock._id,
+        created_at: stock.created_at || new Date().toISOString(),
+        date: stock.date || new Date().toISOString(),
+        updated_at: stock.updated_at || new Date().toISOString(),
+        coin_id: stock._id || stock.id || '',
         peRatio: stock.baseinfo?.peRatio || stock.peRatio || '',
-        usstock24h: stock.usstock24h
+        usstock24h: stock.usstock24h || []
       }));
 
-      console.log(`✅ StockService: Successfully transformed ${transformedStocks.length} stocks for home display`);
-      console.log('📊 StockService: Sample transformed stock:', transformedStocks[0]);
-
+      console.log('📊 StockService: Sample transformed custom stock:', transformedStocks[0]);
       return transformedStocks;
 
     } catch (error) {
