@@ -515,8 +515,7 @@ const MarketScreen = () => {
   const [searchPlaceholder, setSearchPlaceholder] = useState('搜索股票...');
   const [favoritesTitle, setFavoritesTitle] = useState('我的自选');
   const [allStocksTitle, setAllStocksTitle] = useState('全部股票');
-  const [listHeaders, setListHeaders] = useState(['#', '名称', '价格/24h']);
-  const [listHeadersEnabled, setListHeadersEnabled] = useState(true); // 表头显示开关
+  // REMOVED: listHeaders and listHeadersEnabled - headers are now always shown with fixed content
   
   // 市场列表标签配置状态 - 从后端MARKET_LIST_LABEL获取，包含各字段的显示名称
   // 后端配置格式: { rank: "市值", currentPrice: "最新价", volume: "成交量", peRatio: "市盈率", priceChangePercent: "涨跌幅" }
@@ -742,7 +741,7 @@ const MarketScreen = () => {
       console.log('🔄 MarketScreen: Loading configs...');
       
       // 并行初始化配置服务和获取配置
-      const [_, headerTitleConfig, searchPlaceholderConfig, favoritesTitleConfig, allCoinsTitleConfig, listHeadersConfig, listHeadersEnabledConfig, pageSizeConfig, favoritesExpandedConfig, favoritesSortConfig, marketListLabelsConfig] = await Promise.all([
+      const [_, headerTitleConfig, searchPlaceholderConfig, favoritesTitleConfig, allCoinsTitleConfig, pageSizeConfig, favoritesExpandedConfig, favoritesSortConfig, marketListLabelsConfig] = await Promise.all([
         // 确保ConfigService完全初始化
         configService.init(),
         // 并行获取所有配置
@@ -750,8 +749,7 @@ const MarketScreen = () => {
         configService.getConfig('MARKET_SEARCH_PLACEHOLDER', '搜索美股...'), // 美股APP搜索提示
         configService.getConfig('MARKET_FAVORITES_TITLE', '我的自选'),
         configService.getConfig('MARKET_ALL_COINS_TITLE', '全部股票'),
-        configService.getConfig('MARKET_LIST_HEADERS', '#,名称,价格/24h'),
-        configService.getConfig('MARKET_LIST_HEADERS_ENABLE', 'false'),
+        // REMOVED: MARKET_LIST_HEADERS and MARKET_LIST_HEADERS_ENABLE configs
         configService.getConfig('MARKET_PAGE_SIZE', '100'),
         configService.getConfig('MARKET_FAVORITES_DEFAULT_EXPANDED', 'false'),
         configService.getConfig('MARKET_FAVORITES_DEFAULT_SORT', 'none'),
@@ -774,14 +772,7 @@ const MarketScreen = () => {
       setFavoritesTitle(favoritesTitleConfig);
       setAllStocksTitle(allCoinsTitleConfig);
       
-      // 解析列表头部配置
-      const headers = listHeadersConfig.split(',').map(header => header.trim()).filter(header => header.length > 0);
-      const finalHeaders = headers.length >= 3 ? headers.slice(0, 3) : ['#', '名称', '价格/24h'];
-      setListHeaders(finalHeaders);
-      
-      // 设置列表头部显示开关
-      const headersEnabled = listHeadersEnabledConfig.toLowerCase() === 'true';
-      setListHeadersEnabled(headersEnabled);
+      // REMOVED: List headers configuration - headers are now always shown with fixed content
       
       // 获取性能配置
       const parsedPageSize = parseInt(pageSizeConfig, 10);
@@ -843,8 +834,7 @@ const MarketScreen = () => {
         searchPlaceholder: searchPlaceholderConfig,
         favoritesTitle: favoritesTitleConfig,
         allStocksTitle: allCoinsTitleConfig,
-        listHeaders: finalHeaders,
-        listHeadersEnabled: headersEnabled,
+        // REMOVED: listHeaders and listHeadersEnabled
         marketListLabels: marketListLabels
       });
       
@@ -861,8 +851,7 @@ const MarketScreen = () => {
       setSearchPlaceholder('搜索美股...');  // 美股APP默认搜索提示
       setFavoritesTitle('我的自选');
       setAllStocksTitle('全部股票');
-      setListHeaders(['#', '名称', '价格/24h']);
-      setListHeadersEnabled(true); // 默认显示表头
+      // REMOVED: setListHeaders and setListHeadersEnabled - headers always shown
       setPageSize(100);
       setIsFavoritesExpanded(false);
       setFavoritesSortOrder('none');
@@ -1990,13 +1979,11 @@ const MarketScreen = () => {
     // 使用骨架屏替代简单的loading指示器，提供更好的用户体验
     return (
       <View style={styles.container}>
-        {listHeadersEnabled && (
-          <View style={styles.listHeader}>
-            <Text style={styles.rankHeader}>{getMarketLabel('rank')}</Text>
-            <Text style={styles.nameHeader}>{getMarketLabel('name')}</Text>
-            <Text style={styles.priceHeader}>{getMarketLabel('currentPrice')}/{getMarketLabel('priceChangePercent')}</Text>
-          </View>
-        )}
+        <View style={styles.listHeader}>
+          <Text style={styles.rankHeader}>{getMarketLabel('rank')}</Text>
+          <Text style={styles.nameHeader}>{getMarketLabel('name')}</Text>
+          <Text style={styles.priceHeader}>{getMarketLabel('currentPrice')}/{getMarketLabel('priceChangePercent')}</Text>
+        </View>
         <SkeletonList count={15} />
       </View>
     );
@@ -2164,13 +2151,11 @@ const MarketScreen = () => {
           onEndReached={searchText ? undefined : loadMore}
           onEndReachedThreshold={0.3}
           ListHeaderComponent={
-            listHeadersEnabled ? (
-              <View style={styles.listHeader}>
-                <Text style={styles.rankHeader}>{getMarketLabel('rank')}</Text>
-                <Text style={styles.nameHeader}>{getMarketLabel('name')}</Text>
-                <Text style={styles.priceHeader}>{getMarketLabel('currentPrice')}/{getMarketLabel('priceChangePercent')}</Text>
-              </View>
-            ) : null
+            <View style={styles.listHeader}>
+              <Text style={styles.rankHeader}>{getMarketLabel('rank')}</Text>
+              <Text style={styles.nameHeader}>{getMarketLabel('name')}</Text>
+              <Text style={styles.priceHeader}>{getMarketLabel('currentPrice')}/{getMarketLabel('priceChangePercent')}</Text>
+            </View>
           }
           ListFooterComponent={searchText ? null : renderFooter}
           ListEmptyComponent={renderEmpty}
