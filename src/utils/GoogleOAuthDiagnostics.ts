@@ -122,7 +122,7 @@ class GoogleOAuthDiagnostics {
       ],
       authorizedDomains: [
         'http://localhost:8081 (开发环境)',
-        'https://app.chainalert.me (生产环境)',
+        'https://xmb.chainalert.me (生产环境)',
         'https://chainalert.me (主域名)'
       ]
     };
@@ -142,10 +142,10 @@ class GoogleOAuthDiagnostics {
       webClientId: '你的Google客户端ID.apps.googleusercontent.com',
       authorizedJavaScriptOrigins: isLocalhost 
         ? ['http://localhost:8081', 'http://localhost:3000']
-        : ['https://app.chainalert.me', 'https://chainalert.me'],
+        : ['https://xmb.chainalert.me', 'https://chainalert.me'],
       authorizedRedirectURIs: isLocalhost
         ? ['http://localhost:8081/auth/callback', 'http://localhost:8081']
-        : ['https://app.chainalert.me/auth/callback', 'https://app.chainalert.me']
+        : ['https://xmb.chainalert.me/auth/callback', 'https://xmb.chainalert.me']
     };
   }
 

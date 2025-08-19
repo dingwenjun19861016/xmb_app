@@ -258,14 +258,14 @@ self.addEventListener('fetch', (event) => {
                 
                 <div class="backup-links">
                   <h3>🔄 备用接入点</h3>
-                  <a href="https://app.chainalert.me" class="backup-link primary">
-                    主接入点：app.chainalert.me
+                  <a href="https://xmb.chainalert.me" class="backup-link primary">
+                    xmb.chainalert.me
                   </a>
-                  <a href="https://app.gostake.io" class="backup-link">
-                    备用接入点1：app.gostake.io
+                  <a href="https://xmb.gostake.io" class="backup-link">
+                    xmb.gostake.io
                   </a>
-                  <a href="https://app.airdrophunt.me" class="backup-link">
-                    备用接入点2：app.airdrophunt.me
+                  <a href="https://xmb.airdrophunt.me" class="backup-link">
+                    xmb.airdrophunt.me
                   </a>
                 </div>
                 
@@ -282,9 +282,9 @@ self.addEventListener('fetch', (event) => {
                 // 自动检测并跳转到可用的域名
                 async function autoSwitch() {
                   const domains = [
-                    'https://app.gostake.io', 
-                    'https://app.chainalert.me',
-                    'https://app.airdrophunt.me'
+                    'https://xmb.gostake.io', 
+                    'https://xmb.chainalert.me',
+                    'https://xmb.airdrophunt.me'
                   ];
                   
                   for (const domain of domains) {

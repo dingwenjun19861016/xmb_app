@@ -25,7 +25,7 @@ const IS_TEST =
 // 域名配置
 export const domains = {
   main: 'chainalert.me',
-  webapp: 'app.chainalert.me',
+  webapp: 'xmb.chainalert.me',
   api: 'api.chainalert.me',
   test: 'localhost:8081'
 };
