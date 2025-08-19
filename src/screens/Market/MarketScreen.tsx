@@ -514,7 +514,7 @@ const MarketScreen = () => {
   const [headerTitle, setHeaderTitle] = useState('行情');
   const [searchPlaceholder, setSearchPlaceholder] = useState('搜索股票...');
   const [favoritesTitle, setFavoritesTitle] = useState('我的自选');
-  const [allStocksTitle, setAllStocksTitle] = useState('全部股票');
+  // REMOVED: allStocksTitle - now uses fixed text "全部股票"
   // REMOVED: listHeaders and listHeadersEnabled - headers are now always shown with fixed content
   
   // 市场列表标签配置状态 - 从后端MARKET_LIST_LABEL获取，包含各字段的显示名称
@@ -741,14 +741,14 @@ const MarketScreen = () => {
       console.log('🔄 MarketScreen: Loading configs...');
       
       // 并行初始化配置服务和获取配置
-      const [_, headerTitleConfig, searchPlaceholderConfig, favoritesTitleConfig, allCoinsTitleConfig, pageSizeConfig, favoritesExpandedConfig, favoritesSortConfig, marketListLabelsConfig] = await Promise.all([
+      const [_, headerTitleConfig, searchPlaceholderConfig, favoritesTitleConfig, pageSizeConfig, favoritesExpandedConfig, favoritesSortConfig, marketListLabelsConfig] = await Promise.all([
         // 确保ConfigService完全初始化
         configService.init(),
         // 并行获取所有配置
         configService.getConfig('MARKET_HEADER_TITLE', '行情'),
         configService.getConfig('MARKET_SEARCH_PLACEHOLDER', '搜索美股...'), // 美股APP搜索提示
         configService.getConfig('MARKET_FAVORITES_TITLE', '我的自选'),
-        configService.getConfig('MARKET_ALL_COINS_TITLE', '全部股票'),
+        // REMOVED: MARKET_ALL_COINS_TITLE config
         // REMOVED: MARKET_LIST_HEADERS and MARKET_LIST_HEADERS_ENABLE configs
         configService.getConfig('MARKET_PAGE_SIZE', '100'),
         configService.getConfig('MARKET_FAVORITES_DEFAULT_EXPANDED', 'false'),
@@ -770,7 +770,7 @@ const MarketScreen = () => {
       setHeaderTitle(headerTitleConfig);
       setSearchPlaceholder(searchPlaceholderConfig);
       setFavoritesTitle(favoritesTitleConfig);
-      setAllStocksTitle(allCoinsTitleConfig);
+      // REMOVED: setAllStocksTitle - now uses fixed text "全部股票"
       
       // REMOVED: List headers configuration - headers are now always shown with fixed content
       
@@ -833,7 +833,7 @@ const MarketScreen = () => {
         headerTitle: headerTitleConfig,
         searchPlaceholder: searchPlaceholderConfig,
         favoritesTitle: favoritesTitleConfig,
-        allStocksTitle: allCoinsTitleConfig,
+        // REMOVED: allStocksTitle - now uses fixed text "全部股票"
         // REMOVED: listHeaders and listHeadersEnabled
         marketListLabels: marketListLabels
       });
@@ -850,7 +850,7 @@ const MarketScreen = () => {
       setHeaderTitle('行情');
       setSearchPlaceholder('搜索美股...');  // 美股APP默认搜索提示
       setFavoritesTitle('我的自选');
-      setAllStocksTitle('全部股票');
+      // REMOVED: setAllStocksTitle - now uses fixed text "全部股票"
       // REMOVED: setListHeaders and setListHeadersEnabled - headers always shown
       setPageSize(100);
       setIsFavoritesExpanded(false);
@@ -1922,7 +1922,7 @@ const MarketScreen = () => {
     if (others.length > 0) {
       if (favorites.length > 0) {
         // 美股APP简化：统一显示标题
-        const headerTitle = allStocksTitle;
+        const headerTitle = '全部股票'; // FIXED: Now uses fixed text instead of config
         const headerIcon = 'list';
         
         data.push({

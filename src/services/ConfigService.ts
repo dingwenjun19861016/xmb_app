@@ -107,24 +107,8 @@ class ConfigService {
       this.lastFetchTime = Date.now();
       console.log(`✅ ConfigService: Loaded ${configs.length} configs`);
       
-      // 显示所有MARKET_LIST相关的配置
-      const marketListConfigs: ConfigItem[] = [];
-      this.configCache.forEach((config, key) => {
-        if (key.startsWith('MARKET_LIST')) {
-          marketListConfigs.push(config);
-        }
-      });
+      // REMOVED: MARKET_LIST configuration display logic
       
-      if (marketListConfigs.length > 0) {
-        console.log('🎯 ConfigService: MARKET_LIST configs found:', marketListConfigs.length);
-        marketListConfigs
-          .sort((a, b) => a.key.localeCompare(b.key))
-          .forEach(config => {
-            console.log(`   ${config.key}: "${config.value}"`);
-          });
-      } else {
-        console.warn('⚠️ ConfigService: No MARKET_LIST configs found!');
-      }
     } catch (error) {
       console.error('❌ ConfigService: Failed to fetch configs:', error);
       // 出错时不更新lastFetchTime，允许下次再次尝试
