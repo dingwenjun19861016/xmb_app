@@ -38,7 +38,7 @@ const webAppURLs = {
 
 // 资源URL配置
 export const resourceURLs = {
-  logo: `https://${domains.main}/images/logo.png`,
+  logo: `https://${domains.main}/images/xmb-logo.png`, // 更新为股票应用专用logo
   favicon: `https://${domains.main}/favicon.ico`,
   appleIcon: `https://${domains.main}/apple-touch-icon-152x152.png`,
   placeholder: `https://${domains.main}/images/placeholder.jpg`
