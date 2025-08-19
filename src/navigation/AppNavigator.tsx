@@ -220,15 +220,24 @@ const AppNavigator = () => {
 
           return <Ionicons name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: '#0056CC',
-        tabBarInactiveTintColor: 'gray',
+        tabBarActiveTintColor: '#1976D2', // 活跃状态使用金融蓝色
+        tabBarInactiveTintColor: '#78909C', // 非活跃状态使用蓝灰色
         tabBarStyle: {
+          backgroundColor: '#FFFFFF', // 白色背景
           paddingBottom: 5,
-          height: 60
+          height: 60,
+          borderTopWidth: 2,
+          borderTopColor: '#E3F2FD', // 浅蓝色上边框
+          shadowColor: '#1565C0', // 蓝色阴影
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.08,
+          shadowRadius: 8,
+          elevation: 8,
         },
         tabBarLabelStyle: {
           fontSize: 12,
-          paddingBottom: 5
+          paddingBottom: 5,
+          fontWeight: '600',
         }
       })}
     >

@@ -242,7 +242,7 @@ const StockOverview: React.FC<StockOverviewProps> = ({
       <Animated.View 
         style={[
           {
-            backgroundColor: '#E1E9EE',
+            backgroundColor: '#E3F2FD', // 浅蓝色骨架，与主题一致
             width,
             height,
             borderRadius,

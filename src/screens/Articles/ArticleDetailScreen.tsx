@@ -599,7 +599,7 @@ const ArticleDetailScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F8FAFE', // 浅蓝色背景，与主题一致
   },
   header: {
     flexDirection: 'row',
@@ -608,7 +608,7 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'ios' ? 44 : 24, // 减少头部高度，与其他屏幕保持一致
     paddingBottom: 15,
     paddingHorizontal: 15,
-    backgroundColor: '#0056CC',
+    backgroundColor: '#1976D2', // 金融蓝色，与主题一致
   },
   headerTitle: {
     fontSize: 18,

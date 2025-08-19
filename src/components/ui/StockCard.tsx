@@ -516,17 +516,17 @@ const styles = StyleSheet.create({
   },
   stockLogo: {
     marginRight: 12, // 增加与右侧内容的间距
-    backgroundColor: '#F0F0F0',
+    backgroundColor: '#F8FAFE', // 浅蓝色背景，与主题一致
   },
   placeholderLogo: {
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#E0E0E0',
+    backgroundColor: '#E3F2FD', // 浅蓝色背景，与主题一致
   },
   loadingLogo: {
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F8FAFE', // 浅蓝色背景，与主题一致
   },
   loadingText: {
     fontSize: 16,

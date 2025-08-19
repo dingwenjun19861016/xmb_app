@@ -410,7 +410,7 @@ const styles = StyleSheet.create({
   imagePlaceholder: {
     width: '100%',
     height: '100%',
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F8FAFE', // 浅蓝色背景，与主题一致
     justifyContent: 'center',
     alignItems: 'center',
   },

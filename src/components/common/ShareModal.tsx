@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F8FAFE', // 浅蓝色背景，与主题一致
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 1,

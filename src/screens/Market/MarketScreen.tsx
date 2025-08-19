@@ -130,17 +130,20 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   filtersContainer: {
-    backgroundColor: 'white',
-    paddingVertical: 12,
-    marginBottom: 8,
-    shadowColor: '#000',
+    backgroundColor: '#F8FAFE', // 浅蓝色背景，与其他部分保持一致
+    paddingVertical: 16,
+    paddingHorizontal: 4,
+    marginBottom: 2,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E3F2FD', // 浅蓝色边框
+    shadowColor: '#1976D2',
     shadowOffset: {
       width: 0,
-      height: 1,
+      height: 2,
     },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
     position: 'relative',
   },
   filtersWrapper: {

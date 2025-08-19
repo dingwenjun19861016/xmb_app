@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
     borderLeftColor: '#E0E0E0',
   },
   cancelButton: {
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F8FAFE', // 浅蓝色背景，与主题一致
   },
   destructiveButton: {
     backgroundColor: '#FF3B30',

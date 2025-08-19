@@ -226,7 +226,7 @@ const styles = StyleSheet.create({
     width: 88,
     height: 88,
     borderRadius: 12,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F8FAFE', // 浅蓝色背景，与主题一致
     borderWidth: 2,
     borderColor: '#E3F2FD',
   },

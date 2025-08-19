@@ -23,18 +23,29 @@ const PriceCard = ({ price, change, isPositive }: PriceCardProps) => {
 
 const styles = StyleSheet.create({
   priceCard: {
-    backgroundColor: 'white',
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 10,
+    backgroundColor: '#F8FAFE', // 浅蓝色背景，与主题一致
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 12,
+    shadowColor: '#1565C0', // 蓝色阴影
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 5,
+    borderWidth: 2,
+    borderColor: '#E3F2FD', // 浅蓝色边框
   },
   priceText: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#0D47A1', // 深蓝色文字
+    letterSpacing: 0.3,
   },
   changeText: {
-    fontSize: 16,
-    marginTop: 5,
+    fontSize: 15,
+    marginTop: 6,
+    fontWeight: '600',
+    letterSpacing: 0.2,
   },
 });
 

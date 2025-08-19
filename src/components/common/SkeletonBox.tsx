@@ -34,7 +34,7 @@ const SkeletonBox: React.FC<SkeletonBoxProps> = ({
           width,
           height,
           borderRadius,
-          backgroundColor: isHighlighted ? '#F5F5F5' : '#E0E0E0',
+          backgroundColor: isHighlighted ? '#F8FAFE' : '#E3F2FD', // 蓝色主题骨架
         },
         style,
       ]}
@@ -44,7 +44,7 @@ const SkeletonBox: React.FC<SkeletonBoxProps> = ({
 
 const styles = StyleSheet.create({
   skeleton: {
-    backgroundColor: '#E0E0E0',
+    backgroundColor: '#E3F2FD', // 浅蓝色骨架，与主题一致
   },
 });
 
