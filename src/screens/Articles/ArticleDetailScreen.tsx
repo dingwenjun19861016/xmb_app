@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { 
   View, 
   Text, 
@@ -10,10 +10,15 @@ import {
   ActivityIndicator,
   Linking,
   Platform,
-  Alert
+  Alert,
+  Modal,
+  TouchableWithoutFeedback,
+  Animated
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+// 新增手势缩放
+import { PinchGestureHandler, State } from 'react-native-gesture-handler';
 import Markdown from 'react-native-markdown-display';
 
 // Import services
@@ -80,24 +85,76 @@ const ArticleDetailScreen = () => {
   // 新增: 记录内容容器宽度用于按真实宽高比计算图片高度，避免宽屏裁剪
   const [contentWidth, setContentWidth] = useState(0);
   
-  // 计算图片高度：保持原图宽高比，仅调整高度，不裁剪
+  // ====== 图片全屏查看/缩放 ======
+  const [viewerVisible, setViewerVisible] = useState(false);
+  const [viewerIndex, setViewerIndex] = useState(0);
+  const scale = useRef(new Animated.Value(1)).current; // 当前缩放
+  const baseScaleRef = useRef(1); // 累积缩放
+  const lastTapRef = useRef(0);
+  
+  const imageUrls = useMemo(() => (article?.contents || []).filter(c => !!c.url).map(c => c.url), [article]);
+  
+  // ====== 图片宽高比计算参数 ======
+  const MIN_ASPECT = 0.40; // 最小显示高宽比，避免超宽图过扁 (h/w)
+  const MAX_HEIGHT_RATIO = 1.8; // 最大高度相对宽度比例，防止竖图过高
   const getImageCalculatedStyle = (url: string) => {
     const dims = imageDimensions[url];
     if (!dims || !contentWidth) {
-      return { height: 260 };
+      // 还未获取真实尺寸时给一个占位（16:9）高度，加载后会自动调整
+      return { aspectRatio: 16 / 9 } as any;
     }
-    // 原始高宽比
-    const ratio = dims.height / dims.width; // H/W
-    const maxH = Platform.OS === 'web' ? 720 : 560;
-    // 最小显示高宽比（避免超宽图过扁）: 0.40 表示高度至少为宽度的40%
-    const MIN_ASPECT = 0.40; // 可调整: 0.35~0.45 之间
-    const naturalHeight = contentWidth * ratio;
-    const minHeight = contentWidth * MIN_ASPECT;
-    // 目标高度：不低于最小显示高度，不超过最大高度
-    const targetHeight = Math.min(Math.max(naturalHeight, minHeight), maxH);
-    return { height: targetHeight };
+    let aspect = dims.height / dims.width; // 实际高宽比
+    if (aspect < MIN_ASPECT) aspect = MIN_ASPECT; // 保障最小高度
+    const calcHeight = contentWidth * aspect;
+    const maxHeight = contentWidth * MAX_HEIGHT_RATIO;
+    const finalHeight = Math.min(calcHeight, maxHeight);
+    return { height: finalHeight } as any;
   };
   
+  const openViewer = (url: string) => {
+    const idx = imageUrls.indexOf(url);
+    if (idx >= 0) {
+      setViewerIndex(idx);
+    } else {
+      setViewerIndex(0);
+    }
+    baseScaleRef.current = 1;
+    scale.setValue(1);
+    setViewerVisible(true);
+  };
+  
+  const closeViewer = () => {
+    setViewerVisible(false);
+    baseScaleRef.current = 1;
+    scale.setValue(1);
+  };
+  
+  const handleDoubleTap = () => {
+    const now = Date.now();
+    if (now - lastTapRef.current < 300) {
+      // 双击切换 1 与 2.5 倍
+      const next = baseScaleRef.current > 1 ? 1 : 2.5;
+      baseScaleRef.current = next;
+      Animated.timing(scale, { toValue: next, duration: 160, useNativeDriver: true }).start();
+    }
+    lastTapRef.current = now;
+  };
+  
+  const onPinchEvent = Animated.event([{ nativeEvent: { scale: scale } }], { useNativeDriver: true });
+  
+  const onPinchStateChange = (e: any) => {
+    if (e.nativeEvent.state === State.END || e.nativeEvent.state === State.CANCELLED) {
+      // 累积缩放并夹在区间
+      baseScaleRef.current = baseScaleRef.current * e.nativeEvent.scale;
+      if (baseScaleRef.current < 1) baseScaleRef.current = 1;
+      if (baseScaleRef.current > 4) baseScaleRef.current = 4;
+      Animated.timing(scale, { toValue: baseScaleRef.current, duration: 120, useNativeDriver: true }).start();
+    } else if (e.nativeEvent.state === State.BEGAN) {
+      // 开始手势时重置临时显示值到 1 (依附 baseScale)
+      scale.setValue(baseScaleRef.current);
+    }
+  };
+
   // Poster modal state
   const [showPosterModal, setShowPosterModal] = useState(false);
 
@@ -600,28 +657,27 @@ const ArticleDetailScreen = () => {
                   {/* 渲染图片 */}
                   {contentItem.url && !imageLoadFailed && (
                     <View style={styles.imageContainer} onLayout={e => {
-                      // 仅记录一次或当宽度变化显著时更新
                       const w = e.nativeEvent.layout.width;
                       if (Math.abs(w - contentWidth) > 2) setContentWidth(w);
                     }}>
-                      <Image
-                        source={{ uri: contentItem.url }}
-                        style={[
-                          styles.contentImage,
-                          getImageCalculatedStyle(contentItem.url)
-                        ]}
-                        onError={() => {
-                          console.warn(`图片加载失败: ${contentItem.url}`);
-                        }}
-                        onLoad={(event) => {
-                          const { width, height } = event.nativeEvent.source;
-                          setImageDimensions(prev => ({
-                            ...prev,
-                            [contentItem.url]: { width, height }
-                          }));
-                        }}
-                        resizeMode="contain" // 使用contain确保整张图完整显示，不裁剪
-                      />
+                      <TouchableOpacity activeOpacity={0.85} onPress={() => openViewer(contentItem.url)}>
+                        <Image
+                          source={{ uri: contentItem.url }}
+                          style={[
+                            styles.contentImage,
+                            getImageCalculatedStyle(contentItem.url)
+                          ]}
+                          onError={() => { console.warn(`图片加载失败: ${contentItem.url}`); }}
+                          onLoad={(event) => {
+                            const { width, height } = event.nativeEvent.source;
+                            setImageDimensions(prev => ({
+                              ...prev,
+                              [contentItem.url]: { width, height }
+                            }));
+                          }}
+                          resizeMode="contain"
+                        />
+                      </TouchableOpacity>
                     </View>
                   )}
                   
@@ -735,6 +791,50 @@ const ArticleDetailScreen = () => {
         onClose={() => setLoginModalVisible(false)}
         onLoginSuccess={handleLoginSuccess}
       />
+
+      {/* 图片查看器 Modal */}
+      <Modal visible={viewerVisible} transparent animationType="fade" onRequestClose={closeViewer}>
+        <View style={styles.viewerBackdrop}>
+          <View style={styles.viewerHeader}>
+            <TouchableOpacity onPress={closeViewer} style={styles.viewerCloseBtn}>
+              <Ionicons name="close" size={26} color="#fff" />
+            </TouchableOpacity>
+            <Text style={styles.viewerCounter}>{viewerIndex + 1}/{imageUrls.length}</Text>
+            <View style={{ width: 40 }} />
+          </View>
+          <View style={styles.viewerBody}>
+            <PinchGestureHandler onGestureEvent={onPinchEvent} onHandlerStateChange={onPinchStateChange}>
+              <Animated.View style={styles.viewerImageWrapper}>
+                <TouchableWithoutFeedback onPress={handleDoubleTap}>
+                  <Animated.Image
+                    source={{ uri: imageUrls[viewerIndex] }}
+                    style={[styles.viewerImage, { transform: [{ scale }] }]}
+                    resizeMode="contain"
+                  />
+                </TouchableWithoutFeedback>
+              </Animated.View>
+            </PinchGestureHandler>
+            {imageUrls.length > 1 && (
+              <>
+                <TouchableOpacity style={[styles.navBtn, styles.navLeft]} onPress={() => {
+                  const next = (viewerIndex - 1 + imageUrls.length) % imageUrls.length;
+                  setViewerIndex(next);
+                  baseScaleRef.current = 1; scale.setValue(1);
+                }}>
+                  <Ionicons name="chevron-back" size={30} color="#fff" />
+                </TouchableOpacity>
+                <TouchableOpacity style={[styles.navBtn, styles.navRight]} onPress={() => {
+                  const next = (viewerIndex + 1) % imageUrls.length;
+                  setViewerIndex(next);
+                  baseScaleRef.current = 1; scale.setValue(1);
+                }}>
+                  <Ionicons name="chevron-forward" size={30} color="#fff" />
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -867,18 +967,59 @@ const styles = StyleSheet.create({
   },
   contentImage: {
     width: '100%',
-    // 移除固定/最小高度由计算函数控制
     resizeMode: 'contain',
   },
-  embedContainer: {
-    marginTop: 16,
-    marginBottom: 16,
-    padding: 16,
-    backgroundColor: '#F8F9FA',
-    borderRadius: 8,
-    borderLeftWidth: 4,
-    borderLeftColor: '#007AFF',
+  // ====== Viewer Styles ======
+  viewerBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.95)',
   },
+  viewerHeader: {
+    paddingTop: Platform.OS === 'ios' ? 44 : 28,
+    paddingHorizontal: 12,
+    paddingBottom: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between'
+  },
+  viewerCloseBtn: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  viewerCounter: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600'
+  },
+  viewerBody: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  viewerImageWrapper: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center'
+  },
+  viewerImage: {
+    width: '100%',
+    height: '100%'
+  },
+  navBtn: {
+    position: 'absolute',
+    top: '50%',
+    marginTop: -30,
+    width: 54,
+    height: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.25)'
+  },
+  navLeft: { left: 0 },
+  navRight: { right: 0 },
 
   // Loading states
   loadingContainer: {
