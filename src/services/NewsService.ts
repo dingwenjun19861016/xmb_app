@@ -9,6 +9,7 @@ export interface NewsArticle {
   title: string;
   summary: string;
   content: string;
+  contents: ContentItem[]; // 添加原始contents数组
   date: string;
   author: string;
   image: string;
@@ -208,21 +209,32 @@ class NewsService {
    * @returns NewsArticle
    */
   private transformNewsData(rawData: RawNewsData): NewsArticle {
-    // 处理内容
-    const fullContent = rawData.contents
-      ? rawData.contents.map(item => item.content).join('\n\n')
-      : '';
+    // 处理内容 - 保留原始contents数组
+    const contentsArray = rawData.contents || [];
+    
+    // 合并所有content字段作为主要内容
+    const fullContent = contentsArray
+      .map(item => item.content)
+      .filter(content => content && content.trim())
+      .join('\n\n');
     
     // 处理摘要
-    const summary = rawData.contents && rawData.contents.length > 0
-      ? this.extractSummaryFromMarkdown(rawData.contents[0].content)
+    const summary = contentsArray.length > 0
+      ? this.extractSummaryFromMarkdown(contentsArray[0].content)
       : rawData.pathname || rawData.title || '暂无摘要';
     
     // 优先使用pathname作为标题，因为新API中pathname是正确的标题
     const title = rawData.pathname || rawData.title || '未知标题';
     
-    // 处理图片URL - 新API使用imageUrl字段
-    const imageUrl = this.getFullImageUrl(rawData.imageUrl || rawData.logourl);
+    // 处理图片URL - 优先使用contents中的第一个有效图片URL，其次是imageUrl
+    let primaryImageUrl = rawData.imageUrl || rawData.logourl;
+    for (const item of contentsArray) {
+      if (item.url && this.isValidImageUrl(item.url)) {
+        primaryImageUrl = item.url;
+        break;
+      }
+    }
+    const imageUrl = this.getFullImageUrl(primaryImageUrl);
     
     // 处理日期 - 新API使用createdAt
     const formattedDate = this.formatDate(rawData.createdAt || rawData.updatedAt);
@@ -238,6 +250,7 @@ class NewsService {
       title,
       summary,
       content: fullContent,
+      contents: contentsArray, // 保留原始contents数组供详情页使用
       date: formattedDate,
       author: '小目标',
       image: imageUrl,

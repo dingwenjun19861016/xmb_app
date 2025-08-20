@@ -76,6 +76,27 @@ const ArticleDetailScreen = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [imageLoadFailed, setImageLoadFailed] = useState(false);
+  const [imageDimensions, setImageDimensions] = useState<{[key: string]: {width: number, height: number}}>({});
+  // 新增: 记录内容容器宽度用于按真实宽高比计算图片高度，避免宽屏裁剪
+  const [contentWidth, setContentWidth] = useState(0);
+  
+  // 计算图片高度：保持原图宽高比，仅调整高度，不裁剪
+  const getImageCalculatedStyle = (url: string) => {
+    const dims = imageDimensions[url];
+    if (!dims || !contentWidth) {
+      return { height: 260 };
+    }
+    // 原始高宽比
+    const ratio = dims.height / dims.width; // H/W
+    const maxH = Platform.OS === 'web' ? 720 : 560;
+    // 最小显示高宽比（避免超宽图过扁）: 0.40 表示高度至少为宽度的40%
+    const MIN_ASPECT = 0.40; // 可调整: 0.35~0.45 之间
+    const naturalHeight = contentWidth * ratio;
+    const minHeight = contentWidth * MIN_ASPECT;
+    // 目标高度：不低于最小显示高度，不超过最大高度
+    const targetHeight = Math.min(Math.max(naturalHeight, minHeight), maxH);
+    return { height: targetHeight };
+  };
   
   // Poster modal state
   const [showPosterModal, setShowPosterModal] = useState(false);
@@ -564,9 +585,62 @@ const ArticleDetailScreen = () => {
           {/* Article Card */}
           <View style={styles.articleCard}>
             <Text style={styles.title}>{article.title}</Text>
-            <Markdown style={markdownStyles}>
-              {article.content}
-            </Markdown>
+            
+            {/* 循环渲染contents数组中的每个内容项 */}
+            {article.contents && article.contents.length > 0 ? (
+              article.contents.map((contentItem, index) => (
+                <View key={contentItem._id || index} style={styles.contentItem}>
+                  {/* 渲染文本内容 */}
+                  {contentItem.content && (
+                    <Markdown style={markdownStyles}>
+                      {contentItem.content}
+                    </Markdown>
+                  )}
+                  
+                  {/* 渲染图片 */}
+                  {contentItem.url && !imageLoadFailed && (
+                    <View style={styles.imageContainer} onLayout={e => {
+                      // 仅记录一次或当宽度变化显著时更新
+                      const w = e.nativeEvent.layout.width;
+                      if (Math.abs(w - contentWidth) > 2) setContentWidth(w);
+                    }}>
+                      <Image
+                        source={{ uri: contentItem.url }}
+                        style={[
+                          styles.contentImage,
+                          getImageCalculatedStyle(contentItem.url)
+                        ]}
+                        onError={() => {
+                          console.warn(`图片加载失败: ${contentItem.url}`);
+                        }}
+                        onLoad={(event) => {
+                          const { width, height } = event.nativeEvent.source;
+                          setImageDimensions(prev => ({
+                            ...prev,
+                            [contentItem.url]: { width, height }
+                          }));
+                        }}
+                        resizeMode="contain" // 使用contain确保整张图完整显示，不裁剪
+                      />
+                    </View>
+                  )}
+                  
+                  {/* 渲染嵌入内容 */}
+                  {contentItem.embed && (
+                    <View style={styles.embedContainer}>
+                      <Markdown style={markdownStyles}>
+                        {contentItem.embed}
+                      </Markdown>
+                    </View>
+                  )}
+                </View>
+              ))
+            ) : (
+              // 如果没有contents数组，使用原来的content字段
+              <Markdown style={markdownStyles}>
+                {article.content}
+              </Markdown>
+            )}
           </View>
         </View>
 
@@ -780,36 +854,30 @@ const styles = StyleSheet.create({
     lineHeight: 28,
     marginBottom: 16,
   },
-
-  coverImage: {
+  
+  // 新增样式用于contents数组的富媒体内容
+  contentItem: {
+    marginBottom: 16,
+  },
+  imageContainer: {
+    marginTop: 16,
+    marginBottom: 16,
+    borderRadius: 8,
+    overflow: 'hidden',
+  },
+  contentImage: {
     width: '100%',
-    height: 220,
-    resizeMode: 'cover',
-    // 移除背景色，让图片区域在无图片时完全透明
+    // 移除固定/最小高度由计算函数控制
+    resizeMode: 'contain',
   },
-  articleHeader: {
-    backgroundColor: 'white',
-    paddingHorizontal: 20,
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-  },
-  categoryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  date: {
-    fontSize: 14,
-    color: '#999',
-  },
-
-  summary: {
-    fontSize: 16,
-    color: '#666',
-    lineHeight: 22,
-    marginBottom: 15,
+  embedContainer: {
+    marginTop: 16,
+    marginBottom: 16,
+    padding: 16,
+    backgroundColor: '#F8F9FA',
+    borderRadius: 8,
+    borderLeftWidth: 4,
+    borderLeftColor: '#007AFF',
   },
 
   // Loading states
