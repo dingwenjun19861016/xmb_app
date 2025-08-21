@@ -677,12 +677,102 @@ const MarketScreen = () => {
     return transformedStocks;
   };
 
+  // 客户端排序函数 - 确保数据排序正确
+  const sortStocksClientSide = (stocks: StockCardData[], sortField: string, sortOrder: 'asc' | 'desc'): StockCardData[] => {
+    if (!stocks || stocks.length === 0) return stocks;
+    
+    console.log('🔄 MarketScreen: 客户端排序', { sortField, sortOrder, stocksCount: stocks.length });
+    
+    return [...stocks].sort((a, b) => {
+      let aValue: number | string = 0;
+      let bValue: number | string = 0;
+      
+      switch (sortField) {
+        case 'rank':
+          // 确保rank字段为数字类型排序
+          aValue = parseInt(a.rank?.toString() || '999999') || 999999;
+          bValue = parseInt(b.rank?.toString() || '999999') || 999999;
+          console.log('🔢 排序rank:', { aRank: aValue, bRank: bValue, aName: a.name, bName: b.name });
+          break;
+        case 'currentPrice':
+          aValue = parseFloat(a.price.replace(/[$,]/g, '')) || 0;
+          bValue = parseFloat(b.price.replace(/[$,]/g, '')) || 0;
+          break;
+        case 'volume':
+          aValue = parseFloat((a.volume || '0').toString().replace(/[$,]/g, '')) || 0;
+          bValue = parseFloat((b.volume || '0').toString().replace(/[$,]/g, '')) || 0;
+          break;
+        case 'marketcap':
+        case 'marketCap':
+          aValue = parseFloat((a.marketCap || '0').toString().replace(/[$,]/g, '')) || 0;
+          bValue = parseFloat((b.marketCap || '0').toString().replace(/[$,]/g, '')) || 0;
+          break;
+        case 'priceChangePercent':
+          // 处理涨跌幅，去除%符号
+          aValue = parseFloat((a.change || '0').replace(/[%+\-]/g, '')) || 0;
+          bValue = parseFloat((b.change || '0').replace(/[%+\-]/g, '')) || 0;
+          // 如果包含负号，转为负数
+          if (a.change?.includes('-')) aValue = -Math.abs(aValue);
+          if (b.change?.includes('-')) bValue = -Math.abs(bValue);
+          break;
+        default:
+          // 默认按rank排序
+          aValue = parseInt(a.rank?.toString() || '999999') || 999999;
+          bValue = parseInt(b.rank?.toString() || '999999') || 999999;
+          break;
+      }
+      
+      // 执行排序
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        const result = sortOrder === 'asc' ? aValue - bValue : bValue - aValue;
+        return result;
+      } else {
+        // 字符串排序
+        const aStr = aValue.toString();
+        const bStr = bValue.toString();
+        return sortOrder === 'asc' ? aStr.localeCompare(bStr) : bStr.localeCompare(aStr);
+      }
+    });
+  };
+
   // 获取排序参数 - 美股APP专用
   const getSortParams = () => {
-    // 使用当前选中的过滤字段和排序方向
+    // 修复排序参数映射，确保与后端API一致
+    let apiSortField = selectedSortField;
+    let apiSortOrder = selectedSortOrder;
+    
+    // 字段映射：将前端字段名映射为后端API字段名
+    switch (selectedSortField) {
+      case 'rank':
+        apiSortField = 'rank'; // 排名字段
+        break;
+      case 'currentPrice':
+        apiSortField = 'currentPrice'; // 价格字段
+        break;
+      case 'volume':
+        apiSortField = 'volume'; // 成交量字段  
+        break;
+      case 'marketcap':
+        apiSortField = 'marketCap'; // 市值字段
+        break;
+      case 'priceChangePercent':
+        apiSortField = 'priceChangePercent'; // 涨跌幅字段
+        break;
+      default:
+        apiSortField = 'rank'; // 默认按排名排序
+        break;
+    }
+    
+    console.log('🔄 MarketScreen: getSortParams', { 
+      selectedSortField, 
+      selectedSortOrder, 
+      apiSortField, 
+      apiSortOrder 
+    });
+    
     return { 
-      sortBy: selectedSortField as const, 
-      sortOrder: selectedSortOrder as const 
+      sortBy: apiSortField, 
+      sortOrder: apiSortOrder 
     };
   };
 
@@ -985,11 +1075,28 @@ const MarketScreen = () => {
           console.log(`✅ Transformed stock24h length: ${transformedStocks[0].stock24h?.length || 0}`);
         }
         
-        // 更新股票列表 - 简单追加方式，保持后端API的排序
+        // 客户端排序验证和修正 - 确保数据正确排序
+        const { sortBy, sortOrder: apiSortOrder } = getSortParams();
+        const sortedTransformedStocks = sortStocksClientSide(transformedStocks, sortBy, apiSortOrder);
+        
+        // 更新股票列表 - 使用排序后的数据
         if (isNewSession && batchIndex === 0) {
-          setUsStocks(transformedStocks);
+          setUsStocks(sortedTransformedStocks);
         } else {
-          setUsStocks(prev => [...prev, ...transformedStocks]);
+          setUsStocks(prev => {
+            const combined = [...prev, ...sortedTransformedStocks];
+            // 合并后再次排序，确保整体顺序正确
+            const resorted = sortStocksClientSide(combined, sortBy, apiSortOrder);
+            console.log('🔄 MarketScreen: 合并后重新排序(旧方法)', { 
+              prevCount: prev.length, 
+              newCount: sortedTransformedStocks.length, 
+              totalCount: combined.length,
+              sortedCount: resorted.length,
+              sortBy,
+              apiSortOrder
+            });
+            return resorted;
+          });
         }
         
         console.log(`✅ MarketScreen: Stock batch ${batchIndex} loaded successfully, ${transformedStocks.length} stocks`);
@@ -1154,10 +1261,26 @@ const MarketScreen = () => {
         
         const transformedStocks = await transformStockData(stockDataFormat, false);
         
+        // 客户端排序验证和修正 - 确保数据正确排序
+        const sortedTransformedStocks = sortStocksClientSide(transformedStocks, sortField, sortOrder);
+        
         if (isNewSession && batchIndex === 0) {
-          setUsStocks(transformedStocks);
+          setUsStocks(sortedTransformedStocks);
         } else {
-          setUsStocks(prev => [...prev, ...transformedStocks]);
+          setUsStocks(prev => {
+            const combined = [...prev, ...sortedTransformedStocks];
+            // 合并后再次排序，确保整体顺序正确
+            const reorted = sortStocksClientSide(combined, sortField, sortOrder);
+            console.log('🔄 MarketScreen: 合并后重新排序', { 
+              prevCount: prev.length, 
+              newCount: sortedTransformedStocks.length, 
+              totalCount: combined.length,
+              sortedCount: reorted.length,
+              sortField,
+              sortOrder
+            });
+            return reorted;
+          });
         }
         
         console.log(`✅ MarketScreen: Stock batch ${batchIndex} loaded successfully with sort, ${transformedStocks.length} stocks`);
@@ -1463,6 +1586,40 @@ const MarketScreen = () => {
       return () => clearTimeout(timeoutId);
     }
   }, [stockRealTimePrices, stockPriceChanges, searchResults.length, usStocks.length, favoriteStocksData.length]);
+
+  // 排序验证和修正 - 确保usStocks数据始终正确排序
+  useEffect(() => {
+    if (usStocks.length > 0 && !isProgressiveLoading) {
+      const { sortBy, sortOrder } = getSortParams();
+      
+      // 检查当前数据是否已正确排序
+      const shouldSort = usStocks.some((stock, index) => {
+        if (index === 0) return false;
+        const prevStock = usStocks[index - 1];
+        
+        if (sortBy === 'rank') {
+          const prevRank = parseInt(prevStock.rank?.toString() || '999999') || 999999;
+          const currentRank = parseInt(stock.rank?.toString() || '999999') || 999999;
+          
+          if (sortOrder === 'asc') {
+            return prevRank > currentRank; // 如果前一个排名大于当前排名，说明排序错误
+          } else {
+            return prevRank < currentRank; // 如果前一个排名小于当前排名，说明排序错误
+          }
+        }
+        
+        return false;
+      });
+      
+      if (shouldSort) {
+        console.log('⚠️ MarketScreen: 检测到排序错误，重新排序', { sortBy, sortOrder, stocksCount: usStocks.length });
+        const sortedStocks = sortStocksClientSide(usStocks, sortBy, sortOrder);
+        setUsStocks(sortedStocks);
+      } else {
+        console.log('✅ MarketScreen: 数据排序正确', { sortBy, sortOrder, stocksCount: usStocks.length });
+      }
+    }
+  }, [usStocks, selectedSortField, selectedSortOrder, isProgressiveLoading]);
 
   // 根据搜索状态决定显示的币种列表
   const displayStocks = useMemo(() => {
