@@ -192,11 +192,11 @@ class MarketService {
         currentPrice: stock.currentPrice,
         priceChange24h: stock.priceChangePercent,
         priceChangePercent: stock.priceChangePercent,
-        marketcap: stock.baseinfo?.marketCap || stock.marketCap || '',
-        volume: stock.baseinfo?.volume || stock.volume || '',
-        fdv: stock.baseinfo?.marketCap || stock.marketCap || '',
-        totalSupply: stock.baseinfo?.sharesOutstanding || '',
-        circulatingSupply: stock.baseinfo?.sharesOutstanding || '',
+        marketcap: stock.marketcap,
+        volume: stock.volume,
+        fdv: stock.fdv,
+        totalSupply: stock.totalSupply,
+        circulatingSupply: stock.circulatingSupply,
         description: `${stock.name} (${stock.code}) - ${stock.sector}`,
         logo: stockLogoService.getLogoUrlSync(stock.code),
         cexInfos: [],
@@ -460,7 +460,7 @@ class MarketService {
         currentPrice: stock.currentPrice,
         priceChange24h: stock.priceChange24h,
         priceChangePercent: stock.priceChangePercent,
-        marketCap: stock.marketcap,
+        marketcap: stock.marketcap,
         volume: stock.volume,
         fdv: stock.fdv,
         totalSupply: stock.totalSupply,
@@ -473,7 +473,7 @@ class MarketService {
         date: stock.date,
         updated_at: stock.updated_at,
         coin24h: stock.usstock24h?.map(item => ({
-          price: item.price,
+          price: parseFloat(item.price), // 转换string为number
           createdAt: item.createdAt
         })) || []
       }));
@@ -517,9 +517,9 @@ class MarketService {
         currentPrice: stock.currentPrice,
         priceChange24h: stock.priceChangePercent,
         priceChangePercent: stock.priceChangePercent,
-        marketCap: stock.baseinfo?.marketCap || stock.marketCap || '',
-        volume: stock.baseinfo?.volume || stock.volume || '',
-        fdv: stock.baseinfo?.marketCap || stock.marketCap || '',
+        marketcap: stock.marketCap, // StockData使用marketCap字段
+        volume: stock.volume,
+        fdv: stock.marketCap, // 使用marketCap作为FDV
         totalSupply: stock.baseinfo?.sharesOutstanding || '',
         circulatingSupply: stock.baseinfo?.sharesOutstanding || '',
         description: `${stock.name} (${stock.code}) - ${stock.sector}`,
@@ -530,7 +530,7 @@ class MarketService {
         date: stock.date,
         updated_at: stock.updated_at,
         coin24h: stock.usstock24h?.map(item => ({
-          price: item.price,
+          price: parseFloat(item.price), // 转换为number类型
           createdAt: item.createdAt
         })) || []
       }));

@@ -8,6 +8,7 @@ import { UserProvider } from './src/contexts/UserContext';
 import AppNavigator from './src/navigation/AppNavigator';
 import linking from './src/navigation/LinkingConfiguration';
 import configService from './src/services/ConfigService';
+import apiPreloadManager from './src/services/APIPreloadManager';
 import serviceWorkerManager from './src/services/ServiceWorkerManager';
 
 const App = () => {
@@ -26,12 +27,21 @@ const App = () => {
   const isWideScreen = Platform.OS === 'web' && screenData.width > 1000;
 
   useEffect(() => {
-    // 初始化配置服务
+    // 初始化配置服务和预加载
     const initializeApp = async () => {
       try {
         // console.log('🔄 App: Initializing ConfigService...');
         await configService.init();
         // console.log('✅ App: ConfigService initialized successfully');
+        
+        // 配置初始化完成后，启动API预加载
+        const delay = apiPreloadManager.getRecommendedDelay();
+        setTimeout(() => {
+          apiPreloadManager.startMarketDataPreload().catch(error => {
+            console.error('❌ App: API预加载失败:', error);
+          });
+        }, delay);
+        
       } catch (error) {
         console.error('❌ App: Failed to initialize ConfigService:', error);
       }
