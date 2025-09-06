@@ -122,8 +122,8 @@ const UserStockScreen: React.FC = () => {
   const [favoriteArticlesError, setFavoriteArticlesError] = useState<string | null>(null);
   
   // 收起/展开状态
-  const [favoriteStocksCollapsed, setFavoriteStocksCollapsed] = useState(false);
-  const [favoriteArticlesCollapsed, setFavoriteArticlesCollapsed] = useState(false);
+  const [favoriteStocksCollapsed, setFavoriteStocksCollapsed] = useState(true);
+  const [favoriteArticlesCollapsed, setFavoriteArticlesCollapsed] = useState(true);
   
   // 排序相关状态
   const [selectedSortField, setSelectedSortField] = useState<'default' | 'price' | 'change' | 'peRatio' | 'volume'>('default');
