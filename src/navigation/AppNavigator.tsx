@@ -227,7 +227,7 @@ const AppNavigator = () => {
         tabBarStyle: {
           backgroundColor: '#FFFFFF', // 白色背景
           paddingBottom: 5,
-          height: 60,
+          height: 78, // 增加30%: 60 * 1.3 = 78
           borderTopWidth: 2,
           borderTopColor: '#E3F2FD', // 浅蓝色上边框
           shadowColor: '#1565C0', // 蓝色阴影
