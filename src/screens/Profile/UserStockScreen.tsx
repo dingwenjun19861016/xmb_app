@@ -12,6 +12,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import userStockService from '../../services/UserStockService';
+import userArticleService, { FavoriteArticle } from '../../services/UserArticleService';
 import { useUser } from '../../contexts/UserContext';
 import StockCard, { StockCardData } from '../../components/ui/StockCard';
 import stockService from '../../services/StockService';
@@ -39,6 +40,72 @@ interface FavoriteStockItem {
   updated_at: string;
 }
 
+// 文章卡片组件
+const ArticleCard: React.FC<{
+  article: FavoriteArticle;
+  onPress: () => void;
+  onRemove?: (article: FavoriteArticle) => void;
+  showRemoveButton?: boolean;
+}> = ({ article, onPress, onRemove, showRemoveButton = false }) => {
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffInMs = now.getTime() - date.getTime();
+      const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+      const diffInDays = Math.floor(diffInHours / 24);
+      
+      if (diffInHours < 1) {
+        return '刚刚';
+      } else if (diffInHours < 24) {
+        return `${diffInHours}小时前`;
+      } else if (diffInDays < 7) {
+        return `${diffInDays}天前`;
+      } else {
+        return date.toLocaleDateString('zh-CN');
+      }
+    } catch (error) {
+      return '未知时间';
+    }
+  };
+
+  return (
+    <TouchableOpacity style={styles.articleCard} onPress={onPress} activeOpacity={0.7}>
+      <View style={styles.articleContent}>
+        <Text style={styles.articleTitle} numberOfLines={2}>
+          {article.title}
+        </Text>
+        <Text style={styles.articleDate}>
+          {formatDate(article.date)}
+        </Text>
+      </View>
+      <View style={styles.articleActions}>
+        {showRemoveButton && onRemove && (
+          <TouchableOpacity 
+            style={[styles.favoriteButton, { backgroundColor: UI_COLORS.danger }]}
+            onPress={() => onRemove(article)}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="trash-outline" size={16} color="white" />
+          </TouchableOpacity>
+        )}
+        <Ionicons name="chevron-forward" size={20} color={UI_COLORS.secondaryText} />
+      </View>
+    </TouchableOpacity>
+  );
+};
+
+// 骨架屏组件
+const SkeletonCard: React.FC = () => (
+  <View style={styles.skeletonCard}>
+    <View style={styles.skeletonContent}>
+      <View style={[styles.skeletonLine, { width: '80%', marginBottom: 8 }]} />
+      <View style={[styles.skeletonLine, { width: '60%' }]} />
+    </View>
+    <View style={styles.skeletonIcon} />
+  </View>
+);
+
 const UserStockScreen: React.FC = () => {
   const navigation = useNavigation();
   const { currentUser } = useUser();
@@ -48,6 +115,15 @@ const UserStockScreen: React.FC = () => {
   const [stockData, setStockData] = useState<StockCardData[]>([]);
   const [sortedStockData, setSortedStockData] = useState<StockCardData[]>([]); // 排序后的数据
   const [error, setError] = useState<string | null>(null);
+  
+  // 收藏文章状态
+  const [favoriteArticles, setFavoriteArticles] = useState<FavoriteArticle[]>([]);
+  const [favoriteArticlesLoading, setFavoriteArticlesLoading] = useState(false);
+  const [favoriteArticlesError, setFavoriteArticlesError] = useState<string | null>(null);
+  
+  // 收起/展开状态
+  const [favoriteStocksCollapsed, setFavoriteStocksCollapsed] = useState(false);
+  const [favoriteArticlesCollapsed, setFavoriteArticlesCollapsed] = useState(false);
   
   // 排序相关状态
   const [selectedSortField, setSelectedSortField] = useState<'default' | 'price' | 'change' | 'peRatio' | 'volume'>('default');
@@ -143,6 +219,7 @@ const UserStockScreen: React.FC = () => {
     if (!currentUser) {
       setFavoriteStocks([]);
       setStockData([]);
+      setFavoriteArticles([]);
       setLoading(false);
       return;
     }
@@ -151,10 +228,14 @@ const UserStockScreen: React.FC = () => {
       setLoading(true);
       setError(null);
       
-      const result = await userStockService.getUserStocks(currentUser.email);
+      // 并行加载自选股票和收藏文章
+      const [stockResult] = await Promise.all([
+        userStockService.getUserStocks(currentUser.email),
+        loadFavoriteArticles()
+      ]);
       
-      if (result.success && result.data && (result.data as any).stocks) {
-        const data = (result.data as any).stocks as FavoriteStockItem[];
+      if (stockResult.success && stockResult.data && (stockResult.data as any).stocks) {
+        const data = (stockResult.data as any).stocks as FavoriteStockItem[];
         setFavoriteStocks(data);
         
         // 获取每个股票的基础信息
@@ -235,7 +316,7 @@ const UserStockScreen: React.FC = () => {
         showMessageModal(
           'warning',
           '登录已过期',
-          '请重新登录后查看自选股票',
+          '请重新登录后查看自选内容',
           [
             { text: '取消', style: 'cancel', onPress: () => setModalVisible(false) },
             { text: '登录', onPress: () => {
@@ -250,6 +331,39 @@ const UserStockScreen: React.FC = () => {
       setRefreshing(false);
     }
   }, [currentUser, sortStockData, selectedSortField, selectedSortOrder]);
+
+  // 获取用户收藏文章
+  const loadFavoriteArticles = async () => {
+    if (!currentUser) {
+      setFavoriteArticles([]);
+      return Promise.resolve();
+    }
+
+    try {
+      setFavoriteArticlesLoading(true);
+      setFavoriteArticlesError(null);
+
+      const result = await userArticleService.getUserArticles(currentUser.email);
+      
+      if (result.success && result.data) {
+        console.log('✅ UserStockScreen: 获取到收藏文章:', result.data.length, '篇');
+        setFavoriteArticles(result.data);
+      } else {
+        setFavoriteArticles([]);
+        if (result.error && !result.error.includes('登录已过期')) {
+          setFavoriteArticlesError(result.error);
+        }
+      }
+    } catch (error: any) {
+      console.error('❌ UserStockScreen: 获取收藏文章失败:', error);
+      setFavoriteArticles([]);
+      if (error.message && !error.message.includes('登录已过期')) {
+        setFavoriteArticlesError(error.message);
+      }
+    } finally {
+      setFavoriteArticlesLoading(false);
+    }
+  };
 
   // 当排序设置改变时，重新排序现有数据
   useEffect(() => {
@@ -292,22 +406,48 @@ const UserStockScreen: React.FC = () => {
     navigation.navigate('CoinDetail', params);
   };
 
-  const handleRemoveFavorite = async (stockSymbol: string) => {
-    if (!currentUser) return;
-    
+  // 处理文章点击
+  const handleArticlePress = (article: FavoriteArticle) => {
+    navigation.navigate('ArticleDetail', {
+      articleId: article.path,
+      returnTo: 'UserStock'
+    });
+  };
+
+  // 处理文章收藏删除
+  const handleRemoveArticle = async (article: FavoriteArticle) => {
+    if (!currentUser) {
+      return;
+    }
+
     try {
-      const result = await userStockService.removeUserStock(currentUser.email, stockSymbol);
+      const result = await userArticleService.removeUserArticle(currentUser.email, article.path);
+      
       if (result.success) {
-        showMessageModal('success', '移除成功', `${stockSymbol} 已从自选列表中移除`);
-        // 延迟刷新列表
-        setTimeout(() => {
-          loadFavorites();
-        }, 1000);
+        // 从本地状态中移除该文章
+        setFavoriteArticles(prev => prev.filter(item => item.path !== article.path));
+        
+        showMessageModal(
+          'success',
+          '取消收藏成功',
+          '文章已从收藏列表中移除',
+          [{ text: '确定', onPress: () => setModalVisible(false) }]
+        );
       } else {
-        showMessageModal('error', '移除失败', result.error || '移除失败，请重试');
+        showMessageModal(
+          'error',
+          '取消收藏失败',
+          result.error || '操作失败，请稍后重试',
+          [{ text: '确定', onPress: () => setModalVisible(false) }]
+        );
       }
     } catch (error: any) {
-      showMessageModal('error', '移除失败', error.message || '移除失败，请重试');
+      showMessageModal(
+        'error',
+        '取消收藏失败',
+        error.message || '操作失败，请稍后重试',
+        [{ text: '确定', onPress: () => setModalVisible(false) }]
+      );
     }
   };
 
@@ -439,6 +579,103 @@ const UserStockScreen: React.FC = () => {
     );
   };
 
+  // 渲染收藏文章列表
+  const renderFavoriteArticles = () => {
+    if (favoriteArticlesLoading) {
+      return (
+        <View style={styles.section}>
+          <TouchableOpacity 
+            style={styles.sectionHeader}
+            onPress={() => setFavoriteArticlesCollapsed(!favoriteArticlesCollapsed)}
+          >
+            <Ionicons name="bookmark" size={20} color={UI_COLORS.primary} />
+            <Text style={styles.sectionTitle}>收藏文章</Text>
+            <Text style={styles.sectionCount}>加载中...</Text>
+            <Ionicons 
+              name={favoriteArticlesCollapsed ? "chevron-forward" : "chevron-down"} 
+              size={20} 
+              color={UI_COLORS.secondaryText} 
+            />
+          </TouchableOpacity>
+          {!favoriteArticlesCollapsed && (
+            <View style={styles.articlesContainer}>
+              {[1, 2, 3].map((_, index) => (
+                <SkeletonCard key={index} />
+              ))}
+            </View>
+          )}
+        </View>
+      );
+    }
+
+    if (favoriteArticlesError) {
+      return (
+        <View style={styles.section}>
+          <TouchableOpacity 
+            style={styles.sectionHeader}
+            onPress={() => setFavoriteArticlesCollapsed(!favoriteArticlesCollapsed)}
+          >
+            <Ionicons name="bookmark" size={20} color={UI_COLORS.primary} />
+            <Text style={styles.sectionTitle}>收藏文章</Text>
+            <Text style={styles.sectionCount}>加载失败</Text>
+            <Ionicons 
+              name={favoriteArticlesCollapsed ? "chevron-forward" : "chevron-down"} 
+              size={20} 
+              color={UI_COLORS.secondaryText} 
+            />
+          </TouchableOpacity>
+          {!favoriteArticlesCollapsed && (
+            <View style={styles.errorContainer}>
+              <Text style={styles.errorText}>{favoriteArticlesError}</Text>
+              <TouchableOpacity style={styles.retryButton} onPress={loadFavoriteArticles}>
+                <Text style={styles.retryText}>重试</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.section}>
+        <TouchableOpacity 
+          style={styles.sectionHeader}
+          onPress={() => setFavoriteArticlesCollapsed(!favoriteArticlesCollapsed)}
+        >
+          <Ionicons name="bookmark" size={20} color={UI_COLORS.primary} />
+          <Text style={styles.sectionTitle}>收藏文章</Text>
+          <Text style={styles.sectionCount}>{favoriteArticles.length} 篇</Text>
+          <Ionicons 
+            name={favoriteArticlesCollapsed ? "chevron-forward" : "chevron-down"} 
+            size={20} 
+            color={UI_COLORS.secondaryText} 
+          />
+        </TouchableOpacity>
+        {!favoriteArticlesCollapsed && (
+          favoriteArticles.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Ionicons name="bookmark-outline" size={50} color={UI_COLORS.secondaryText} />
+              <Text style={styles.emptyText}>暂无收藏文章</Text>
+              <Text style={styles.emptySubText}>在文章详情页点击收藏按钮添加</Text>
+            </View>
+          ) : (
+            <View style={styles.articlesContainer}>
+              {favoriteArticles.map((article) => (
+                <ArticleCard
+                  key={article.path}
+                  article={article}
+                  onPress={() => handleArticlePress(article)}
+                  onRemove={handleRemoveArticle}
+                  showRemoveButton={true}
+                />
+              ))}
+            </View>
+          )
+        )}
+      </View>
+    );
+  };
+
   if (stockData.length === 0) {
     return (
       <View style={styles.container}>
@@ -470,16 +707,69 @@ const UserStockScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       {renderHeader()}
-      {renderSortOptions()}
       
-      <FlatList
-        data={sortedStockData}
-        keyExtractor={(item) => item.id || item.symbol}
-        renderItem={renderItem}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-        contentContainerStyle={{ paddingVertical: 8 }}
-        showsVerticalScrollIndicator={false}
-      />
+      <ScrollView
+        style={styles.scrollView}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[UI_COLORS.primary]}
+            tintColor={UI_COLORS.primary}
+          />
+        }
+      >
+        {/* 自选股票部分 */}
+        <View style={styles.section}>
+          <TouchableOpacity 
+            style={styles.sectionHeader}
+            onPress={() => setFavoriteStocksCollapsed(!favoriteStocksCollapsed)}
+          >
+            <Ionicons name="star" size={20} color={UI_COLORS.primary} />
+            <Text style={styles.sectionTitle}>自选股票</Text>
+            <Text style={styles.sectionCount}>{stockData.length} 只</Text>
+            <Ionicons 
+              name={favoriteStocksCollapsed ? "chevron-forward" : "chevron-down"} 
+              size={20} 
+              color={UI_COLORS.secondaryText} 
+            />
+          </TouchableOpacity>
+          {!favoriteStocksCollapsed && (
+            <View>
+              {renderSortOptions()}
+              {stockData.length === 0 ? (
+                <View style={styles.emptyContainer}>
+                  <Ionicons name="star-outline" size={50} color={UI_COLORS.secondaryText} />
+                  <Text style={styles.emptyText}>暂无自选股票</Text>
+                  <Text style={styles.emptySubText}>在行情或详情页点击 ⭐ 按钮添加</Text>
+                </View>
+              ) : (
+                <View style={styles.stocksContainer}>
+                  {sortedStockData.map((item) => (
+                    <StockCard
+                      key={item.id || item.symbol}
+                      data={item}
+                      context="market"
+                      showFavoriteButton={true}
+                      isFavorited={true}
+                      onPress={() => handleStockPress(item)}
+                      onFavoritePress={(symbol, isAdding) => {
+                        if (!isAdding) {
+                          handleRemoveFavorite(symbol);
+                        }
+                      }}
+                      onLoginRequired={() => setLoginModalVisible(true)}
+                    />
+                  ))}
+                </View>
+              )}
+            </View>
+          )}
+        </View>
+
+        {/* 收藏文章部分 */}
+        {renderFavoriteArticles()}
+      </ScrollView>
       
       <LoginModal
         visible={loginModalVisible}
@@ -508,6 +798,125 @@ const styles = StyleSheet.create({
     flex: 1, 
     backgroundColor: '#fff' 
   },
+  scrollView: {
+    flex: 1,
+  },
+  section: {
+    backgroundColor: UI_COLORS.cardBackground,
+    marginHorizontal: 16,
+    marginVertical: 8,
+    borderRadius: 12,
+    shadowColor: UI_COLORS.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: UI_COLORS.border,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: UI_COLORS.text,
+    marginLeft: 8,
+    flex: 1,
+  },
+  sectionCount: {
+    fontSize: 14,
+    color: UI_COLORS.secondaryText,
+    fontWeight: '500',
+  },
+  stocksContainer: {
+    // 自选股票容器
+  },
+  articlesContainer: {
+    // 文章容器
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    padding: 40,
+  },
+  emptyText: {
+    fontSize: 18,
+    color: UI_COLORS.secondaryText,
+    marginTop: 16,
+    fontWeight: '500',
+  },
+  emptySubText: {
+    fontSize: 14,
+    color: UI_COLORS.secondaryText,
+    marginTop: 8,
+    textAlign: 'center',
+  },
+  articleCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: UI_COLORS.border,
+  },
+  articleContent: {
+    flex: 1,
+  },
+  articleActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  favoriteButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
+  },
+  articleTitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: UI_COLORS.text,
+    lineHeight: 22,
+    marginBottom: 4,
+  },
+  articleDate: {
+    fontSize: 14,
+    color: UI_COLORS.secondaryText,
+  },
+  skeletonCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: UI_COLORS.border,
+  },
+  skeletonContent: {
+    flex: 1,
+  },
+  skeletonLine: {
+    height: 12,
+    backgroundColor: '#E0E0E0',
+    borderRadius: 6,
+  },
+  skeletonIcon: {
+    width: 20,
+    height: 20,
+    backgroundColor: '#E0E0E0',
+    borderRadius: 10,
+  },
+  errorContainer: {
+    alignItems: 'center',
+    padding: 40,
+  },
+  retryText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  // 原有样式继续保留
   center: { 
     flex: 1, 
     alignItems: 'center', 
