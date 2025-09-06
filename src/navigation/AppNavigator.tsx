@@ -152,6 +152,8 @@ const UserStockStackNavigator = () => {
           })
         }}
       />
+      {/* 允许从自选栈直接打开文章详情，支持收藏文章功能 */}
+      <UserStockStack.Screen name="ArticleDetail" component={ArticleDetailScreen} />
       <UserStockStack.Screen name="UserStatus" component={UserStatusScreen} />
       <UserStockStack.Screen name="UserProfile" component={UserProfileScreen} />
       <UserStockStack.Screen name="TermsOfService" component={TermsOfServiceScreen} />

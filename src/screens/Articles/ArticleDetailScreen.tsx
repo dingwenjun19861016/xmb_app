@@ -25,6 +25,7 @@ import Markdown from 'react-native-markdown-display';
 import { newsService, NewsArticle } from '../../services/NewsService';
 import { configService } from '../../services/ConfigService';
 import { getWebAppURL } from '../../config/apiConfig';
+import userArticleService from '../../services/UserArticleService';
 
 // Import contexts
 import { useUser } from '../../contexts/UserContext';
@@ -84,6 +85,11 @@ const ArticleDetailScreen = () => {
   const [imageDimensions, setImageDimensions] = useState<{[key: string]: {width: number, height: number}}>({});
   // 新增: 记录内容容器宽度用于按真实宽高比计算图片高度，避免宽屏裁剪
   const [contentWidth, setContentWidth] = useState(0);
+  
+  // 收藏相关状态
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [isAddingToFavorites, setIsAddingToFavorites] = useState(false);
+  const [favoriteAdded, setFavoriteAdded] = useState(false);
   
   // ====== 图片全屏查看/缩放 ======
   const [viewerVisible, setViewerVisible] = useState(false);
@@ -268,9 +274,118 @@ const ArticleDetailScreen = () => {
     showMessageModal(
       'success',
       '登录成功',
-      `欢迎回来，${user.email}！`,
+      `欢迎回来，${user.email}！现在可以收藏文章了。`,
       [{ text: '确定', onPress: () => setModalVisible(false) }]
     );
+    
+    // 登录成功后检查收藏状态
+    checkIfFavorite();
+  };
+
+  // 检查文章是否已收藏
+  const checkIfFavorite = async () => {
+    if (!currentUser || !article) {
+      setIsFavorite(false);
+      return;
+    }
+
+    try {
+      const result = await userArticleService.getUserArticles(currentUser.email);
+      if (result.success && result.data) {
+        const favoriteArticles = result.data;
+        const isArticleFavorite = favoriteArticles.some(
+          (favoriteArticle) => favoriteArticle.path === article.id
+        );
+        setIsFavorite(isArticleFavorite);
+      }
+    } catch (error: any) {
+      // 检查是否为登录过期错误
+      if (error.message && error.message.includes('登录已过期')) {
+        // 这里不自动打开登录modal，只是记录日志，让用户在主动操作时再提示
+      }
+      
+      setIsFavorite(false);
+    }
+  };
+
+  // 处理收藏按钮点击
+  const handleFavoritePress = async () => {
+    if (!article) return;
+    
+    const isRemoving = isFavorite;
+    const actionText = isRemoving ? '取消收藏' : '收藏文章';
+    
+    // 检查用户是否登录
+    if (!currentUser) {
+      showMessageModal(
+        'warning',
+        '需要登录',
+        '请先登录账户才能收藏文章',
+        [
+          { 
+            text: '取消', 
+            style: 'cancel',
+            onPress: () => setModalVisible(false)
+          },
+          { 
+            text: '登录',
+            onPress: () => {
+              setModalVisible(false);
+              setLoginModalVisible(true);
+            }
+          }
+        ]
+      );
+      return;
+    }
+
+    try {
+      setIsAddingToFavorites(true);
+      
+      // 根据当前状态选择API
+      const response = isRemoving 
+        ? await userArticleService.removeUserArticle(currentUser.email, article.id)
+        : await userArticleService.addUserArticle(currentUser.email, article.id);
+        
+      if (response.success && response.data) {
+        // 更新本地状态
+        setIsFavorite(!isRemoving);
+        setFavoriteAdded(true);
+        
+        // 显示成功消息
+        showMessageModal(
+          'success',
+          `${actionText}成功`,
+          isRemoving 
+            ? `文章已取消收藏`
+            : `文章已添加到收藏列表`,
+          [{ text: '确定', onPress: () => setModalVisible(false) }]
+        );
+        
+        // 3秒后恢复原始状态
+        setTimeout(() => {
+          setFavoriteAdded(false);
+        }, 3000);
+      } else {
+        throw new Error(response.error || `${actionText}失败`);
+      }
+    } catch (error: any) {
+      
+      // 检查是否为登录过期错误
+      if (error.message && error.message.includes('登录已过期')) {
+        setLoginModalVisible(true);
+        return;
+      }
+      
+      showMessageModal(
+        'error',
+        `${actionText}失败`,
+        error.message || `${actionText}失败，请稍后重试`,
+        [{ text: '确定', onPress: () => setModalVisible(false) }]
+      );
+    } finally {
+      setIsAddingToFavorites(false);
+    }
   };
 
   // Fetch article data
@@ -358,6 +473,15 @@ const ArticleDetailScreen = () => {
 
     fetchArticleData();
   }, [articleId, passedArticle]);
+
+  // 监听用户状态和文章状态变化，检查收藏状态
+  useEffect(() => {
+    if (currentUser && article) {
+      checkIfFavorite();
+    } else {
+      setIsFavorite(false);
+    }
+  }, [currentUser, article]);
 
   // Share article function
   const handleShare = async () => {
@@ -508,6 +632,22 @@ const ArticleDetailScreen = () => {
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{pageTitle}</Text>
           <View style={styles.headerRightContainer}>
+            {/* 收藏按钮 */}
+            <TouchableOpacity 
+              style={[styles.favoriteButton, isAddingToFavorites && styles.favoriteButtonDisabled]}
+              onPress={handleFavoritePress}
+              disabled={isAddingToFavorites}
+            >
+              {isAddingToFavorites ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <Ionicons 
+                  name={isFavorite ? "heart" : "heart-outline"} 
+                  size={22} 
+                  color={isFavorite ? "#FF6B6B" : "white"} 
+                />
+              )}
+            </TouchableOpacity>
             <TouchableOpacity 
               style={styles.shareButton}
               onPress={handleShare}
@@ -551,6 +691,22 @@ const ArticleDetailScreen = () => {
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{pageTitle}</Text>
           <View style={styles.headerRightContainer}>
+            {/* 收藏按钮 */}
+            <TouchableOpacity 
+              style={[styles.favoriteButton, isAddingToFavorites && styles.favoriteButtonDisabled]}
+              onPress={handleFavoritePress}
+              disabled={isAddingToFavorites}
+            >
+              {isAddingToFavorites ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <Ionicons 
+                  name={isFavorite ? "heart" : "heart-outline"} 
+                  size={22} 
+                  color={isFavorite ? "#FF6B6B" : "white"} 
+                />
+              )}
+            </TouchableOpacity>
             <TouchableOpacity 
               style={styles.shareButton}
               onPress={handleShare}
@@ -604,6 +760,22 @@ const ArticleDetailScreen = () => {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{pageTitle}</Text>
         <View style={styles.headerRightContainer}>
+          {/* 收藏按钮 */}
+          <TouchableOpacity 
+            style={[styles.favoriteButton, isAddingToFavorites && styles.favoriteButtonDisabled]}
+            onPress={handleFavoritePress}
+            disabled={isAddingToFavorites}
+          >
+            {isAddingToFavorites ? (
+              <ActivityIndicator size="small" color="white" />
+            ) : (
+              <Ionicons 
+                name={isFavorite ? "heart" : "heart-outline"} 
+                size={22} 
+                color={isFavorite ? "#FF6B6B" : "white"} 
+              />
+            )}
+          </TouchableOpacity>
           <TouchableOpacity 
             style={styles.shareButton}
             onPress={handleShare}
@@ -896,6 +1068,17 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 14,
     fontWeight: '600',
+  },
+  favoriteButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 8,
+  },
+  favoriteButtonDisabled: {
+    opacity: 0.7,
   },
   scrollView: {
     flex: 1,
