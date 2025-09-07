@@ -1,5 +1,5 @@
 // 小目标 Service Worker - Final Version
-const APP_VERSION = '1.0.0'; // 每次部署时更新这个版本号
+const APP_VERSION = '1.0.1'; // 每次部署时更新这个版本号
 const CACHE_NAME = `xmb-stock-${APP_VERSION}`;
 
 // 备用接入点配置
